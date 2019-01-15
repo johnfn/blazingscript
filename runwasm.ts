@@ -1,6 +1,4 @@
-import fetch from 'node-fetch';
 import fs from 'fs'
-import { instantiateStreaming } from 'wasm-instantiate-streaming'
 
 var memory = new WebAssembly.Memory({
   initial: 10, 
@@ -17,9 +15,16 @@ instantiateStreaming(fs.readFileSync('test.wasm'), { js: { mem: memory } })
 
 var importObject = {
   console: {
-    log: (arg) => {
+    log: (arg: string) => {
       console.log(arg);
     }
+  },
+  c: {
+    log: (start: number, end: number) => {
+      const data = new Int8Array(memory.buffer.slice(start, end));
+
+      console.log([...data].map(x => String.fromCharCode(x)).join(""));
+    },
   },
   js: { mem: memory },
   imports: {

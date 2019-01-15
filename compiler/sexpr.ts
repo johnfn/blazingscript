@@ -22,7 +22,45 @@ export function S(name: string, ...body: (string | Sexpr)[]): Sexpr {
   };
 }
 
-// TODO: Come up with better way to write sexprs, probably with function application or something.
+S.Const = (value: number): Sexpr => S(
+  "i32.const", 
+  String(value)
+);
+
+S.Store = (pos: number, value: number): Sexpr => S(
+  "i32.store",
+  S.Const(pos),
+  S.Const(value),
+);
+
+S.Export = (name: string, type: "func"): Sexpr => S(
+  "export",
+  `"${name}"`,
+  S(
+    "func",
+    `\$${name}`,
+  )
+);
+
+// TODO: Proper return types
+S.Func = ({ name, body, params }: { name: string, body: Sexpr[], params: Param[] }): Sexpr => S(
+  "func",
+  `\$${name}`,
+  ...Sx.Params(params),
+  S("result", "i32"),
+  ...body,
+);
+
+S.GetLocal = (name: string): Sexpr => S(
+  "get_local", 
+  "$" + name
+);
+
+S.Param = (param: Param): Sexpr => S(
+  "param",
+  "$" + param.name, 
+  param.type,
+);
 
 export class Sx {
   content: (string | Sexpr)[];
@@ -31,47 +69,18 @@ export class Sx {
     this.content = args;
   }
 
-  public static Func(p: { name: string, body: Sexpr[], params: Param[] }): Sexpr {
-    const { name, body, params } = p;
-
-    // TODO: Proper return types
-    return S(
-      "func", 
-      `\$${ name }`, 
-      ...Sx.Params(params), 
-      S("result", "i32"),
-      ...body,
+  public static SetStringLiteralAt(pos: number, string: string): Sexpr[] {
+    return string.split("").map((ch, i) => 
+      S.Store(pos + i, ch.charCodeAt(0))
     );
   }
 
-  public static Export(name: string, type: "func"): Sexpr {
-    return S(
-      "export",
-        `"${ name }"`, 
-        S(
-          "func", 
-          `\$${ name }`, 
-        )
-    )
-  }
-
-  public static GetLocal(name: string): Sexpr {
-    return S("get_local", "$" + name);
-  }
-
-  public static Param(param: Param): Sexpr {
-    return {
-      name: "param",
-      body: ["$" + param.name, param.type],
-    };
-  }
-
   public static Params(params: Param[]): Sexpr[] {
-    return params.map(param => Sx.Param(param));
+    return params.map(param => S.Param(param));
   }
 }
 
-export function sexprToString(s: Sexpr): string {
+export function sexprToString(s: string | Sexpr): string {
   if (typeof s === "string") {
     return s;
   }

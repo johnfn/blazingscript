@@ -1,6 +1,18 @@
-import ts, { SyntaxKind, parseJsonSourceFileConfigFileContent, FunctionDeclaration, SyntaxList, ParameterDeclaration, Block, Statement, isSwitchStatement, ReturnStatement, Expression, BinaryExpression, Identifier, SuperExpression, SourceFile, NodeArray, ExpressionStatement, CallExpression, Token, LiteralExpression } from 'typescript';
+import ts, { SyntaxKind, parseJsonSourceFileConfigFileContent, FunctionDeclaration, SyntaxList, ParameterDeclaration, Block, Statement, isSwitchStatement, ReturnStatement, Expression, BinaryExpression, Identifier, SuperExpression, SourceFile, NodeArray, ExpressionStatement, CallExpression, Token, LiteralExpression, StringLiteral } from 'typescript';
 import { sexprToString, Param, Sexpr, Sx, S } from './sexpr';
 import { Program } from './program';
+
+function flatten<T>(x: T[][]): T[] {
+  const result: T[] = [];
+
+  for (const a of x) {
+    for (const b of a) {
+      result.push(b);
+    }
+  }
+
+  return result;
+}
 
 function strnode(node: ts.Node, indent = 0): string {
   return (
@@ -58,19 +70,9 @@ export class Rewriter {
         "module",
         S("import", '"js"', '"mem"', S("memory", "1")),
         S("import", '"console"', '"log"', S("func", "$log", S("param", "i32"))),
+        S("import", '"c"', '"log"', S("func", "$clog", S("param", "i32"), S("param", "i32"))),
         ...this.parseStatementList(sf.statements),
       );
-
-      return {
-        name: "module",
-        body: [
-          { 
-            name: "import", 
-            body: [ '"js"', '"mem"', '(memory 1)'] 
-          },
-          ...this.parseStatementList(sf.statements)
-        ],
-      };
     }
 
     throw new Error('Unhandled base thing');
@@ -83,16 +85,16 @@ export class Rewriter {
     const sb = this.parseStatementList(node.body!.statements);
 
     return [
-      Sx.Func({
+      S.Func({
         name: functionName,
         body: sb,
         params: params
       }),
-      Sx.Export(functionName, "func")
+      S.Export(functionName, "func")
     ];
   }
 
-  parseExpression(expression: Expression): Sexpr {
+  parseExpression(expression: Expression): Sexpr[] {
     if (expression.kind === SyntaxKind.BinaryExpression) {
       const be = expression as BinaryExpression;
       const type = this.program.typeChecker.getTypeAtLocation(be.left);
@@ -156,30 +158,66 @@ export class Rewriter {
 
       // TODO: Mop up this intrinsic name stuff
 
-      return {
+      return [{
         name: fn,
         body: [
-          this.parseExpression(be.left),
-          this.parseExpression(be.right),
+          ...this.parseExpression(be.left),
+          ...this.parseExpression(be.right),
         ],
-      };
+      }];
     }
 
     if (expression.kind === SyntaxKind.CallExpression) {
+      // TODO: I think this line is wrong.
+
       const ce: CallExpression = expression;
 
       console.log(ce.expression.getText());
 
-      if (ce.arguments.length !== 1) {
-        throw new Error("unhandled log w/o 1 arg");
-      }
+      // TODO: I actualy have to resolve the lhs
+
+      // tho to be fair, i dont know how to call anything at all rn.
+
+      // if (ce.expression.kind !== ts.SyntaxKind.FunctionExpression) {
+      //   throw new Error(`dunno how to call anything thats not exactly a function, got ${ ts.SyntaxKind[ce.expression.kind] }`)
+      // }
 
       if (ce.expression.getText() === "console.log") {
-        return S(
-          "call",
-          "$log",
-          ...ce.arguments.map(x => this.parseExpression(x)),
-        );
+        if (ce.arguments.length !== 1) {
+          throw new Error("unhandled log w/o 1 arg");
+        }
+
+        return [
+          S(
+            "call",
+            "$log",
+          ...flatten(ce.arguments.map(x => this.parseExpression(x))),
+          )
+        ];
+      } else if (ce.expression.getText() === "clog") {
+        // ...flatten(ce.arguments.map(x => this.parseExpression(x))),
+
+        if (ce.arguments.length !== 1) {
+          throw new Error(`cant clog with more (or less) than 1 argument. got ${ ce.arguments.length }.`);
+        }
+
+        const arg = ce.arguments[0];
+
+        if (arg.kind !== ts.SyntaxKind.StringLiteral) {
+          throw new Error("cant clog anything which is not a string literal. lol");
+        }
+
+        const text = arg.getText().slice(1, -1);
+
+        return [
+          ...Sx.SetStringLiteralAt(0, text),
+          S(
+            "call",
+            "$clog",
+            S("i32.const", String(0)), // start
+            S("i32.const", String(0 + text.length)), // end
+          )
+        ];
       } else {
         throw new Error(`Unhandled call expression ${ expression.getText() }`);
       }
@@ -188,7 +226,7 @@ export class Rewriter {
     if (expression.kind === SyntaxKind.Identifier) {
       const id = expression as Identifier;
 
-      return Sx.GetLocal(id.escapedText);
+      return [S.GetLocal(id.escapedText)];
     }
 
     if (expression.kind === SyntaxKind.FirstLiteralToken) {
@@ -196,7 +234,7 @@ export class Rewriter {
 
       // TODO: Handle types
 
-      return S("i32.const", t.getText());
+      return [ S("i32.const", t.getText()) ];
     }
 
     console.log(expression.kind);
@@ -208,7 +246,7 @@ export class Rewriter {
     if (statement.kind === ts.SyntaxKind.ExpressionStatement) {
       const es: ExpressionStatement = statement as ExpressionStatement;
 
-      return [ this.parseExpression(es.expression) ];
+      return [ ...this.parseExpression(es.expression) ];
     }
 
     if (statement.kind === ts.SyntaxKind.ReturnStatement) {
@@ -218,7 +256,9 @@ export class Rewriter {
         throw new Error("Unhandled");
       }
 
-      return [ this.parseExpression(rs.expression) ];
+      return [
+        S("return", ...this.parseExpression(rs.expression))
+      ];
     }
 
     switch (statement.kind) {

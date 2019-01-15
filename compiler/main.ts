@@ -25,6 +25,7 @@ const p = new Program(`
     console.log(5678);
     console.log(5678);
     console.log(5678);
+    clog("hello world!");
 
     return x * y;
   }
