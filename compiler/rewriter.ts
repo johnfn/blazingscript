@@ -1,8 +1,8 @@
-import ts, { SyntaxKind, parseJsonSourceFileConfigFileContent, FunctionDeclaration, SyntaxList, ParameterDeclaration, Block, Statement, isSwitchStatement, ReturnStatement, Expression, BinaryExpression, Identifier, SuperExpression, SourceFile, NodeArray, ExpressionStatement, CallExpression, Token, LiteralExpression, StringLiteral } from 'typescript';
+import ts, { SyntaxKind, parseJsonSourceFileConfigFileContent, FunctionDeclaration, SyntaxList, ParameterDeclaration, Block, Statement, isSwitchStatement, ReturnStatement, Expression, BinaryExpression, Identifier, SuperExpression, SourceFile, NodeArray, ExpressionStatement, CallExpression, Token, LiteralExpression, StringLiteral, VariableStatement, IfStatement, ConditionalExpression } from 'typescript';
 import { sexprToString, Param, Sexpr, Sx, S } from './sexpr';
 import { Program } from './program';
 
-function flatten<T>(x: T[][]): T[] {
+export function flatten<T>(x: T[][]): T[] {
   const result: T[] = [];
 
   for (const a of x) {
@@ -80,7 +80,6 @@ export class Rewriter {
 
   parseFunction(node: FunctionDeclaration): Sexpr[] {
     const functionName = node.name!.text;
-
     const params = this.parseParameterList(node.parameters)
     const sb = this.parseStatementList(node.body!.statements);
 
@@ -94,13 +93,32 @@ export class Rewriter {
     ];
   }
 
+  parseIfStatement(node: IfStatement): Sexpr[] {
+    console.log(sn(node.expression));
+  }
+
+  parseVariableStatement(vs: VariableStatement): Sexpr[] {
+    return flatten(vs.declarationList.declarations.map(decl => {
+      if (decl.name.kind === ts.SyntaxKind.Identifier) {
+        const name = decl.name.getText();
+
+        return [
+          S.Local(name, "i32"),
+          ...S.SetLocal(name, decl.initializer ? this.parseExpression(decl.initializer) : S.Const(0))
+        ];
+      } else {
+        throw new Error("I dont handle destructuring in variable names");
+      }
+    }));
+  }
+
   parseExpression(expression: Expression): Sexpr[] {
     if (expression.kind === SyntaxKind.BinaryExpression) {
       const be = expression as BinaryExpression;
       const type = this.program.typeChecker.getTypeAtLocation(be.left);
       let fn: string | undefined;
 
-      if (type.intrinsicName === "number") {
+      if (type.intrinsicName === "number" || type.isNumberLiteral()) {
         const functionMapping: { [key in ts.BinaryOperator]: string | undefined } = {
           [ts.SyntaxKind.CommaToken                            ]: undefined,
           [ts.SyntaxKind.LessThanToken                         ]: undefined,
@@ -108,7 +126,7 @@ export class Rewriter {
           [ts.SyntaxKind.LessThanEqualsToken                   ]: undefined,
           [ts.SyntaxKind.GreaterThanEqualsToken                ]: undefined,
           [ts.SyntaxKind.EqualsEqualsToken                     ]: undefined,
-          [ts.SyntaxKind.EqualsEqualsEqualsToken               ]: undefined,
+          [ts.SyntaxKind.EqualsEqualsEqualsToken               ]: "i32.eq",
           [ts.SyntaxKind.ExclamationEqualsToken                ]: undefined,
           [ts.SyntaxKind.ExclamationEqualsEqualsToken          ]: undefined,
           [ts.SyntaxKind.AsteriskAsteriskToken                 ]: undefined,
@@ -149,7 +167,7 @@ export class Rewriter {
 
         fn = functionMapping[be.operatorToken.kind];
       } else {
-        throw new Error("Dunno how to add that gg.");
+        throw new Error(`Dunno how to add that gg. ${ type.intrinsicName }`);
       }
 
       if (fn === undefined) {
@@ -158,21 +176,17 @@ export class Rewriter {
 
       // TODO: Mop up this intrinsic name stuff
 
-      return [{
-        name: fn,
-        body: [
-          ...this.parseExpression(be.left),
-          ...this.parseExpression(be.right),
-        ],
-      }];
+      return [
+        ...this.parseExpression(be.left),
+        ...this.parseExpression(be.right),
+        fn,
+      ];
     }
 
     if (expression.kind === SyntaxKind.CallExpression) {
       // TODO: I think this line is wrong.
 
       const ce: CallExpression = expression;
-
-      console.log(ce.expression.getText());
 
       // TODO: I actualy have to resolve the lhs
 
@@ -188,12 +202,10 @@ export class Rewriter {
         }
 
         return [
-          S(
-            "call",
-            "$log",
-          ...flatten(ce.arguments.map(x => this.parseExpression(x))),
-          )
-        ];
+          ...this.parseExpression(ce.arguments[0]),
+          "call",
+          "$log",
+        ]
       } else if (ce.expression.getText() === "clog") {
         // ...flatten(ce.arguments.map(x => this.parseExpression(x))),
 
@@ -211,12 +223,9 @@ export class Rewriter {
 
         return [
           ...Sx.SetStringLiteralAt(0, text),
-          S(
-            "call",
-            "$clog",
-            S("i32.const", String(0)), // start
-            S("i32.const", String(0 + text.length)), // end
-          )
+          "i32.const", String(0),               // start
+          "i32.const", String(0 + text.length), // end
+          "call", "$clog"
         ];
       } else {
         throw new Error(`Unhandled call expression ${ expression.getText() }`);
@@ -226,7 +235,10 @@ export class Rewriter {
     if (expression.kind === SyntaxKind.Identifier) {
       const id = expression as Identifier;
 
-      return [S.GetLocal(id.escapedText)];
+      return [
+        "get_local",
+        "$" + id.escapedText,
+      ]
     }
 
     if (expression.kind === SyntaxKind.FirstLiteralToken) {
@@ -234,7 +246,21 @@ export class Rewriter {
 
       // TODO: Handle types
 
-      return [ S("i32.const", t.getText()) ];
+      return [
+        "i32.const",
+        t.getText(),
+      ];
+    }
+
+    if (expression.kind === SyntaxKind.ConditionalExpression) {
+      const t = expression as ConditionalExpression;
+
+      return [
+        ...this.parseExpression(t.whenTrue),
+        ...this.parseExpression(t.whenFalse),
+        ...this.parseExpression(t.condition),
+        "select"
+      ];
     }
 
     console.log(expression.kind);
@@ -257,16 +283,20 @@ export class Rewriter {
       }
 
       return [
-        S("return", ...this.parseExpression(rs.expression))
+        ...this.parseExpression(rs.expression),
+        "return",
       ];
     }
 
     switch (statement.kind) {
       case SyntaxKind.FunctionDeclaration:
-        const fn = statement as FunctionDeclaration;
-        const sexpr = this.parseFunction(fn);
+        return this.parseFunction(statement as FunctionDeclaration);
+      case SyntaxKind.IfStatement:
+        return this.parseIfStatement(statement as IfStatement);
+      case SyntaxKind.VariableStatement:
+        const vs = statement as VariableStatement;
 
-        return sexpr;
+        return this.parseVariableStatement(vs);
     }
 
     throw new Error(`unhandled statement! ${ ts.SyntaxKind[statement.kind] }`);

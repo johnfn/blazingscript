@@ -4,7 +4,11 @@ import { Program } from './program';
 import { sexprToString } from './sexpr';
 
 // TODO: double pass: convert to reasonable data structure first, then convert to sexprs
+// First pass: 
+//   1. convert to reasonable data structure. 
+//   2. label all variables so i can use local ?
 // TODO: generate a d.ts file for the exported members of the wasm thing
+// TODO: actually check for TS errors n stuff.
 
 // useful to get wat snippets
 // https://mbebenita.github.io/WasmExplorer/
@@ -20,11 +24,16 @@ let indent = 0;
 
 const p = new Program(`
   function foo(x: number, y: number) {
-    console.log(x * y);
+    let z = 51;
+    console.log(z === 51 ? 111 : 000)
+
+    clog("I was called with")
+    console.log(x)
+    console.log(y)
+    clog("========")
+    console.log(55);
     console.log(x - y);
-    console.log(5678);
-    console.log(5678);
-    console.log(5678);
+    console.log(3 * 2 + 3);
     clog("hello world!");
 
     return x * y;

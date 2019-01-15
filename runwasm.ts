@@ -38,6 +38,9 @@ var importObject = {
 WebAssembly.instantiate(
   fs.readFileSync('test.wasm')
   , importObject
-).then(result =>
+).then(result => {
+  console.log("begin run of test.wasm");
+  console.log("");
+
   console.log(result.instance.exports.foo(9, 5))
-).catch(e => console.log(e))
+}).catch(e => console.log(e))
