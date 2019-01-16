@@ -24,6 +24,17 @@ let indent = 0;
 
 const p = new Program(`
   function foo(x: number, y: number) {
+    console.log(x);
+    x++;
+    console.log(x);
+
+    if (x === 10) {
+      clog("It works!")
+    } else {
+      clog("It doesnt work!")
+    }
+
+    /*
     let z = 51;
     console.log(z === 51 ? 111 : 000)
 
@@ -35,6 +46,7 @@ const p = new Program(`
     console.log(x - y);
     console.log(3 * 2 + 3);
     clog("hello world!");
+    */
 
     return x * y;
   }

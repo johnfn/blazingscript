@@ -1,6 +1,16 @@
-import ts, { SyntaxKind, parseJsonSourceFileConfigFileContent, FunctionDeclaration, SyntaxList, ParameterDeclaration, Block, Statement, isSwitchStatement, ReturnStatement, Expression, BinaryExpression, Identifier, SuperExpression, SourceFile, NodeArray, ExpressionStatement, CallExpression, Token, LiteralExpression, StringLiteral, VariableStatement, IfStatement, ConditionalExpression } from 'typescript';
-import { sexprToString, Param, Sexpr, Sx, S } from './sexpr';
+import ts, { SyntaxKind, FunctionDeclaration, ParameterDeclaration, Block, Statement, ReturnStatement, Expression, BinaryExpression, Identifier, SourceFile, NodeArray, ExpressionStatement, CallExpression, LiteralExpression, VariableStatement, IfStatement, ConditionalExpression, PostfixUnaryExpression } from 'typescript';
+import { Param, Sexpr, Sx, S } from './sexpr';
 import { Program } from './program';
+
+function assert(x: boolean, msg = "") {
+  if (x !== true) {
+    throw new Error(msg)
+  }
+}
+
+type Context = {
+  blockNameStack: string[];
+}
 
 export function flatten<T>(x: T[][]): T[] {
   const result: T[] = [];
@@ -26,10 +36,15 @@ function sn(node: ts.Node): string {
 }
 
 export class Rewriter {
+  ctx: Context;
+
   constructor(
     private root   : ts.Node,
     private program: Program
   ) {
+    this.ctx = { 
+      blockNameStack: []
+    };
   }
 
   parse(): Sexpr {
@@ -94,7 +109,31 @@ export class Rewriter {
   }
 
   parseIfStatement(node: IfStatement): Sexpr[] {
-    console.log(sn(node.expression));
+    const blockName = "$ifblock";
+
+    this.ctx.blockNameStack.push(blockName);
+
+    const result = [
+      "(if",
+      "(block (result i32)",
+      ...this.parseExpression(node.expression),
+      ")",
+      "(then",
+      ...this.parseStatement(node.thenStatement),
+      ")",
+      ...(node.elseStatement
+        ? [
+          "(else",
+          ...this.parseStatement(node.elseStatement),
+          ")",
+        ] : []
+      ),
+      ")",
+    ];
+
+    assert(this.ctx.blockNameStack.pop() === blockName, "bad block name stack");
+
+    return result;
   }
 
   parseVariableStatement(vs: VariableStatement): Sexpr[] {
@@ -263,9 +302,27 @@ export class Rewriter {
       ];
     }
 
+    if (expression.kind === SyntaxKind.PostfixUnaryExpression) {
+      const pue = expression as PostfixUnaryExpression;
+
+      // TODO: Check types!
+      // TODO: Return previous value.
+      return [
+        ...S.SetLocal(pue.operand.getText(), [
+          ...this.parseExpression(pue.operand),
+          ...S.Const(1),
+          "i32.add",
+        ])
+      ];
+    }
+
     console.log(expression.kind);
 
     throw new Error(`Unhandled expression! ${ ts.SyntaxKind[expression.kind] }`);
+  }
+
+  parseBlock(block: Block): Sexpr[] {
+    return this.parseStatementList(block.statements);
   }
 
   parseStatement(statement: Statement): Sexpr[] {
@@ -291,6 +348,8 @@ export class Rewriter {
     switch (statement.kind) {
       case SyntaxKind.FunctionDeclaration:
         return this.parseFunction(statement as FunctionDeclaration);
+      case SyntaxKind.Block:
+        return this.parseBlock(statement as Block);
       case SyntaxKind.IfStatement:
         return this.parseIfStatement(statement as IfStatement);
       case SyntaxKind.VariableStatement:
