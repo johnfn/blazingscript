@@ -2,8 +2,9 @@ import { ParameterDeclaration } from "typescript";
 import { flatten } from "./rewriter";
 
 // TODO: turn into class
-export type Sexpr = string | {
+export type Sexpr = {
   name: string;
+  type: "i32" | "[]";
   body: (string | Sexpr)[];
 }
 
@@ -16,28 +17,63 @@ export interface Param {
   declaration: ParameterDeclaration;
 }
 
-export function S(name: string, ...body: (string | Sexpr)[]): Sexpr {
+export function S(type: "i32" | "[]", name: string, ...body: (string | Sexpr)[]): Sexpr {
   return {
     name,
     body,
+    type,
   };
 }
 
-S.Const = (value: number): string[] => [
+S.Wrap = (type: "i32", body: Sexpr[]): Sexpr =>
+  body.length === 1
+    ? body[0]
+    : S(
+      type,
+      "block",
+      S(type, "result", type),
+      ...body
+    );
+
+S.WrapWithType = (type: "i32", body: Sexpr[]): Sexpr => S(
+  type,
+  "block",
+  S(type, "result", type),
+  ...body,
+  S.Const("i32", 0),
+);
+
+S.Const = (type: "i32", value: number): Sexpr => S(
+  type,
   "i32.const", 
   String(value),
-];
+);
 
-S.Store = (pos: Sexpr[], value: Sexpr[]): Sexpr[] => [
-  ...pos,
-  ...value,
-  "i32.store"
-]
+S.Drop = (expr: Sexpr): Sexpr => S(
+  "[]",
+  "drop",
+  expr
+);
+
+S.Store = (pos: Sexpr, value: Sexpr): Sexpr => S(
+  value.type,
+  "i32.store",
+  pos,
+  value,
+);
+
+S.Load = (type: "i32", pos: Sexpr): Sexpr => S(
+  type,
+  "i32.load",
+  pos,
+);
 
 S.Export = (name: string, type: "func"): Sexpr => S(
+  "[]",
   "export",
   `"${name}"`,
   S(
+    "[]",
     "func",
     `\$${name}`,
   )
@@ -45,31 +81,36 @@ S.Export = (name: string, type: "func"): Sexpr => S(
 
 // TODO: Proper return types
 S.Func = ({ name, body, params }: { name: string, body: Sexpr[], params: Param[] }): Sexpr => S(
+  "[]",
   "func",
   `\$${name}`,
   ...Sx.Params(params),
-  S("result", "i32"),
+  S("[]", "result", "i32"),
   ...body,
 );
 
-S.GetLocal = (name: string): string[] => [
-  "$" + name,
+S.GetLocal = (type: "i32", name: string): Sexpr => S(
+  type,
   "get_local",
-]
-
-S.SetLocal = (name: string, value: Sexpr[]): Sexpr[] => [
-  ...value,
-  "set_local", 
   "$" + name,
-];
+)
+
+S.SetLocal = (name: string, value: Sexpr): Sexpr => S(
+  "[]",
+  "set_local",
+  "$" + name,
+  value,
+);
 
 S.Local = (name: string, type: "i32"): Sexpr => S(
+  "[]",
   "local",
   "$" + name,
   type
 );
 
 S.Param = (param: Param): Sexpr => S(
+  "[]",
   "param",
   "$" + param.name, 
   param.type,
@@ -83,12 +124,12 @@ export class Sx {
   }
 
   public static SetStringLiteralAt(pos: number, string: string): Sexpr[] {
-    return flatten(string.split("").map((ch, i) => 
+    return string.split("").map((ch, i) => 
       S.Store(
-        S.Const(pos + i),
-        S.Const(ch.charCodeAt(0))
+        S.Const("i32", pos + i),
+        S.Const("i32", ch.charCodeAt(0))
       )
-    ));
+    );
   }
 
   public static Params(params: Param[]): Sexpr[] {

@@ -1,6 +1,6 @@
 import ts, { SyntaxKind, parseJsonSourceFileConfigFileContent, FunctionDeclaration, SyntaxList, ParameterDeclaration, Block, Statement, isSwitchStatement, ReturnStatement, Expression, BinaryExpression, Identifier, SuperExpression } from 'typescript';
 import { Rewriter } from './rewriter';
-import { Sexpr } from './sexpr';
+import { Sexpr, sexprToString } from './sexpr';
 
 export class Program {
   code: string;
@@ -45,10 +45,12 @@ export class Program {
     this.typeChecker = this.program.getTypeChecker()
   }
 
-  parse(): Sexpr {
-    return new Rewriter(
+  parse(): string {
+    const sexpr = new Rewriter(
       this.program.getSourceFile("file.ts")!,
       this
     ).parse();
+
+    return sexprToString(sexpr);
   }
 }

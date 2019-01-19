@@ -1,12 +1,17 @@
-import ts, { SyntaxKind, parseJsonSourceFileConfigFileContent, FunctionDeclaration, SyntaxList, ParameterDeclaration, Block, Statement, isSwitchStatement, ReturnStatement, Expression, BinaryExpression, Identifier } from 'typescript';
 import fs from 'fs'
 import { Program } from './program';
-import { sexprToString } from './sexpr';
+
+// TODO:
+// * add simple memory allocator
+// * which gets added to every program
+// * figure out how to do simple dispatches on strings, like length
 
 // TODO: double pass: convert to reasonable data structure first, then convert to sexprs
 // First pass: 
 //   1. convert to reasonable data structure. 
-//   2. label all variables so i can use local ?
+//   2. find all
+//     1. local variables
+//     2. exported functions
 // TODO: generate a d.ts file for the exported members of the wasm thing
 // TODO: actually check for TS errors n stuff.
 
@@ -24,35 +29,60 @@ let indent = 0;
 
 const p = new Program(`
   function foo(x: number, y: number) {
-    console.log(x);
-    x++;
-    console.log(x);
-
-    if (x === 10) {
-      clog("It works!")
+    if (x === 9) {
+      clog("if works")
     } else {
-      clog("It doesnt work!")
+      clog("FAIL")
     }
 
-    /*
-    let z = 51;
-    console.log(z === 51 ? 111 : 000)
+    if (x === 10) {
+      clog("FAIL")
+    } else {
+      clog("if works")
+    }
 
-    clog("I was called with")
-    console.log(x)
-    console.log(y)
-    clog("========")
-    console.log(55);
-    console.log(x - y);
-    console.log(3 * 2 + 3);
-    clog("hello world!");
+    x++;
+
+    if (x === 10) {
+      clog("inc works!")
+    } else {
+      clog("FAIL")
+    }
+
+    console.log(x);
+
+    let z: number;
+
+    if (z === 0) {
+      clog("init z to 0!");
+    } else {
+      clog("FAIL Z");
+    }
+
+    let zz = 5;
+
+    if (zz === 5) {
+      clog("init zz to 5!");
+    } else {
+      clog("FAIL ZZ");
+    }
+    console.log(z);
+
+    /*
+    zz = z;
+
+    if (zz === 0) {
+      clog("set zz to z!");
+    } else {
+      clog("FAIL set zz to z");
+    }
     */
 
     return x * y;
   }
 `);
 
-const result = sexprToString(p.parse());
+const result = p.parse();
 const file = process.argv[2];
 
 if (!file) {
