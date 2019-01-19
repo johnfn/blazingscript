@@ -133,11 +133,7 @@ test("All tests I guess", async () => {
 
   let anyfail = false;
 
-  console.log(result);
-  let i = 0;
-
   for (const key of Object.keys(result)) {
-    i++;
     if (result[key]) {
       console.log(`pass ${ key }`);
     } else {
@@ -147,7 +143,6 @@ test("All tests I guess", async () => {
     }
   }
 
-  console.log("blah", i)
-
   expect(anyfail).toBe(false);
 });
+
