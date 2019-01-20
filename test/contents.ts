@@ -5,7 +5,6 @@ declare const clog: (a: clogType, b?: clogType, c?: clogType) => void;
 declare const mset: (pos: number, val: number) => void;
 declare const mget: (pos: number) => number;
 
-/*
 function test_inc() {
   let x = 7;
 
@@ -79,8 +78,6 @@ function test_oneBranchIf() {
   return true;
 }
 
-*/
-
 function getOffset(): number {
   return mget(0);
 }
@@ -103,17 +100,25 @@ function malloc(size: number): number {
   return offset;
 }
 
-function test_dumb(): number {
-  const x = malloc(5);
-  const y = malloc(6);
-  const z = malloc(7);
+/*
+function test_basic_string(): number {
+  const x = "im a string!";
 
-  const foo = 1;
-
-  clog("malloced:", x)
+  clog(x);
 
   return 1;
 }
+*/
+
+/*
+const x = malloc(5);
+const y = malloc(6);
+const z = malloc(7);
+
+const foo = 1;
+
+clog("malloced:", x);
+*/
 
 /*
 function test_ifCall() {

@@ -232,283 +232,284 @@ export class Rewriter {
     return this.parseExpression(es.expression);
   }
 
-  parseExpression(expression: Expression): Sexpr {
-    if (expression.kind === SyntaxKind.BinaryExpression) {
-      const be = expression as BinaryExpression;
-      const type = this.program.typeChecker.getTypeAtLocation(be.left);
-      let fn: string | undefined;
+  parseBinaryExpression(be: BinaryExpression): Sexpr {
+    const type = this.program.typeChecker.getTypeAtLocation(be.left);
+    let fn: string | undefined;
 
-      if ((type.flags & ts.TypeFlags.Number) || type.isNumberLiteral() || type.flags && ts.TypeFlags.Boolean) {
-        const functionMapping: { [key in ts.BinaryOperator]: string | undefined } = {
-          [ts.SyntaxKind.CommaToken                            ]: undefined,
-          [ts.SyntaxKind.LessThanToken                         ]: undefined,
-          [ts.SyntaxKind.GreaterThanToken                      ]: undefined,
-          [ts.SyntaxKind.LessThanEqualsToken                   ]: undefined,
-          [ts.SyntaxKind.GreaterThanEqualsToken                ]: undefined,
-          [ts.SyntaxKind.EqualsEqualsToken                     ]: undefined,
-          [ts.SyntaxKind.EqualsEqualsEqualsToken               ]: "i32.eq",
-          [ts.SyntaxKind.ExclamationEqualsToken                ]: undefined,
-          [ts.SyntaxKind.ExclamationEqualsEqualsToken          ]: undefined,
-          [ts.SyntaxKind.AsteriskAsteriskToken                 ]: undefined,
-          [ts.SyntaxKind.PercentToken                          ]: undefined,
-          [ts.SyntaxKind.LessThanLessThanToken                 ]: undefined,
-          [ts.SyntaxKind.GreaterThanGreaterThanToken           ]: undefined,
-          [ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken]: undefined,
-          [ts.SyntaxKind.AmpersandToken                        ]: undefined,
-          [ts.SyntaxKind.BarToken                              ]: undefined,
-          [ts.SyntaxKind.CaretToken                            ]: undefined,  
-          [ts.SyntaxKind.AmpersandAmpersandToken               ]: "i32.and",              
-          [ts.SyntaxKind.BarBarToken                           ]: undefined, 
-          [ts.SyntaxKind.EqualsToken                           ]: undefined,
-          [ts.SyntaxKind.PlusEqualsToken                       ]: undefined,
-          [ts.SyntaxKind.MinusEqualsToken                      ]: undefined,
-          [ts.SyntaxKind.AsteriskEqualsToken                   ]: undefined,
-          [ts.SyntaxKind.AsteriskAsteriskEqualsToken           ]: undefined,
-          [ts.SyntaxKind.SlashEqualsToken                      ]: undefined,
-          [ts.SyntaxKind.PercentEqualsToken                    ]: undefined,
-          [ts.SyntaxKind.LessThanLessThanEqualsToken           ]: undefined,
-          [ts.SyntaxKind.GreaterThanGreaterThanEqualsToken     ]: undefined,
-          [ts.SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken]: undefined,
-          [ts.SyntaxKind.AmpersandEqualsToken                  ]: undefined,
-          [ts.SyntaxKind.BarEqualsToken                        ]: undefined,
-          [ts.SyntaxKind.CaretEqualsToken                      ]: undefined,
-          [ts.SyntaxKind.InKeyword                             ]: undefined,
-          [ts.SyntaxKind.InstanceOfKeyword                     ]: undefined,
+    if ((type.flags & ts.TypeFlags.Number) || type.isNumberLiteral() || type.flags && ts.TypeFlags.Boolean) {
+      const functionMapping: { [key in ts.BinaryOperator]: string | undefined } = {
+        [ts.SyntaxKind.CommaToken]: undefined,
+        [ts.SyntaxKind.LessThanToken]: undefined,
+        [ts.SyntaxKind.GreaterThanToken]: undefined,
+        [ts.SyntaxKind.LessThanEqualsToken]: undefined,
+        [ts.SyntaxKind.GreaterThanEqualsToken]: undefined,
+        [ts.SyntaxKind.EqualsEqualsToken]: undefined,
+        [ts.SyntaxKind.EqualsEqualsEqualsToken]: "i32.eq",
+        [ts.SyntaxKind.ExclamationEqualsToken]: undefined,
+        [ts.SyntaxKind.ExclamationEqualsEqualsToken]: undefined,
+        [ts.SyntaxKind.AsteriskAsteriskToken]: undefined,
+        [ts.SyntaxKind.PercentToken]: undefined,
+        [ts.SyntaxKind.LessThanLessThanToken]: undefined,
+        [ts.SyntaxKind.GreaterThanGreaterThanToken]: undefined,
+        [ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken]: undefined,
+        [ts.SyntaxKind.AmpersandToken]: undefined,
+        [ts.SyntaxKind.BarToken]: undefined,
+        [ts.SyntaxKind.CaretToken]: undefined,
+        [ts.SyntaxKind.AmpersandAmpersandToken]: "i32.and",
+        [ts.SyntaxKind.BarBarToken]: undefined,
+        [ts.SyntaxKind.EqualsToken]: undefined,
+        [ts.SyntaxKind.PlusEqualsToken]: undefined,
+        [ts.SyntaxKind.MinusEqualsToken]: undefined,
+        [ts.SyntaxKind.AsteriskEqualsToken]: undefined,
+        [ts.SyntaxKind.AsteriskAsteriskEqualsToken]: undefined,
+        [ts.SyntaxKind.SlashEqualsToken]: undefined,
+        [ts.SyntaxKind.PercentEqualsToken]: undefined,
+        [ts.SyntaxKind.LessThanLessThanEqualsToken]: undefined,
+        [ts.SyntaxKind.GreaterThanGreaterThanEqualsToken]: undefined,
+        [ts.SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken]: undefined,
+        [ts.SyntaxKind.AmpersandEqualsToken]: undefined,
+        [ts.SyntaxKind.BarEqualsToken]: undefined,
+        [ts.SyntaxKind.CaretEqualsToken]: undefined,
+        [ts.SyntaxKind.InKeyword]: undefined,
+        [ts.SyntaxKind.InstanceOfKeyword]: undefined,
 
-          [ts.SyntaxKind.PlusToken]                            : "i32.add",
-          [ts.SyntaxKind.MinusToken]                           : "i32.sub",
-          [ts.SyntaxKind.AsteriskToken]                        : "i32.mul",
-          [ts.SyntaxKind.SlashToken]                           : "i32.div",
-        };
+        [ts.SyntaxKind.PlusToken]: "i32.add",
+        [ts.SyntaxKind.MinusToken]: "i32.sub",
+        [ts.SyntaxKind.AsteriskToken]: "i32.mul",
+        [ts.SyntaxKind.SlashToken]: "i32.div",
+      };
 
-        if (!(be.operatorToken.kind in functionMapping)) {
-          throw new Error(`Unhandled binary operation! ${ be.operatorToken.kind}`)
-        }
-
-        fn = functionMapping[be.operatorToken.kind];
-      } else {
-        throw new Error(`Dunno how to add that gg. ${ (type as any).intrinsicName }`);
+      if (!(be.operatorToken.kind in functionMapping)) {
+        throw new Error(`Unhandled binary operation! ${be.operatorToken.kind}`)
       }
 
-      if (fn === undefined) {
-        throw new Error(`Unsupported binary operation: ${ ts.SyntaxKind[be.operatorToken.kind] }`);
-      }
-
-      // TODO: Mop up this intrinsic name stuff
-
-      return S(
-        "i32",
-        fn,
-        this.parseExpression(be.left),
-        this.parseExpression(be.right),
-      );
+      fn = functionMapping[be.operatorToken.kind];
+    } else {
+      throw new Error(`Dunno how to add that gg. ${(type as any).intrinsicName}`);
     }
 
-    if (expression.kind === SyntaxKind.CallExpression) {
-      const ce: CallExpression = expression as CallExpression;
+    if (fn === undefined) {
+      throw new Error(`Unsupported binary operation: ${ts.SyntaxKind[be.operatorToken.kind]}`);
+    }
 
-      // TODO: I actualy have to resolve the lhs
+    // TODO: Mop up this intrinsic name stuff
 
-      // tho to be fair, i dont know how to call anything at all rn.
+    return S(
+      "i32",
+      fn,
+      this.parseExpression(be.left),
+      this.parseExpression(be.right),
+    );
+  }
 
-      // if (ce.expression.kind !== ts.SyntaxKind.FunctionExpression) {
-      //   throw new Error(`dunno how to call anything thats not exactly a function, got ${ ts.SyntaxKind[ce.expression.kind] }`)
-      // }
+  parseCallExpression(ce: CallExpression): Sexpr {
+    // TODO: I actualy have to resolve the lhs
 
-      if (ce.expression.getText() === "console.log") {
-        if (ce.arguments.length !== 1) {
-          throw new Error("unhandled log w/o 1 arg");
-        }
+    // tho to be fair, i dont know how to call anything at all rn.
 
-        return S(
-          "[]",
-          "call",
-          "$log",
-          this.parseExpression(ce.arguments[0]),
-        );
-      } else if (ce.expression.getText() === "mset") {
-        return S.Store(
-          this.parseExpression(ce.arguments[0]),
-          this.parseExpression(ce.arguments[1]),
-        );
-      } else if (ce.expression.getText() === "mget") {
-        return S.Load(
-          "i32",
-          this.parseExpression(ce.arguments[0]),
-        );
-      } else if (ce.expression.getText() === "clog") {
-        const logArgs: {
-          size : number;
-          start: number;
-          type : number;
-          putValueInMemory: Sexpr[];
-        }[] = [];
+    // if (ce.expression.kind !== ts.SyntaxKind.FunctionExpression) {
+    //   throw new Error(`dunno how to call anything thats not exactly a function, got ${ ts.SyntaxKind[ce.expression.kind] }`)
+    // }
 
-        let offset = 0;
+    if (ce.expression.getText() === "console.log") {
+      if (ce.arguments.length !== 1) {
+        throw new Error("unhandled log w/o 1 arg");
+      }
 
-        for (const arg of ce.arguments) {
-          if (arg.kind === ts.SyntaxKind.StringLiteral) {
-            const str = arg.getText().slice(1, -1);
+      return S(
+        "[]",
+        "call",
+        "$log",
+        this.parseExpression(ce.arguments[0]),
+      );
+    } else if (ce.expression.getText() === "mset") {
+      return S.Store(
+        this.parseExpression(ce.arguments[0]),
+        this.parseExpression(ce.arguments[1]),
+      );
+    } else if (ce.expression.getText() === "mget") {
+      return S.Load(
+        "i32",
+        this.parseExpression(ce.arguments[0]),
+      );
+    } else if (ce.expression.getText() === "clog") {
+      const logArgs: {
+        size: number;
+        start: number;
+        type: number;
+        putValueInMemory: Sexpr[];
+      }[] = [];
 
-            logArgs.push({
-              size : str.length,
-              start: offset,
-              type : 0,
-              putValueInMemory: Sx.SetStringLiteralAt(offset, str),
-            });
+      let offset = 0;
 
-            offset += str.length;
-          } else if (arg.kind === ts.SyntaxKind.NumericLiteral) {
-            const num = Number(arg.getText());
+      for (const arg of ce.arguments) {
+        if (arg.kind === ts.SyntaxKind.StringLiteral) {
+          const str = arg.getText().slice(1, -1);
 
-            logArgs.push({
-              size : 4,
-              start: offset,
-              type : 1,
-              putValueInMemory: [
-                S.Store(
-                  S.Const("i32", offset),
-                  S.Const("i32", num)
-                )
-              ],
-            });
-
-            offset += 4;
-          } else if (arg.kind === ts.SyntaxKind.Identifier) {
-            logArgs.push({
-              size : 4,
-              start: offset,
-              type : 1,
-              putValueInMemory: [
-                S.Store(
-                  S.Const("i32", offset),
-                  S.GetLocal("i32", arg.getText()),
-                )
-              ],
-            });
-
-            offset += 4;
-          } else {
-            logArgs.push({
-              size : 4,
-              start: offset,
-              type : 1,
-              putValueInMemory: [
-                S.Store(
-                  S.Const("i32", offset),
-                  this.parseExpression(arg),
-                )
-              ],
-            });
-
-            offset += 4;
-          }
-        }
-
-        while (logArgs.length < 3) {
           logArgs.push({
-            size : 0,
-            start: 0,
-            type : 9999,
-            putValueInMemory: [S("[]", "nop")],
+            size: str.length,
+            start: offset,
+            type: 0,
+            putValueInMemory: Sx.SetStringLiteralAt(offset, str),
           });
+
+          offset += str.length;
+        } else if (arg.kind === ts.SyntaxKind.NumericLiteral) {
+          const num = Number(arg.getText());
+
+          logArgs.push({
+            size: 4,
+            start: offset,
+            type: 1,
+            putValueInMemory: [
+              S.Store(
+                S.Const("i32", offset),
+                S.Const("i32", num)
+              )
+            ],
+          });
+
+          offset += 4;
+        } else if (arg.kind === ts.SyntaxKind.Identifier) {
+          logArgs.push({
+            size: 4,
+            start: offset,
+            type: 1,
+            putValueInMemory: [
+              S.Store(
+                S.Const("i32", offset),
+                S.GetLocal("i32", arg.getText()),
+              )
+            ],
+          });
+
+          offset += 4;
+        } else {
+          logArgs.push({
+            size: 4,
+            start: offset,
+            type: 1,
+            putValueInMemory: [
+              S.Store(
+                S.Const("i32", offset),
+                this.parseExpression(arg),
+              )
+            ],
+          });
+
+          offset += 4;
         }
-
-        return S.Wrap(
-          "i32", [
-            // store all args into memory
-
-            ...flatten(logArgs.map(obj => obj.putValueInMemory)),
-
-            S(
-              "[]",
-              "call",
-              "$clog",
-              ...flatten(
-                logArgs.map(obj => [
-                  S.Const("i32", obj.type),
-                  S.Const("i32", obj.start),
-                  S.Const("i32", obj.start + obj.size),
-                ])
-              ),
-            ),
-            S.Const("i32", 0)
-          ]
-        );
-      } else {
-        return S(
-          "i32", 
-          "call", "$" + ce.expression.getText(),
-          ...ce.arguments.map(arg => this.parseExpression(arg))
-        )
       }
-    }
 
-    if (expression.kind === SyntaxKind.Identifier) {
-      const id = expression as Identifier;
+      while (logArgs.length < 3) {
+        logArgs.push({
+          size: 0,
+          start: 0,
+          type: 9999,
+          putValueInMemory: [S("[]", "nop")],
+        });
+      }
 
-      // TODO this is wrong (as is any use of get text im pretty sure)
+      return S.Wrap(
+        "i32", [
+          // store all args into memory
 
-      return S.GetLocal("i32", id.getText());
-    }
+          ...flatten(logArgs.map(obj => obj.putValueInMemory)),
 
-    if (expression.kind === SyntaxKind.FirstLiteralToken) {
-      const t = expression as LiteralExpression;
-
-      // TODO: Handle types e.g. anything thats not a number, lol
-
-      return S.Const("i32", Number(t.getText()));
-    }
-
-    if (expression.kind === SyntaxKind.ConditionalExpression) {
-      const t = expression as ConditionalExpression;
-
-      // TODO this is wrong because it always evaluates both sides
-      return S("i32", "select",
-        this.parseExpression(t.whenTrue),
-        this.parseExpression(t.whenFalse),
-        this.parseExpression(t.condition),
+          S(
+            "[]",
+            "call",
+            "$clog",
+            ...flatten(
+              logArgs.map(obj => [
+                S.Const("i32", obj.type),
+                S.Const("i32", obj.start),
+                S.Const("i32", obj.start + obj.size),
+              ])
+            ),
+          ),
+          S.Const("i32", 0)
+        ]
       );
-    }
-
-    if (expression.kind === SyntaxKind.PostfixUnaryExpression) {
-      const pue = expression as PostfixUnaryExpression;
-
-      // TODO: Check types!
-      // TODO: Return previous value.
-      return S.SetLocal(pue.operand.getText(), S(
-          "i32",
-          "i32.add",
-          this.parseExpression(pue.operand),
-          S.Const("i32", 1),
-        )
-      );
-    }
-
-    if (expression.kind === SyntaxKind.TrueKeyword) {
-      return S.Const("i32", 1);
-    }
-
-    if (expression.kind === SyntaxKind.FalseKeyword) {
-      return S.Const("i32", 0);
-    }
-
-    if (expression.kind === SyntaxKind.PrefixUnaryExpression) {
-      const pue = expression as PrefixUnaryExpression;
-
+    } else {
       return S(
         "i32",
-        "if",
-        S("[]", "result", "i32"),
-        S("i32", "i32.eq", this.parseExpression(pue.operand), S.Const("i32", 0)),
+        "call", "$" + ce.expression.getText(),
+        ...ce.arguments.map(arg => this.parseExpression(arg))
+      )
+    }
+  }
+
+  parseIdentifier(id: Identifier): Sexpr {
+    // TODO this is wrong (as is any use of get text im pretty sure)
+
+    return S.GetLocal("i32", id.getText());
+  }
+
+  parseFirstLiteralToken(flt: LiteralExpression): Sexpr {
+    // TODO: Handle types e.g. anything thats not a number, lol
+
+    return S.Const("i32", Number(flt.getText()));
+  }
+
+  parseConditionalExpression(t: ConditionalExpression): Sexpr {
+    // TODO this is wrong because it always evaluates both sides
+    return S("i32", "select",
+      this.parseExpression(t.whenTrue),
+      this.parseExpression(t.whenFalse),
+      this.parseExpression(t.condition),
+    );
+  }
+
+  parsePostfixUnaryExpression(pue: PostfixUnaryExpression): Sexpr {
+    // TODO: Check types! (mostly vs f32 etc)
+    // TODO: Return previous value.
+    // TODO: consider ++ vs --
+
+    return S.SetLocal(pue.operand.getText(), S(
+        "i32",
+        "i32.add",
+        this.parseExpression(pue.operand),
         S.Const("i32", 1),
-        S.Const("i32", 0),
-      );
+      )
+    );
+  }
+
+  parsePrefixUnaryExpression(pue: PrefixUnaryExpression): Sexpr {
+    return S(
+      "i32",
+      "if",
+      S("[]", "result", "i32"),
+      S("i32", "i32.eq", this.parseExpression(pue.operand), S.Const("i32", 0)),
+      S.Const("i32", 1),
+      S.Const("i32", 0),
+    );
+  }
+
+  parseExpression(expression: Expression): Sexpr {
+    switch (expression.kind) {
+      case SyntaxKind.BinaryExpression:
+        return this.parseBinaryExpression(expression as BinaryExpression);
+      case SyntaxKind.CallExpression:
+        return this.parseCallExpression(expression as CallExpression);
+      case SyntaxKind.Identifier:
+        return this.parseIdentifier(expression as Identifier);
+      case SyntaxKind.FirstLiteralToken:
+        return this.parseIdentifier(expression as Identifier);
+      case SyntaxKind.ConditionalExpression:
+        return this.parseConditionalExpression(expression as ConditionalExpression);
+      case SyntaxKind.PostfixUnaryExpression:
+        return this.parsePostfixUnaryExpression(expression as PostfixUnaryExpression);
+      case SyntaxKind.PrefixUnaryExpression:
+        return this.parsePrefixUnaryExpression(expression as PrefixUnaryExpression);
+      case SyntaxKind.TrueKeyword:
+        return S.Const("i32", 1); // cant find correct type!
+      case SyntaxKind.FalseKeyword:
+        return S.Const("i32", 0); // cant find correct type!
+      default:
+      throw new Error(`Unhandled expression! ${ ts.SyntaxKind[expression.kind] }`);
     }
 
-    console.log(expression.kind);
-
-    throw new Error(`Unhandled expression! ${ ts.SyntaxKind[expression.kind] }`);
   }
 
   parseBlock(block: Block): Sexpr {
@@ -538,9 +539,7 @@ export class Rewriter {
       case SyntaxKind.IfStatement:
         return this.parseIfStatement(statement as IfStatement);
       case SyntaxKind.VariableStatement:
-        const vs = statement as VariableStatement;
-
-        return this.parseVariableStatement(vs);
+        return this.parseVariableStatement(statement as VariableStatement);
       case SyntaxKind.TypeAliasDeclaration:
         return null;
       default:
