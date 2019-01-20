@@ -28,57 +28,12 @@ let indent = 0;
 // utility
 
 const p = new Program(`
-  function foo(x: number, y: number) {
-    if (x === 9) {
-      clog("if works")
-    } else {
-      clog("FAIL")
-    }
+  function foo() {
+    if (true) {
+      mset(0, 1);
+    } 
 
-    if (x === 10) {
-      clog("FAIL")
-    } else {
-      clog("if works")
-    }
-
-    x++;
-
-    if (x === 10) {
-      clog("inc works!")
-    } else {
-      clog("FAIL")
-    }
-
-    console.log(x);
-
-    let z: number;
-
-    if (z === 0) {
-      clog("init z to 0!");
-    } else {
-      clog("FAIL Z");
-    }
-
-    let zz = 5;
-
-    if (zz === 5) {
-      clog("init zz to 5!");
-    } else {
-      clog("FAIL ZZ");
-    }
-    console.log(z);
-
-    /*
-    zz = z;
-
-    if (zz === 0) {
-      clog("set zz to z!");
-    } else {
-      clog("FAIL set zz to z");
-    }
-    */
-
-    return x * y;
+    return mget(0) === 1;
   }
 `);
 

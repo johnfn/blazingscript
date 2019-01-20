@@ -1,7 +1,6 @@
-import wabt from 'wabt'
+import fs from 'fs';
 import { Program } from '../compiler/program';
-
-const fufu = (wabt as any)();
+import { exec } from 'child_process';
 
 async function runProgram(str: string): Promise<{ [test: string]: number }> {
   const results: { [test: string]: number } = {}
@@ -14,15 +13,46 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
   const importObject = {
     console: {
       log: (arg: string) => {
-        console.log("[a]", arg);
+        console.log("[a]!", arg);
       }
     },
-    c: {
-      log: (start: number, end: number) => {
-        const data = new Int8Array(memory.buffer.slice(start, end));
-        const str = [...data].map(x => String.fromCharCode(x)).join("");
 
-        console.log("[a]", str);
+    c: {
+      log: (
+        t1: number, s1: number, e1: number,
+        t2: number, s2: number, e2: number,
+        t3: number, s3: number, e3: number,
+      ) => {
+        const args: {
+          type: number;
+          start: number;
+          end: number
+        }[] = [
+          { type: t1, start: s1, end: e1 },
+          { type: t2, start: s2, end: e2 },
+          { type: t3, start: s3, end: e3 },
+        ];
+
+        let res: string[] = [];
+
+        for (const { type, start, end } of args) {
+          if (type === 0 /* string */) {
+            const data = new Int8Array(memory.buffer.slice(start, end));
+            const str = [...data].map(x => String.fromCharCode(x)).join("");
+
+            res.push(str);
+          } else if (type === 1 /* i32 */) {
+            const data = new Int32Array(memory.buffer.slice(start, end))[0];
+
+            res.push(String(data))
+          } else if (type === 9999 /* unsupported */) {
+            continue;
+          } else {
+            throw new Error("unsupported type passed to clog");
+          }
+        }
+
+        console.log("[a]", ...res);
       },
     },
     js: { mem: memory },
@@ -34,11 +64,30 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
   };
 
   const sexprs = new Program(str).parse();
-  const foo = fufu.parseWat("", sexprs);
-  const bin = foo.toBinary(importObject);
+
+  fs.writeFileSync("temp", sexprs);
+
+  await new Promise((resolve) => {
+    exec('wat2wasm temp -o test.wasm', (err, stdout, stderr) => {
+      if (stderr) {
+        console.log(stderr)
+      }
+
+      resolve();
+    })
+  });
+
+  const buff = fs.readFileSync("test.wasm")
+
+  // return {};
+
+  // const foo: any = {};
+
+  // const foo = fufu.parseWat("", sexprs);
+  //   const bin = foo.toBinary(importObject);
 
   await WebAssembly.instantiate(
-    bin.buffer, 
+    buff,
     importObject
   ).then(result => {
     for (const fn in result.instance.exports) {
@@ -50,94 +99,20 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
 
   return results;
 }
- 
-test("All tests I guess", async () => {
-  const result = await runProgram(`
-    function test_inc() {
-      let x = 5;
 
-      x++;
+if (!('test' in global)) {
+  (global as any).test = (name: string, fn: () => void) => fn();
+}
 
-      return x;
-    }
-
-    function test_iff() {
-      if (true) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    function test_niff() {
-      if (!true) {
-        return false;
-      } else {
-        return true;
-      }
-    }
-
-    function test_and1() {
-      if (true && true) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    function test_and2() {
-      if (true && !true) {
-        return false;
-      } else {
-        return true;
-      }
-    }
-
-    function test_and3() {
-      if (true && false) {
-        return false;
-      } else {
-        return true;
-      }
-    }
-
-    function test_multivar() {
-      let x = 1;
-      let y = 2; 
-      let z = 3;
-
-      return x + y + z === 6;
-    }
-
-    function toCall(x: number, y: number) {
-      return x + y;
-    }
-
-    function test_call() {
-      return toCall(1, 2) === 3;
-    }
-
-    function malloc(): number {
-      return mget(2);
-    }
-
-    function test_basic_mem() {
-      mset(0, 0);
-      mset(1, 1);
-      mset(2, 2);
-      mset(3, 3);
-      return 3; //malloc() === 3;
-    }
-
-  `);
-
+test('all tests', async () => {
+  const result = await runProgram(fs.readFileSync("test/contents.ts").toString());
   let anyfail = false;
 
   for (const key of Object.keys(result)) {
     if (result[key]) {
       console.log(`pass ${ key }`);
     } else {
-      console.log(`FAIL ${ key }`);
+      console.log(`FAIL ${ key } got ${ result[key] }`);
 
       anyfail = true;
     }
@@ -145,4 +120,3 @@ test("All tests I guess", async () => {
 
   expect(anyfail).toBe(false);
 });
-

@@ -20,10 +20,15 @@ var importObject = {
     }
   },
   c: {
-    log: (start: number, end: number) => {
-      const data = new Int8Array(memory.buffer.slice(start, end));
+    log: (
+      s1: number, e1: number,
+      s2: number, e2: number,
+      s3: number, e3: number,
+    ) => {
+      // const data = new Int8Array(memory.buffer.slice(start, end));
 
-      console.log([...data].map(x => String.fromCharCode(x)).join(""));
+      // console.log([...data].map(x => String.fromCharCode(x)).join(""));
+      console.log(s1, e1)
     },
   },
   js: { mem: memory },

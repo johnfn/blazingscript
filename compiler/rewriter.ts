@@ -51,7 +51,7 @@ export class Rewriter {
     return this.parseHelper(this.root);
   }
 
-  parseParameterList(nodes: NodeArray<ParameterDeclaration>): Param[] {
+  parseParameterList(nodes: NodeArray<ParameterDeclaration>, functionName: string): Param[] {
     const result: Param[] = [];
 
     for (const n of nodes) {
@@ -61,7 +61,11 @@ export class Rewriter {
       if (type.flags & ts.TypeFlags.Number) {
         wasmType = "i32";
       } else {
-        throw new Error("Unsupported type!")
+        if (functionName !== "clog") {
+          throw new Error("Unsupported type!")
+        } else {
+          wasmType = "i32";
+        }
       }
 
       result.push({
@@ -101,7 +105,18 @@ export class Rewriter {
         "module",
         S("[]", "import", '"js"', '"mem"', S("[]", "memory", "1")),
         S("[]", "import", '"console"', '"log"', S("[]", "func", "$log", S("[]", "param", "i32"))),
-        S("[]", "import", '"c"', '"log"', S("[]", "func", "$clog", S("[]", "param", "i32"), S("[]", "param", "i32"))),
+        S("[]", "import", '"c"', '"log"', 
+          S("[]", "func", "$clog", 
+          S("[]", "param", "i32"), 
+          S("[]", "param", "i32"),
+          S("[]", "param", "i32"), 
+          S("[]", "param", "i32"),
+          S("[]", "param", "i32"), 
+          S("[]", "param", "i32"),
+          S("[]", "param", "i32"),
+          S("[]", "param", "i32"), 
+          S("[]", "param", "i32"),
+          )),
         ...this.parseStatementList(sf.statements),
         ...(
           exportedFunctions.map(fnname => S.Export(fnname, "func"))
@@ -114,7 +129,7 @@ export class Rewriter {
 
   parseFunction(node: FunctionDeclaration): Sexpr {
     const functionName = node.name!.text;
-    const params = this.parseParameterList(node.parameters)
+    const params = this.parseParameterList(node.parameters, functionName)
     const sb = this.parseStatementList(node.body!.statements);
 
     const allVarDecls: { name: ts.BindingName, type: "i32" }[] = [];
@@ -128,8 +143,8 @@ export class Rewriter {
         for (const decl of vs.declarationList.declarations) {
           const type = this.program.typeChecker.getTypeAtLocation(decl);
 
-          if (!(type.flags & ts.TypeFlags.Number)) {
-            throw new Error("Do not know how to handle that type.");
+          if (!(type.flags & ts.TypeFlags.Number) && !(type.flags & ts.TypeFlags.NumberLiteral)) {
+            throw new Error(`Do not know how to handle that type: ${ ts.TypeFlags[type.flags] } for ${ statement.getText() }`);
           }
 
           allVarDecls.push({
@@ -143,7 +158,7 @@ export class Rewriter {
     return S.Func({
       name: functionName,
       body: [
-        ...(allVarDecls.map(decl => S.Local(decl.name.getText(), decl.type))),
+        ...(allVarDecls.map(decl => S.DeclareLocal(decl.name.getText(), decl.type))),
         ...sb
       ],
       params: params
@@ -155,7 +170,7 @@ export class Rewriter {
 
     this.ctx.blockNameStack.push(blockName);
 
-    let thn = this.parseStatement(node.thenStatement);
+    let thn = this.parseStatement(node.thenStatement) || S.Const("i32", 0);
     let els = node.elseStatement ? this.parseStatement(node.elseStatement) : undefined;
 
     if (thn.type !== "i32") {
@@ -172,7 +187,7 @@ export class Rewriter {
       "(result i32)",
       this.parseExpression(node.expression),
       S("i32", "then", thn),
-      ...(els ? [S("i32", "else", els)] : []),
+      S("i32", "else", els ? els : S.Const("i32", 0)),
     )
 
     assert(this.ctx.blockNameStack.pop() === blockName, "bad block name stack");
@@ -180,7 +195,24 @@ export class Rewriter {
     return result;
   }
 
-  parseVariableStatement(vs: VariableStatement): Sexpr {
+  parseVariableStatement(vs: VariableStatement): Sexpr | null {
+    for (const mod of vs.modifiers || []) {
+      switch (mod.kind) {
+        case SyntaxKind.DeclareKeyword:
+          return null;
+        case SyntaxKind.AbstractKeyword:
+        case SyntaxKind.AsyncKeyword:
+        case SyntaxKind.ConstKeyword:
+        case SyntaxKind.DefaultKeyword:
+        case SyntaxKind.ExportKeyword:
+        case SyntaxKind.PublicKeyword:
+        case SyntaxKind.PrivateKeyword:
+        case SyntaxKind.ProtectedKeyword:
+        case SyntaxKind.ReadonlyKeyword:
+        case SyntaxKind.StaticKeyword:
+      }
+    }
+
     if (vs.declarationList.declarations.length > 1) {
       throw new Error("Cant handle more than 1 declaration!!!");
     }
@@ -305,47 +337,90 @@ export class Rewriter {
           this.parseExpression(ce.arguments[0]),
         );
       } else if (ce.expression.getText() === "clog") {
-        /*
-        let program: Sexpr[] = [];
-        let clogargs: number[] = [];
+        const logArgs: {
+          size : number;
+          start: number;
+          type : number;
+          putValueInMemory: Sexpr[];
+        }[] = [];
+
+        let offset = 0;
 
         for (const arg of ce.arguments) {
           if (arg.kind === ts.SyntaxKind.StringLiteral) {
-            // const q: StringLiteral = arg; TODO: Why can't I do this? How can I do it?
+            const str = arg.getText().slice(1, -1);
 
-            program = [
-              ...program,
-              ...Sx.SetStringLiteralAt(0, arg.getText().slice(1, -1)),
-            ];
+            logArgs.push({
+              size : str.length,
+              start: offset,
+              type : 0,
+              putValueInMemory: Sx.SetStringLiteralAt(offset, str),
+            });
+
+            offset += str.length;
           } else if (arg.kind === ts.SyntaxKind.NumericLiteral) {
+            const num = Number(arg.getText());
 
+            logArgs.push({
+              size : 4,
+              start: offset,
+              type : 1,
+              putValueInMemory: [
+                S.Store(
+                  S.Const("i32", offset),
+                  S.Const("i32", num)
+                )
+              ],
+            });
+
+            offset += 4;
+          } else if (arg.kind === ts.SyntaxKind.Identifier) {
+            logArgs.push({
+              size : 4,
+              start: offset,
+              type : 1,
+              putValueInMemory: [
+                S.Store(
+                  S.Const("i32", offset),
+                  S.GetLocal("i32", arg.getText()),
+                )
+              ],
+            });
+
+            offset += 4;
+          } else {
+            throw new Error("Unsupported type for clog");
           }
         }
-        */
 
-        if (ce.arguments.length !== 1) {
-          throw new Error(`cant clog with more (or less) than 1 argument. got ${ ce.arguments.length }.`);
+        while (logArgs.length < 3) {
+          logArgs.push({
+            size : 0,
+            start: 0,
+            type : 9999,
+            putValueInMemory: [S("[]", "nop")],
+          });
         }
-
-        const arg = ce.arguments[0];
-
-        if (arg.kind !== ts.SyntaxKind.StringLiteral) {
-          throw new Error("cant clog anything which is not a string literal. lol");
-        }
-
-        const text = arg.getText().slice(1, -1);
 
         return S.Wrap(
           "i32", [
-            ...Sx.SetStringLiteralAt(100, text),
+            // store all args into memory
+
+            ...flatten(logArgs.map(obj => obj.putValueInMemory)),
+
             S(
               "[]",
               "call",
               "$clog",
-              S.Const("i32", 100), // start
-              S.Const("i32", 100 + text.length), // end
+              ...flatten(
+                logArgs.map(obj => [
+                  S.Const("i32", obj.type),
+                  S.Const("i32", obj.start),
+                  S.Const("i32", obj.start + obj.size),
+                ])
+              ),
             ),
-            S.Const("i32", 0) //return i32 (TODO: figure out how to specify VOID wtf)
+            S.Const("i32", 0)
           ]
         );
       } else {
@@ -438,7 +513,7 @@ export class Rewriter {
     );
   }
 
-  parseStatement(statement: Statement): Sexpr {
+  parseStatement(statement: Statement): Sexpr | null {
     switch (statement.kind) {
       case SyntaxKind.ExpressionStatement:
         return this.parseExpressionStatement(statement as ExpressionStatement);
@@ -454,6 +529,8 @@ export class Rewriter {
         const vs = statement as VariableStatement;
 
         return this.parseVariableStatement(vs);
+      case SyntaxKind.TypeAliasDeclaration:
+        return null;
       default:
         throw new Error(`unhandled statement! ${ ts.SyntaxKind[statement.kind] }`);
     }
@@ -463,7 +540,11 @@ export class Rewriter {
     let results: Sexpr[] = [];
 
     for (const statement of list) {
-      results = results.concat(this.parseStatement(statement));
+      const parsed = this.parseStatement(statement);
+
+      if (parsed) {
+        results = results.concat(parsed);
+      }
     }
 
     return results;

@@ -56,7 +56,7 @@ S.Drop = (expr: Sexpr): Sexpr => S(
 );
 
 S.Store = (pos: Sexpr, value: Sexpr): Sexpr => S(
-  value.type,
+  "[]",
   "i32.store",
   pos,
   value,
@@ -102,7 +102,7 @@ S.SetLocal = (name: string, value: Sexpr): Sexpr => S(
   value,
 );
 
-S.Local = (name: string, type: "i32"): Sexpr => S(
+S.DeclareLocal = (name: string, type: "i32"): Sexpr => S(
   "[]",
   "local",
   "$" + name,
