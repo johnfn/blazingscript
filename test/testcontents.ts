@@ -6,6 +6,24 @@ declare const mset: (pos: number, val: number) => void;
 declare const mget: (pos: number) => number;
 
 /*
+
+class String {
+  init(lhs: StrConst) {
+    const length = __strlen(lhs);
+    const mem = malloc(length);
+
+    store(mem, length);
+
+    for (let i = 0; i < length; i++) {
+      store(mem + i + 1, __strget(lhs, i));
+    }
+
+    return mem;
+  }
+}
+
+*/
+
 function test_inc() {
   let x = 7;
 
@@ -78,7 +96,6 @@ function test_oneBranchIf() {
 
   return true;
 }
-*/
 
 function getOffset(): number {
   return mget(0);
@@ -103,9 +120,11 @@ function malloc(size: number): number {
 }
 
 function test_basic_string(): number {
-  let x = "im a string! THE BEST STRING";
+  let x = "abcd";
+  const y = "1234";
 
   clog(x);
+  clog(y);
 
   return 1;
 }

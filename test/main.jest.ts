@@ -111,7 +111,7 @@ if (!('test' in global)) {
 }
 
 test('all tests', async () => {
-  const result = await runProgram(fs.readFileSync("test/contents.ts").toString());
+  const result = await runProgram(fs.readFileSync("test/testcontents.ts").toString());
   let anyfail = false;
 
   for (const key of Object.keys(result)) {

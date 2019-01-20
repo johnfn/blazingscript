@@ -379,7 +379,7 @@ export class Rewriter {
         } else if (arg.kind === ts.SyntaxKind.Identifier) {
           const type = this.program.typeChecker.getTypeAtLocation(arg);
 
-          if (type.flags & ts.TypeFlags.String) {
+          if (type.flags & ts.TypeFlags.String || type.flags & ts.TypeFlags.StringLiteral) {
             logArgs.push({
               size: S.Load("i32", S.GetLocal("i32", arg.getText())),
               start: S.GetLocal("i32", arg.getText()),
@@ -514,7 +514,7 @@ export class Rewriter {
     return S.Wrap("i32", [
       S.SetLocal(
         "myslocal",
-        S("i32", "call", "$malloc", S.Const("i32", sl.text.length + 1))
+        S("i32", "call", "$malloc", S.Const("i32", sl.text.length + 4))
       ),
       // store length first
       S.Store(
