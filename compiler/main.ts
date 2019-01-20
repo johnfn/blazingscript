@@ -3,6 +3,8 @@ import { Program } from './program';
 
 // TODO:
 // * add simple memory allocator
+//   * string allocations need to be declared up front
+//   * all temporary variables need to know their type (string, object, etc etc etc)
 // * which gets added to every program
 // * figure out how to do simple dispatches on strings, like length
 

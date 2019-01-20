@@ -45,6 +45,12 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
             const data = new Int32Array(memory.buffer.slice(start, end))[0];
 
             res.push(String(data))
+          } else if (type === 2 /* mem str */) {
+            const buffLen = new Int32Array(memory.buffer.slice(start, start + 4))[0];
+            const strbuff = new Int8Array(memory.buffer.slice(start + 4, start + 4 + buffLen));
+            const str = [...strbuff].map(x => String.fromCharCode(x)).join("");
+
+            res.push(str);
           } else if (type === 9999 /* unsupported */) {
             continue;
           } else {
@@ -52,7 +58,7 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
           }
         }
 
-        console.log("[asc]:", ...res);
+        console.log("[clog]:", ...res);
       },
     },
     js: { mem: memory },

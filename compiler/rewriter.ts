@@ -143,14 +143,19 @@ export class Rewriter {
         for (const decl of vs.declarationList.declarations) {
           const type = this.program.typeChecker.getTypeAtLocation(decl);
 
-          if (!(type.flags & ts.TypeFlags.Number) && !(type.flags & ts.TypeFlags.NumberLiteral)) {
+          if ((type.flags & ts.TypeFlags.Number) || (type.flags & ts.TypeFlags.NumberLiteral)) {
+            allVarDecls.push({
+              name: decl.name,
+              type: "i32",
+            });
+          } else if (type.flags & ts.TypeFlags.StringLiteral || type.flags & ts.TypeFlags.String) {
+            allVarDecls.push({
+              name: decl.name,
+              type: "i32",
+            });
+          } else {
             throw new Error(`Do not know how to handle that type: ${ ts.TypeFlags[type.flags] } for ${ statement.getText() }`);
           }
-
-          allVarDecls.push({
-            name: decl.name,
-            type: "i32",
-          })
         }
       }
     }
@@ -159,6 +164,7 @@ export class Rewriter {
       name: functionName,
       body: [
         ...(allVarDecls.map(decl => S.DeclareLocal(decl.name.getText(), decl.type))),
+        S.DeclareLocal("myslocal", "i32"), //TODO: check ahead of time rather than blindly adding them all now.
         ...sb
       ],
       params: params
@@ -334,8 +340,8 @@ export class Rewriter {
       );
     } else if (ce.expression.getText() === "clog") {
       const logArgs: {
-        size: number;
-        start: number;
+        size: Sexpr;
+        start: Sexpr;
         type: number;
         putValueInMemory: Sexpr[];
       }[] = [];
@@ -347,8 +353,8 @@ export class Rewriter {
           const str = arg.getText().slice(1, -1);
 
           logArgs.push({
-            size: str.length,
-            start: offset,
+            size: S.Const("i32", str.length),
+            start: S.Const("i32", offset),
             type: 0,
             putValueInMemory: Sx.SetStringLiteralAt(offset, str),
           });
@@ -358,8 +364,8 @@ export class Rewriter {
           const num = Number(arg.getText());
 
           logArgs.push({
-            size: 4,
-            start: offset,
+            size: S.Const("i32", 4),
+            start: S.Const("i32", offset),
             type: 1,
             putValueInMemory: [
               S.Store(
@@ -371,23 +377,41 @@ export class Rewriter {
 
           offset += 4;
         } else if (arg.kind === ts.SyntaxKind.Identifier) {
-          logArgs.push({
-            size: 4,
-            start: offset,
-            type: 1,
-            putValueInMemory: [
-              S.Store(
-                S.Const("i32", offset),
-                S.GetLocal("i32", arg.getText()),
-              )
-            ],
-          });
+          const type = this.program.typeChecker.getTypeAtLocation(arg);
+
+          if (type.flags & ts.TypeFlags.String) {
+            logArgs.push({
+              size: S.Load("i32", S.GetLocal("i32", arg.getText())),
+              start: S.GetLocal("i32", arg.getText()),
+              type: 2,
+              putValueInMemory: [
+                S.Store(
+                  S.Const("i32", offset),
+                  S.GetLocal("i32", arg.getText()),
+                )
+              ],
+            });
+          } else if (type.flags & ts.TypeFlags.Number) {
+            logArgs.push({
+              size: S.Const("i32", 4),
+              start: S.Const("i32", offset),
+              type: 1,
+              putValueInMemory: [
+                S.Store(
+                  S.Const("i32", offset),
+                  S.GetLocal("i32", arg.getText()),
+                )
+              ],
+            });
+          } else {
+            throw new Error(`dont know how to clog that!! ${ ts.TypeFlags[type.flags] }... ${ type.flags & ts.TypeFlags.String} in ${ arg.getText() }`);
+          }
 
           offset += 4;
         } else {
           logArgs.push({
-            size: 4,
-            start: offset,
+            size: S.Const("i32", 4),
+            start: S.Const("i32", offset),
             type: 1,
             putValueInMemory: [
               S.Store(
@@ -403,8 +427,8 @@ export class Rewriter {
 
       while (logArgs.length < 3) {
         logArgs.push({
-          size: 0,
-          start: 0,
+          size: S.Const("i32", 0),
+          start: S.Const("i32", 0),
           type: 9999,
           putValueInMemory: [S("[]", "nop")],
         });
@@ -423,8 +447,8 @@ export class Rewriter {
             ...flatten(
               logArgs.map(obj => [
                 S.Const("i32", obj.type),
-                S.Const("i32", obj.start),
-                S.Const("i32", obj.start + obj.size),
+                obj.start,
+                S("i32", "i32.add", obj.start, obj.size),
               ])
             ),
           ),
@@ -486,6 +510,26 @@ export class Rewriter {
     );
   }
 
+  parseStringLiteral(sl: StringLiteral): Sexpr {
+    return S.Wrap("i32", [
+      S.SetLocal(
+        "myslocal",
+        S("i32", "call", "$malloc", S.Const("i32", sl.text.length + 1))
+      ),
+      // store length first
+      S.Store(
+        S.GetLocal("i32", "myslocal"),
+        S.Const("i32", sl.text.length),
+      ),
+      // then contents 
+      ...Sx.SetStringLiteralAtSexpr(
+        S.GetLocal("i32", "myslocal"),
+        sl.text
+      ),
+      S.GetLocal("i32", "myslocal"),
+    ]);
+  }
+
   parseExpression(expression: Expression): Sexpr {
     switch (expression.kind) {
       case SyntaxKind.BinaryExpression:
@@ -495,7 +539,7 @@ export class Rewriter {
       case SyntaxKind.Identifier:
         return this.parseIdentifier(expression as Identifier);
       case SyntaxKind.FirstLiteralToken:
-        return this.parseIdentifier(expression as Identifier);
+        return this.parseFirstLiteralToken(expression as LiteralExpression);
       case SyntaxKind.ConditionalExpression:
         return this.parseConditionalExpression(expression as ConditionalExpression);
       case SyntaxKind.PostfixUnaryExpression:
@@ -506,6 +550,8 @@ export class Rewriter {
         return S.Const("i32", 1); // cant find correct type!
       case SyntaxKind.FalseKeyword:
         return S.Const("i32", 0); // cant find correct type!
+      case SyntaxKind.StringLiteral:
+        return this.parseStringLiteral(expression as StringLiteral);
       default:
       throw new Error(`Unhandled expression! ${ ts.SyntaxKind[expression.kind] }`);
     }

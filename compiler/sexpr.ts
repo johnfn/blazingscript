@@ -124,12 +124,27 @@ export class Sx {
   }
 
   public static SetStringLiteralAt(pos: number, string: string): Sexpr[] {
-    return string.split("").map((ch, i) => 
-      S.Store(
-        S.Const("i32", pos + i),
-        S.Const("i32", ch.charCodeAt(0))
+    return [
+      S.Store(S.Const('i32', pos), S.Const('i32', string.length)),
+      ...string.split("").map((ch, i) => 
+        S.Store(
+          S.Const("i32", pos + i),
+          S.Const("i32", ch.charCodeAt(0))
+        )
       )
-    );
+    ];
+  }
+
+  public static SetStringLiteralAtSexpr(pos: Sexpr, string: string): Sexpr[] {
+    return [
+      S.Store(pos, S.Const('i32', string.length)),
+      ...string.split("").map((ch, i) => 
+        S.Store(
+          S("i32", "i32.add", pos, S.Const("i32", i + 4)),
+          S.Const("i32", ch.charCodeAt(0))
+        )
+      )
+    ];
   }
 
   public static Params(params: Param[]): Sexpr[] {
