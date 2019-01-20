@@ -389,7 +389,19 @@ export class Rewriter {
 
             offset += 4;
           } else {
-            throw new Error("Unsupported type for clog");
+            logArgs.push({
+              size : 4,
+              start: offset,
+              type : 1,
+              putValueInMemory: [
+                S.Store(
+                  S.Const("i32", offset),
+                  this.parseExpression(arg),
+                )
+              ],
+            });
+
+            offset += 4;
           }
         }
 

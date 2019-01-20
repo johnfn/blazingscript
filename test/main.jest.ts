@@ -13,7 +13,7 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
   const importObject = {
     console: {
       log: (arg: string) => {
-        console.log("[a]!", arg);
+        console.log("[asc]:", arg);
       }
     },
 
@@ -52,7 +52,7 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
           }
         }
 
-        console.log("[a]", ...res);
+        console.log("[asc]:", ...res);
       },
     },
     js: { mem: memory },

@@ -104,13 +104,13 @@ function malloc(size: number): number {
 }
 
 function test_dumb(): number {
-  const asdf = malloc(5);
+  const x = malloc(5);
   const y = malloc(6);
   const z = malloc(7);
 
   const foo = 1;
 
-  clog("abcd", foo, z);
+  clog("malloced:", x)
 
   return 1;
 }
