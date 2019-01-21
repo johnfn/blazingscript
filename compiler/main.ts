@@ -25,12 +25,6 @@ import { Program } from './program';
 // https://mbebenita.github.io/WasmExplorer/
 // https://blog.scottlogic.com/2018/05/29/transpiling-webassembly.html
 
-// const emitResolver = typeChecker.getEmitResolver("file.ts")
-
-//emitResolver.writeTypeOfDeclaration(variableDeclarationNode, undefined, undefined, writer)
-
-let indent = 0;
-
 // utility
 
 const p = new Program(`

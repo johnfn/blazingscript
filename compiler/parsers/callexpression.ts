@@ -4,22 +4,31 @@ import { Sexpr, S, Sx } from "../sexpr";
 import { flatten } from "../rewriter";
 import { parseExpression } from "./expression";
 
+const specialFunctions = [
+  "mset",
+  "mget",
+  "clog",
+];
+
 export function parseCallExpression(ctx: Context, ce: CallExpression): Sexpr {
   // TODO: I actualy have to resolve the lhs
   // tho to be fair, i dont know how to call anything at all rn.
 
-  if (ce.expression.getText() === "console.log") {
-    if (ce.arguments.length !== 1) {
-      throw new Error("unhandled log w/o 1 arg");
-    }
+  const lhsText = ce.expression.getText()
 
-    return S(
-      "[]",
-      "call",
-      "$log",
-      parseExpression(ctx, ce.arguments[0]),
-    );
-  } else if (ce.expression.getText() === "mset") {
+  if (specialFunctions.indexOf(ce.expression.getText()) > -1) {
+    return handleSpecialFunctions(ctx, lhsText, ce);
+  }
+
+  return S(
+    "i32",
+    "call", "$" + ce.expression.getText(),
+    ...ce.arguments.map(arg => parseExpression(ctx, arg))
+  );
+}
+
+function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression): Sexpr {
+  if (ce.expression.getText() === "mset") {
     return S.Store(
       parseExpression(ctx, ce.arguments[0]),
       parseExpression(ctx, ce.arguments[1]),
@@ -72,13 +81,13 @@ export function parseCallExpression(ctx: Context, ce: CallExpression): Sexpr {
 
         if (type.flags & TypeFlags.String || type.flags & TypeFlags.StringLiteral) {
           logArgs.push({
-            size: S.Load("i32", S.GetLocal("i32", arg.getText())),
-            start: S.GetLocal("i32", arg.getText()),
+            size: S.Load("i32", ctx.getVariable(arg.getText())),
+            start: ctx.getVariable(arg.getText()),
             type: 2,
             putValueInMemory: [
               S.Store(
                 S.Const("i32", offset),
-                S.GetLocal("i32", arg.getText()),
+                ctx.getVariable(arg.getText())
               )
             ],
           });
@@ -90,7 +99,7 @@ export function parseCallExpression(ctx: Context, ce: CallExpression): Sexpr {
             putValueInMemory: [
               S.Store(
                 S.Const("i32", offset),
-                S.GetLocal("i32", arg.getText()),
+                ctx.getVariable(arg.getText())
               )
             ],
           });
@@ -147,10 +156,6 @@ export function parseCallExpression(ctx: Context, ce: CallExpression): Sexpr {
       ]
     );
   } else {
-    return S(
-      "i32",
-      "call", "$" + ce.expression.getText(),
-      ...ce.arguments.map(arg => parseExpression(ctx, arg))
-    )
+    throw new Error(`unhandled special function ${ name }`)
   }
 }

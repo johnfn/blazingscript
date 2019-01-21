@@ -10,14 +10,14 @@ export function parseStringLiteral(ctx: Context, sl: StringLiteral): Sexpr {
     ),
     // store length first
     S.Store(
-      S.GetLocal("i32", "myslocal"),
+      ctx.getVariable("myslocal"),
       S.Const("i32", sl.text.length),
     ),
     // then contents 
     ...Sx.SetStringLiteralAtSexpr(
-      S.GetLocal("i32", "myslocal"),
+      ctx.getVariable("myslocal"),
       sl.text
     ),
-    S.GetLocal("i32", "myslocal"),
+    ctx.getVariable("myslocal")
   ]);
 }

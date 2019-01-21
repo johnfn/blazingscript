@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Program } from '../compiler/context';
+import { Program } from '../compiler/program';
 import { exec } from 'child_process';
 
 async function runProgram(str: string): Promise<{ [test: string]: number }> {

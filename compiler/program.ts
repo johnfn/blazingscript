@@ -1,12 +1,51 @@
 import ts from 'typescript';
 import { Rewriter } from './rewriter';
-import { Sexpr, sexprToString } from './sexpr';
+import { sexprToString, Sexpr, S } from './sexpr';
+
+type Type = {
+  type: ts.Type | undefined;
+  name: string;
+  repr: "static" | "var";
+}
 
 export class Context {
   typeChecker: ts.TypeChecker;
+  variableNameMapping: { [key: string]: Type } = {};
 
-  constructor(tc: ts.TypeChecker) {
+  constructor(
+    tc: ts.TypeChecker,
+    variableNameMapping: { [key: string]: Type }
+  ) {
     this.typeChecker = tc;
+    this.variableNameMapping = variableNameMapping
+  }
+
+  clone(): Context {
+    const newContext = new Context(this.typeChecker, this.variableNameMapping);
+
+    return newContext;
+  }
+
+  addVariableToScope(name: string, type: ts.Type | undefined, statik = false): void {
+    this.variableNameMapping[name] = {
+      type,
+      name,
+      repr: statik ? "static" : "var",
+    };
+  }
+
+  getVariable(name: string): Sexpr {
+    if (name in this.variableNameMapping) {
+      const obj = this.variableNameMapping[name];
+
+      if (obj.repr === "var") {
+        return S.GetLocal("i32", obj.name);
+      } else {
+        throw new Error("Cant handle statically known variables, yet.")
+      }
+    } else {
+      throw new Error(`variable name ${ name } not found in context!`);
+    }
   }
 }
 
@@ -54,7 +93,7 @@ export class Program {
   }
 
   parse(): string {
-    const ctx = new Context(this.typeChecker);
+    const ctx = new Context(this.typeChecker, {});
 
     const sexpr = new Rewriter(
       this.program.getSourceFile("file.ts")!,

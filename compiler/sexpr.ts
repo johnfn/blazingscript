@@ -89,6 +89,9 @@ S.Func = ({ name, body, params }: { name: string, body: Sexpr[], params: Param[]
   ...body,
 );
 
+/**
+ * Reminder: dont use this function! use ctx.getVariable instead.
+ */
 S.GetLocal = (type: "i32", name: string): Sexpr => S(
   type,
   "get_local",
