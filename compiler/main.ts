@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { Context } from './program';
+import { Program } from './program';
 
 // TODO:
 // * add imports so that my code isnt such a mess
@@ -33,7 +33,7 @@ let indent = 0;
 
 // utility
 
-const p = new Context(`
+const p = new Program(`
   function foo() {
     if (true) {
       mset(0, 1);

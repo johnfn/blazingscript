@@ -4,7 +4,6 @@ import { Context } from "../program";
 import { parseStatement } from "./statement";
 import { parseExpression } from "./expression";
 
-
 export function parseIfStatement(ctx: Context, node: IfStatement): Sexpr {
   let thn = parseStatement(ctx, node.thenStatement) || S.Const("i32", 0);
   let els = node.elseStatement ? parseStatement(ctx, node.elseStatement) : undefined;

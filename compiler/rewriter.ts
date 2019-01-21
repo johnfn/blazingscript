@@ -1,9 +1,7 @@
 import ts, { SyntaxKind, FunctionDeclaration, ParameterDeclaration, Block, Statement, ReturnStatement, Expression, BinaryExpression, Identifier, SourceFile, NodeArray, ExpressionStatement, CallExpression, LiteralExpression, VariableStatement, IfStatement, ConditionalExpression, PostfixUnaryExpression, StringLiteral, PrefixUnaryExpression, FlowFlags, ObjectLiteralExpression, AsExpression, ForStatement, VariableDeclaration, VariableDeclarationList, AssignmentExpression, EqualsToken, TypeFlags, NumericLiteral } from 'typescript';
 import { Sexpr, Sx, S } from './sexpr';
-import { Context } from './program';
-import { parseIfStatement } from './parsers/if';
-import { parseFunction } from './parsers/function';
 import { parseSourceFile } from './parsers/sourcefile';
+import { Context } from './program';
 
 function assert(x: boolean, msg = "") {
   if (x !== true) {

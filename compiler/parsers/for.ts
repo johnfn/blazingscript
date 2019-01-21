@@ -26,7 +26,7 @@ export function parseForStatement(ctx: Context, fs: ForStatement): Sexpr {
     }
   }
 
-  // "statement" is the entire for statement body
+  // "statement" is the entire for statement body (a single block)
 
   const body = parseStatement(ctx, fs.statement);
   const cond = fs.condition ? parseExpression(ctx, fs.condition) : null;

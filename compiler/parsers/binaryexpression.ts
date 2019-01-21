@@ -1,7 +1,7 @@
 import { BinaryExpression, SyntaxKind, BinaryOperator, TypeFlags, AssignmentExpression, EqualsToken, Identifier } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../program";
 import { parseExpression } from "./expression";
+import { Context } from "../program";
 
 export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr {
   const type = ctx.typeChecker.getTypeAtLocation(be.left);

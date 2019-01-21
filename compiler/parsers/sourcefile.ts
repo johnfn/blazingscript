@@ -1,7 +1,7 @@
 import { SourceFile, SyntaxKind, FunctionDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../program";
 import { parseStatementList } from "./statementlist";
+import { Context } from "../program";
 
 export function parseSourceFile(ctx: Context, sf: SourceFile): Sexpr {
   // find all exported functions
