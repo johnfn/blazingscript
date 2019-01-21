@@ -1,7 +1,6 @@
 import fs from 'fs';
-import { Program } from '../compiler/program';
+import { Context } from '../compiler/program';
 import { exec } from 'child_process';
-import process from 'process'
 
 async function runProgram(str: string): Promise<{ [test: string]: number }> {
   const results: { [test: string]: number } = {}
@@ -70,7 +69,7 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
     }
   };
 
-  const sexprs = new Program(str).parse();
+  const sexprs = new Context(str).parse();
 
   fs.writeFileSync("temp", sexprs);
 

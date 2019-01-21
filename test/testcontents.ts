@@ -12,7 +12,6 @@ function strlen(s: string): number {
   return mget(s as any as number);
 }
 
-
 /*
 function __initStr(lhs: string) {
   const mem = malloc(__strlen(lhs));
@@ -28,7 +27,6 @@ function __initStr(lhs: string) {
 */
 
 /*
-
 class String {
   init(lhs: StrConst) {
     const mem = malloc(strlen(lhs));

@@ -2,7 +2,7 @@ import ts, { SyntaxKind, parseJsonSourceFileConfigFileContent, FunctionDeclarati
 import { Rewriter } from './rewriter';
 import { Sexpr, sexprToString } from './sexpr';
 
-export class Program {
+export class Context {
   code: string;
   
   typeChecker: ts.TypeChecker;
