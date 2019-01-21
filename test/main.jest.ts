@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { Program } from '../compiler/program';
 import { exec } from 'child_process';
+import process from 'process'
 
 async function runProgram(str: string): Promise<{ [test: string]: number }> {
   const results: { [test: string]: number } = {}
@@ -73,15 +74,23 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
 
   fs.writeFileSync("temp", sexprs);
 
+  let fail = false;
+
   await new Promise((resolve) => {
     exec('wat2wasm temp -o test.wasm', (err, stdout, stderr) => {
       if (stderr) {
-        console.log(stderr)
+        console.log(stderr);
+
+        fail = true;
       }
 
       resolve();
     })
   });
+
+  if (fail) {
+    return {};
+  }
 
   const buff = fs.readFileSync("test.wasm")
 

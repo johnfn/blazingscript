@@ -2,9 +2,13 @@ import fs from 'fs'
 import { Program } from './program';
 
 // TODO:
-// * add simple memory allocator
+// * add imports so that my code isnt such a mess
+// X add simple memory allocator
 //   * string allocations need to be declared up front
 //   * all temporary variables need to know their type (string, object, etc etc etc)
+//   * each block should have a way to declare ahead of time what local variable names its going to need
+//     * actually i think a better way would be to request a NUMBER of local variables, so that we can continue to
+//       use from the same pile rather than having a ton of unnecessary ones.
 // * which gets added to every program
 // * figure out how to do simple dispatches on strings, like length
 

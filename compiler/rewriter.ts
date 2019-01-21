@@ -1,4 +1,4 @@
-import ts, { SyntaxKind, FunctionDeclaration, ParameterDeclaration, Block, Statement, ReturnStatement, Expression, BinaryExpression, Identifier, SourceFile, NodeArray, ExpressionStatement, CallExpression, LiteralExpression, VariableStatement, IfStatement, ConditionalExpression, PostfixUnaryExpression, StringLiteral, PrefixUnaryExpression, FlowFlags, ObjectLiteralExpression } from 'typescript';
+import ts, { SyntaxKind, FunctionDeclaration, ParameterDeclaration, Block, Statement, ReturnStatement, Expression, BinaryExpression, Identifier, SourceFile, NodeArray, ExpressionStatement, CallExpression, LiteralExpression, VariableStatement, IfStatement, ConditionalExpression, PostfixUnaryExpression, StringLiteral, PrefixUnaryExpression, FlowFlags, ObjectLiteralExpression, AsExpression, ForStatement, VariableDeclaration, VariableDeclarationList, AssignmentExpression, EqualsToken, TypeFlags } from 'typescript';
 import { Param, Sexpr, Sx, S } from './sexpr';
 import { Program } from './program';
 
@@ -58,7 +58,7 @@ export class Rewriter {
       const type = this.program.typeChecker.getTypeAtLocation(n);
       let wasmType = "";
 
-      if (type.flags & ts.TypeFlags.Number) {
+      if (type.flags & ts.TypeFlags.Number || type.flags & ts.TypeFlags.String) {
         wasmType = "i32";
       } else {
         if (functionName !== "clog") {
@@ -137,25 +137,43 @@ export class Rewriter {
     // traverse function ahead of time to find variable declarations, which need to go up front
 
     for (const statement of node.body!.statements) {
+      const rawdecls: VariableDeclaration[] = [];
+
+      if (statement.kind === ts.SyntaxKind.ForStatement) {
+        const fs = statement as ForStatement;
+
+        if (fs.initializer && fs.initializer.kind === ts.SyntaxKind.VariableDeclarationList) {
+          const vdl = fs.initializer as VariableDeclarationList;
+
+          for (const decl of vdl.declarations) {
+            rawdecls.push(decl);
+          }
+        }
+      }
+
       if (statement.kind === ts.SyntaxKind.VariableStatement) {
         const vs = statement as VariableStatement;
 
         for (const decl of vs.declarationList.declarations) {
-          const type = this.program.typeChecker.getTypeAtLocation(decl);
+          rawdecls.push(decl);
+        }
+      }
 
-          if ((type.flags & ts.TypeFlags.Number) || (type.flags & ts.TypeFlags.NumberLiteral)) {
-            allVarDecls.push({
-              name: decl.name,
-              type: "i32",
-            });
-          } else if (type.flags & ts.TypeFlags.StringLiteral || type.flags & ts.TypeFlags.String) {
-            allVarDecls.push({
-              name: decl.name,
-              type: "i32",
-            });
-          } else {
-            throw new Error(`Do not know how to handle that type: ${ ts.TypeFlags[type.flags] } for ${ statement.getText() }`);
-          }
+      for (const decl of rawdecls) {
+        const type = this.program.typeChecker.getTypeAtLocation(decl);
+
+        if ((type.flags & ts.TypeFlags.Number) || (type.flags & ts.TypeFlags.NumberLiteral)) {
+          allVarDecls.push({
+            name: decl.name,
+            type: "i32",
+          });
+        } else if (type.flags & ts.TypeFlags.StringLiteral || type.flags & ts.TypeFlags.String) {
+          allVarDecls.push({
+            name: decl.name,
+            type: "i32",
+          });
+        } else {
+          throw new Error(`Do not know how to handle that type: ${ ts.TypeFlags[type.flags] } for ${ statement.getText() }`);
         }
       }
     }
@@ -242,10 +260,10 @@ export class Rewriter {
     const type = this.program.typeChecker.getTypeAtLocation(be.left);
     let fn: string | undefined;
 
-    if ((type.flags & ts.TypeFlags.Number) || type.isNumberLiteral() || type.flags && ts.TypeFlags.Boolean) {
+    if ((type.flags & ts.TypeFlags.Number) || type.isNumberLiteral() || (type.flags && ts.TypeFlags.Boolean)) {
       const functionMapping: { [key in ts.BinaryOperator]: string | undefined } = {
         [ts.SyntaxKind.CommaToken]: undefined,
-        [ts.SyntaxKind.LessThanToken]: undefined,
+        [ts.SyntaxKind.LessThanToken]: "i32.gt_s",
         [ts.SyntaxKind.GreaterThanToken]: undefined,
         [ts.SyntaxKind.LessThanEqualsToken]: undefined,
         [ts.SyntaxKind.GreaterThanEqualsToken]: undefined,
@@ -294,8 +312,23 @@ export class Rewriter {
       throw new Error(`Dunno how to add that gg. ${(type as any).intrinsicName}`);
     }
 
+    if (be.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
+      const f: AssignmentExpression<EqualsToken> = be as AssignmentExpression<EqualsToken>;
+
+      if (f.left.kind === SyntaxKind.Identifier) {
+        const id: Identifier = f.left as Identifier;
+
+        return S.SetLocal(
+          id.text,
+          this.parseExpression(f.right)
+        );
+      } else {
+        throw new Error("literally no idea what to do with other types of LHSs in assignments!")
+      }
+    }
+    
     if (fn === undefined) {
-      throw new Error(`Unsupported binary operation: ${ts.SyntaxKind[be.operatorToken.kind]}`);
+      throw new Error(`Unsupported binary operation: ${ts.SyntaxKind[be.operatorToken.kind]} in ${ be.getText() }`);
     }
 
     // TODO: Mop up this intrinsic name stuff
@@ -552,6 +585,9 @@ export class Rewriter {
         return S.Const("i32", 0); // cant find correct type!
       case SyntaxKind.StringLiteral:
         return this.parseStringLiteral(expression as StringLiteral);
+      case SyntaxKind.AsExpression:
+        const foo = expression as AsExpression;
+        return this.parseExpression(foo.expression);
       default:
       throw new Error(`Unhandled expression! ${ ts.SyntaxKind[expression.kind] }`);
     }
@@ -572,6 +608,50 @@ export class Rewriter {
     );
   }
 
+  parseForStatement(fs: ForStatement): Sexpr {
+    const initializerSexprs: Sexpr[] = [];
+
+    if (fs.initializer) {
+      if (fs.initializer.kind === SyntaxKind.VariableDeclarationList) {
+        const vdl = fs.initializer as VariableDeclarationList;
+
+        for (const v of vdl.declarations) {
+          if (v.initializer) {
+            initializerSexprs.push(
+              S.SetLocal(
+                v.name.getText(),
+                this.parseExpression(v.initializer)
+              )
+            );
+          }
+        }
+      } else {
+        throw new Error("got non vdl for for loop")
+      }
+    }
+
+    // "statement" is the entire for statement body
+
+    const body = this.parseStatement(fs.statement);
+    const cond = fs.condition ? this.parseExpression(fs.condition) : null;
+    const inc = fs.incrementor ? this.parseExpression(fs.incrementor) : null;
+    const wasmBody = [
+      ...(body ? [body] : []),
+      ...(inc ? [inc] : []),
+      ...(cond ? [S("[]", "br_if", "$block", cond)] : []),
+      S("[]", "br", "$loop"),
+    ];
+
+    return S(
+      "i32",
+      "block", "$block",
+      ...initializerSexprs,
+      S("[]", "loop", "$loop",
+        ...wasmBody,
+      )
+    );
+  }
+
   parseStatement(statement: Statement): Sexpr | null {
     switch (statement.kind) {
       case SyntaxKind.ExpressionStatement:
@@ -588,6 +668,8 @@ export class Rewriter {
         return this.parseVariableStatement(statement as VariableStatement);
       case SyntaxKind.TypeAliasDeclaration:
         return null;
+      case SyntaxKind.ForStatement:
+        return this.parseForStatement(statement as ForStatement);
       default:
         throw new Error(`unhandled statement! ${ ts.SyntaxKind[statement.kind] }`);
     }

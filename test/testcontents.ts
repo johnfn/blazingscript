@@ -5,23 +5,43 @@ declare const clog: (a: clogType, b?: clogType, c?: clogType) => void;
 declare const mset: (pos: number, val: number) => void;
 declare const mget: (pos: number) => number;
 
+declare const __strlen: (str: string) => number;
+declare const __strget: (str: string, pos: number) => number;
+
+function strlen(s: string): number {
+  return mget(s as any as number);
+}
+
+
+/*
+function __initStr(lhs: string) {
+  const mem = malloc(__strlen(lhs));
+
+  mset(mem, __strlen(lhs));
+
+  for (let i = 0; i < __strlen(lhs); i++) {
+    mset(mem + i + 1, __strget(lhs, i));
+  }
+
+  return mem;
+}
+*/
+
 /*
 
 class String {
   init(lhs: StrConst) {
-    const length = __strlen(lhs);
-    const mem = malloc(length);
+    const mem = malloc(strlen(lhs));
 
-    store(mem, length);
+    store(mem, strlen(lhs));
 
-    for (let i = 0; i < length; i++) {
-      store(mem + i + 1, __strget(lhs, i));
+    for (let i = 0; i < strlen(lhs); i++) {
+      store(mem + i + 1, strget(lhs, i));
     }
 
     return mem;
   }
 }
-
 */
 
 function test_inc() {
@@ -119,15 +139,85 @@ function malloc(size: number): number {
   return offset;
 }
 
-function test_basic_string(): number {
+function test_basic_string() {
   let x = "abcd";
-  const y = "1234";
+  const y = "12345";
+
+  if (strlen(x) === 4 && strlen(y) === 5) {
+    return true;
+  }
+
+  return false;
+}
+
+function test_assign() {
+  let x = 1;
+  x = x + 1;
+
+  return x === 2;
+}
+
+function test_for_loop() {
+  let x = 0;
+
+  for (let i = 0; i < 10; i++) {
+    x = x + i;
+  }
+
+  return x === 55;
+}
+
+/*
+
+function test_for_loop_no_init() {
+  let x = 0;
+  let i = 10;
+
+  for (i = 0; i < 10; i++) {
+    x += i;
+  }
 
   clog(x);
-  clog(y);
 
-  return 1;
+  return x === 65;
 }
+
+function test_nested_for_loop() {
+  let sum = 0;
+
+  for (let i = 0; i < 5; i++) {
+    for (let j = 0; j < 5; j++) {
+      sum += (i + j);
+    }
+  }
+
+  return sum = 123;
+}
+
+function test_compound_assignment() {
+  let x = 1;
+
+  x += 5;
+  x += 5;
+
+  return x === 10;
+}
+
+
+*/
+
+/*
+function test_statement_then_if() {
+  let x = "blah";
+  let y = strlen(x);
+
+  if (y === 4) {
+    return true;
+  } else {
+    return false;
+  }
+}
+*/
 
 /*
 const x = malloc(5);
