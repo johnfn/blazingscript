@@ -1,4 +1,4 @@
-// these will be overwritten by native 
+// these will be added by native 
 
 declare type clogType = string | number;
 declare const clog    : (a: clogType, b?: clogType, c?: clogType) => void;
@@ -38,7 +38,7 @@ function __charCodeAt(str: string, i: number): number {
 
 function __charAt(str: string, i: number): string {
   const charCode = mget((str as any as number) + 4 + i) & 0x000000ff;
-  const newStr = malloc(2);
+  const newStr = malloc(4 + 1);
 
   mset(newStr + 0, 1);
   mset(newStr + 4, charCode);
@@ -107,6 +107,10 @@ function test_and3() {
   }
 }
 
+function test_not() {
+  return !false;
+}
+
 function test_multivar() {
   let x = 1;
   let y = 2; 
@@ -138,8 +142,6 @@ function test_assign() {
   return x === 2;
 }
 
-// TODO: Need to flip conditional here
-
 function test_for_loop() {
   let x = 0;
 
@@ -147,7 +149,7 @@ function test_for_loop() {
     x = x + i;
   }
 
-  return x === 55;
+  return x === 45;
 }
 
 function test_basic_string() {
@@ -176,29 +178,33 @@ function test_string_charCodeAt() {
          x.charCodeAt(3) === 100;
 }
 
+function test_str_array_access() {
+  const x = "abcde";
+  const char1: string = x[0];
+  const char2: string = x[1];
+
+  return (
+    char1.charCodeAt(0) === 97 &&
+    char2.charCodeAt(0) === 98
+  )
+}
+
+/*
+
 function test_string_charAt() {
   const x = "abcde";
 
-  // TODO i think these are because i'm not including any lib.d.ts when compiling TS...
-  // should probably define my own library.d.ts at some point
+  // TODO i think these explicit type errors are because i'm not including any
+  // lib.d.ts when compiling TS... should probably define my own library.d.ts at
+  // some point
   const char1: string = x.charAt(0);
-  const char2: string = x.charAt(0);
+  const char2: string = x.charAt(1);
 
   return (
     char1.charCodeAt(0) === 97 &&
     char2.charCodeAt(0) === 98
   );
 }
-
-/*
-function test_str_array_access() {
-  const x = "abcde";
-
-  return x[0] === 'a' && x[1] === 'b';
-}
-*/
-
-/*
 
 function test_for_loop_no_init() {
   let x = 0;

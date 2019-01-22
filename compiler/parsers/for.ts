@@ -34,7 +34,9 @@ export function parseForStatement(ctx: Context, fs: ForStatement): Sexpr {
   const wasmBody = [
     ...(body ? [body] : []),
     ...(inc ? [inc] : []),
-    ...(cond ? [S("[]", "br_if", "$block", cond)] : []),
+    ...(cond ? [
+      S("[]", "br_if", "$block", S("i32", "i32.eqz", cond))
+    ] : []),
     S("[]", "br", "$loop"),
   ];
 

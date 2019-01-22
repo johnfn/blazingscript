@@ -47,5 +47,6 @@ WebAssembly.instantiate(
   console.log("begin run of test.wasm");
   console.log("");
 
+  console.log(result.instance.exports)
   console.log(result.instance.exports.foo(9, 5))
 }).catch(e => console.log(e))
