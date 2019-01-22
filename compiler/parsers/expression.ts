@@ -1,5 +1,5 @@
 import { Context } from "../program";
-import { SyntaxKind, Expression, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression } from "typescript";
+import { SyntaxKind, Expression, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, PropertyAccessExpression, ParenthesizedExpression } from "typescript";
 import { parseBinaryExpression } from "./binaryexpression";
 import { parseCallExpression } from "./callexpression";
 import { parseIdentifier } from "./identifier";
@@ -9,6 +9,7 @@ import { Sexpr, S } from "../sexpr";
 import { parsePostfixUnaryExpression } from "./postfixunaryexpression";
 import { parsePrefixUnaryExpression } from "./prefixunaryexpression";
 import { parseStringLiteral } from "./stringliteral";
+import { parsePropertyAccess } from "./propertyaccess";
 
 export function parseExpression(ctx: Context, expression: Expression): Sexpr {
   switch (expression.kind) {
@@ -33,8 +34,11 @@ export function parseExpression(ctx: Context, expression: Expression): Sexpr {
     case SyntaxKind.StringLiteral:
       return parseStringLiteral(ctx, expression as StringLiteral);
     case SyntaxKind.AsExpression:
-      const foo = expression as AsExpression;
-      return parseExpression(ctx, foo.expression);
+      return parseExpression(ctx, (expression as AsExpression).expression);
+    case SyntaxKind.ParenthesizedExpression:
+      return parseExpression(ctx, (expression as ParenthesizedExpression).expression);
+    case SyntaxKind.PropertyAccessExpression:
+      return parsePropertyAccess(ctx, expression as PropertyAccessExpression);
     default:
     throw new Error(`Unhandled expression! ${ SyntaxKind[expression.kind] }`);
   }

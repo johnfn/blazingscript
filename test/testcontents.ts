@@ -1,46 +1,62 @@
 // these will be overwritten by native 
 
 declare type clogType = string | number;
-declare const clog: (a: clogType, b?: clogType, c?: clogType) => void;
-declare const mset: (pos: number, val: number) => void;
-declare const mget: (pos: number) => number;
+declare const clog    : (a: clogType, b?: clogType, c?: clogType) => void;
+declare const mset    : (pos: number, val: number) => void;
+declare const mget    : (pos: number) => number;
+declare const divfloor: (a: number, b: number) => number;
 
-declare const __strlen: (str: string) => number;
-declare const __strget: (str: string, pos: number) => number;
-
-function strlen(s: string): number {
-  return mget(s as any as number);
+function getOffset(): number {
+  return mget(0);
 }
 
-/*
-function __initStr(lhs: string) {
-  const mem = malloc(__strlen(lhs));
+function setOffset(val: number): number {
+  mset(0, val);
 
-  mset(mem, __strlen(lhs));
+  return 0;
+}
 
-  for (let i = 0; i < __strlen(lhs); i++) {
-    mset(mem + i + 1, __strget(lhs, i));
+function malloc(size: number): number {
+  if (getOffset() === 0) {
+    setOffset(100);
   }
 
-  return mem;
+  let offset = getOffset();
+
+  setOffset(offset + size);
+
+  return offset;
 }
-*/
 
-/*
-class String {
-  init(lhs: StrConst) {
-    const mem = malloc(strlen(lhs));
-
-    store(mem, strlen(lhs));
-
-    for (let i = 0; i < strlen(lhs); i++) {
-      store(mem + i + 1, strget(lhs, i));
-    }
-
-    return mem;
-  }
+function __strlen(str: string): number {
+  return mget(str as any as number);
 }
-*/
+
+function __charCodeAt(str: string, i: number): number {
+  return mget((str as any as number) + 4 + i) & 0x000000ff;
+}
+
+function __charAt(str: string, i: number): string {
+  const charCode = mget((str as any as number) + 4 + i) & 0x000000ff;
+  const newStr = malloc(2);
+
+  mset(newStr + 0, 1);
+  mset(newStr + 4, charCode);
+
+  return newStr as any as string;
+}
+
+function test_malloc() {
+  const x = malloc(5);
+  const y = malloc(5);
+  const z = malloc(5);
+
+  return (
+    y === x + 5 &&
+    z === y + 5 &&
+    z < 1000
+  );
+}
 
 function test_inc() {
   let x = 7;
@@ -115,45 +131,14 @@ function test_oneBranchIf() {
   return true;
 }
 
-function getOffset(): number {
-  return mget(0);
-}
-
-function setOffset(value: number): number {
-  mset(0, value);
-
-  return 0;
-}
-
-function malloc(size: number): number {
-  if (getOffset() === 0) {
-    setOffset(100);
-  }
-
-  let offset = getOffset();
-
-  setOffset(offset + size);
-
-  return offset;
-}
-
-function test_basic_string() {
-  let x = "abcd";
-  const y = "12345";
-
-  if (strlen(x) === 4 && strlen(y) === 5) {
-    return true;
-  }
-
-  return false;
-}
-
 function test_assign() {
   let x = 1;
   x = x + 1;
 
   return x === 2;
 }
+
+// TODO: Need to flip conditional here
 
 function test_for_loop() {
   let x = 0;
@@ -164,6 +149,54 @@ function test_for_loop() {
 
   return x === 55;
 }
+
+function test_basic_string() {
+  let x = "abcd";
+  const y = "12345";
+
+  if (__strlen(x) === 4 && __strlen(y) === 5) {
+    return true;
+  }
+
+  return false;
+}
+
+function test_string_length() {
+  const x = "abcde";
+
+  return x.length === 5;
+}
+
+function test_string_charCodeAt() {
+  const x = "abcde";
+
+  return x.charCodeAt(0) === 97 &&
+         x.charCodeAt(1) === 98 &&
+         x.charCodeAt(2) === 99 &&
+         x.charCodeAt(3) === 100;
+}
+
+function test_string_charAt() {
+  const x = "abcde";
+
+  // TODO i think these are because i'm not including any lib.d.ts when compiling TS...
+  // should probably define my own library.d.ts at some point
+  const char1: string = x.charAt(0);
+  const char2: string = x.charAt(0);
+
+  return (
+    char1.charCodeAt(0) === 97 &&
+    char2.charCodeAt(0) === 98
+  );
+}
+
+/*
+function test_str_array_access() {
+  const x = "abcde";
+
+  return x[0] === 'a' && x[1] === 'b';
+}
+*/
 
 /*
 

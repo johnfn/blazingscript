@@ -1,23 +1,18 @@
 import { Context } from "../program";
-import { CallExpression, SyntaxKind, TypeFlags } from "typescript";
+import { CallExpression, SyntaxKind, TypeFlags, PropertyAccessExpression } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
 import { flatten } from "../rewriter";
 import { parseExpression } from "./expression";
 
-const specialFunctions = [
-  "mset",
-  "mget",
-  "clog",
-];
-
 export function parseCallExpression(ctx: Context, ce: CallExpression): Sexpr {
-  // TODO: I actualy have to resolve the lhs
+  // TODO: This is wrong, I actualy have to resolve the lhs
   // tho to be fair, i dont know how to call anything at all rn.
 
-  const lhsText = ce.expression.getText()
+  const functionName = ce.expression.getText()
+  const special = handleSpecialFunctions(ctx, functionName, ce);
 
-  if (specialFunctions.indexOf(ce.expression.getText()) > -1) {
-    return handleSpecialFunctions(ctx, lhsText, ce);
+  if (special !== null) {
+    return special;
   }
 
   return S(
@@ -27,16 +22,53 @@ export function parseCallExpression(ctx: Context, ce: CallExpression): Sexpr {
   );
 }
 
-function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression): Sexpr {
+function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression): Sexpr | null {
+  const type = ctx.typeChecker.getTypeAtLocation(ce.expression);
+
+  if (ce.expression.kind === SyntaxKind.PropertyAccessExpression) {
+    // If we have Foo.Bar
+
+    const castedExpr    = ce.expression as PropertyAccessExpression;
+    const fooDotBar     = castedExpr.expression;
+    const justBar       = castedExpr.name;
+    const fooDotBarType = ctx.typeChecker.getTypeAtLocation(fooDotBar);
+
+    if (fooDotBarType.flags & TypeFlags.StringLike) {
+      if (justBar.getText() === "charCodeAt") {
+        return S("i32", "call", "$__charCodeAt", parseExpression(ctx, fooDotBar), parseExpression(ctx, ce.arguments[0]));
+      }
+
+      if (justBar.getText() === "charAt") {
+        return S("i32", "call", "$__charAt", parseExpression(ctx, fooDotBar), parseExpression(ctx, ce.arguments[0]));
+      }
+    }
+  }
+
   if (ce.expression.getText() === "mset") {
-    return S.Store(
+    const res = S.Store(
       parseExpression(ctx, ce.arguments[0]),
       parseExpression(ctx, ce.arguments[1]),
     );
+
+    return res;
   } else if (ce.expression.getText() === "mget") {
     return S.Load(
       "i32",
       parseExpression(ctx, ce.arguments[0]),
+    );
+  } else if (ce.expression.getText() === "divfloor") {
+    return S(
+      "i32",
+      "i32.trunc_s/f32",
+      S("f32", 
+        "f32.floor",
+          S(
+            "f32",
+            "f32.div",
+            S("f32", "f32.convert_s/i32", parseExpression(ctx, ce.arguments[0])),
+            S("f32", "f32.convert_s/i32", parseExpression(ctx, ce.arguments[1])),
+          )
+      )
     );
   } else if (ce.expression.getText() === "clog") {
     const logArgs: {
@@ -46,7 +78,7 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
       putValueInMemory: Sexpr[];
     }[] = [];
 
-    let offset = 0;
+    let offset = 10000;
 
     for (const arg of ce.arguments) {
       if (arg.kind === SyntaxKind.StringLiteral) {
@@ -60,22 +92,6 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
         });
 
         offset += str.length;
-      } else if (arg.kind === SyntaxKind.NumericLiteral) {
-        const num = Number(arg.getText());
-
-        logArgs.push({
-          size: S.Const("i32", 4),
-          start: S.Const("i32", offset),
-          type: 1,
-          putValueInMemory: [
-            S.Store(
-              S.Const("i32", offset),
-              S.Const("i32", num)
-            )
-          ],
-        });
-
-        offset += 4;
       } else if (arg.kind === SyntaxKind.Identifier) {
         const type = ctx.typeChecker.getTypeAtLocation(arg);
 
@@ -91,7 +107,7 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
               )
             ],
           });
-        } else if (type.flags & TypeFlags.Number) {
+        } else if (type.flags & TypeFlags.NumberLike) {
           logArgs.push({
             size: S.Const("i32", 4),
             start: S.Const("i32", offset),
@@ -156,6 +172,6 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
       ]
     );
   } else {
-    throw new Error(`unhandled special function ${ name }`)
+    return null;
   }
 }

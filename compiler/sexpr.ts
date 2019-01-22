@@ -4,7 +4,7 @@ import { flatten } from "./rewriter";
 // TODO: turn into class
 export type Sexpr = {
   name: string;
-  type: "i32" | "[]";
+  type: "i32" | "f32" | "[]";
   body: (string | Sexpr)[];
 }
 
@@ -17,7 +17,7 @@ export interface Param {
   declaration: ParameterDeclaration;
 }
 
-export function S(type: "i32" | "[]", name: string, ...body: (string | Sexpr)[]): Sexpr {
+export function S(type: "i32" | "f32" | "[]", name: string, ...body: (string | Sexpr)[]): Sexpr {
   return {
     name,
     body,

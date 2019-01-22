@@ -3,6 +3,10 @@ import { Program } from './program';
 
 // TODO:
 // * add imports so that my code isnt such a mess
+// * rewrite clog to use malloc so its not a ticking time bomb!!!!!!! it was overwriting my malloc offset and causing everything to explode.
+//    * i think i can do it much better now.
+// * define lib.d.ts for bs
+//   * ok... bs is a pretty bad acronym...
 // X add simple memory allocator
 //   * string allocations need to be declared up front
 //   * all temporary variables need to know their type (string, object, etc etc etc)
@@ -24,6 +28,9 @@ import { Program } from './program';
 // useful to get wat snippets
 // https://mbebenita.github.io/WasmExplorer/
 // https://blog.scottlogic.com/2018/05/29/transpiling-webassembly.html
+
+// JS unit tests as far as the eye can see.
+// https://github.com/v8/v8/tree/master/test/mjsunit
 
 // utility
 

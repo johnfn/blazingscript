@@ -12,6 +12,8 @@ export function parseFunction(
   const functionName = node.name!.text;
   const allVarDecls: { name: BindingName, type: "i32" }[] = [];
 
+  ctx.addFunction(functionName, node, functionName.startsWith("__inline"));
+
   // traverse function ahead of time to find variable declarations, which need to go up front
 
   const rawdecls = getAllDecls(node);
@@ -49,12 +51,12 @@ export function parseFunction(
 
   return S.Func({
     name: functionName,
+    params: params,
     body: [
       ...(allVarDecls.map(decl => S.DeclareLocal(decl.name.getText(), decl.type))),
       S.DeclareLocal("myslocal", "i32"), // TODO: check ahead of time rather than blindly adding them all now.
       ...sb
     ],
-    params: params
   });
 }
 

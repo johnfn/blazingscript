@@ -10,7 +10,7 @@ export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr
   if ((type.flags & TypeFlags.Number) || type.isNumberLiteral() || (type.flags && TypeFlags.Boolean)) {
     const functionMapping: { [key in BinaryOperator]: string | undefined } = {
       [SyntaxKind.CommaToken]: undefined,
-      [SyntaxKind.LessThanToken]: "i32.gt_s",
+      [SyntaxKind.LessThanToken]: "i32.lt_s",
       [SyntaxKind.GreaterThanToken]: undefined,
       [SyntaxKind.LessThanEqualsToken]: undefined,
       [SyntaxKind.GreaterThanEqualsToken]: undefined,
@@ -19,11 +19,11 @@ export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr
       [SyntaxKind.ExclamationEqualsToken]: undefined,
       [SyntaxKind.ExclamationEqualsEqualsToken]: undefined,
       [SyntaxKind.AsteriskAsteriskToken]: undefined,
-      [SyntaxKind.PercentToken]: undefined,
-      [SyntaxKind.LessThanLessThanToken]: undefined,
-      [SyntaxKind.GreaterThanGreaterThanToken]: undefined,
+      [SyntaxKind.PercentToken]: "i32.rem_s",
+      [SyntaxKind.LessThanLessThanToken]: "i32.shl",
+      [SyntaxKind.GreaterThanGreaterThanToken]: "i32.shr_s",
       [SyntaxKind.GreaterThanGreaterThanGreaterThanToken]: undefined,
-      [SyntaxKind.AmpersandToken]: undefined,
+      [SyntaxKind.AmpersandToken]: "i32.and",
       [SyntaxKind.BarToken]: undefined,
       [SyntaxKind.CaretToken]: undefined,
       [SyntaxKind.AmpersandAmpersandToken]: "i32.and",
@@ -44,10 +44,10 @@ export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr
       [SyntaxKind.InKeyword]: undefined,
       [SyntaxKind.InstanceOfKeyword]: undefined,
 
-      [SyntaxKind.PlusToken]: "i32.add",
-      [SyntaxKind.MinusToken]: "i32.sub",
+      [SyntaxKind.PlusToken]    : "i32.add",
+      [SyntaxKind.MinusToken]   : "i32.sub",
       [SyntaxKind.AsteriskToken]: "i32.mul",
-      [SyntaxKind.SlashToken]: "i32.div",
+      [SyntaxKind.SlashToken]   : "i32.div_s",
     };
 
     if (!(be.operatorToken.kind in functionMapping)) {

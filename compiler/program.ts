@@ -1,16 +1,16 @@
-import ts from 'typescript';
+import ts, { Node, FunctionDeclaration, ScriptTarget, TransformerFactory, CompilerOptions, DiagnosticWithLocation } from 'typescript';
 import { Rewriter } from './rewriter';
 import { sexprToString, Sexpr, S } from './sexpr';
 
 type Type = {
   type: ts.Type | undefined;
   name: string;
-  repr: "static" | "var";
 }
 
 export class Context {
   typeChecker: ts.TypeChecker;
   variableNameMapping: { [key: string]: Type } = {};
+  functionNameToNodeMapping: { [key: string]: FunctionDeclaration } = {};
 
   constructor(
     tc: ts.TypeChecker,
@@ -26,11 +26,18 @@ export class Context {
     return newContext;
   }
 
-  addVariableToScope(name: string, type: ts.Type | undefined, statik = false): void {
+  addFunction(name: string, node: FunctionDeclaration, inline = false): void {
+    if (name in this.functionNameToNodeMapping) {
+      throw new Error(`Redeclaring function named ${ name }.`);
+    }
+
+    this.functionNameToNodeMapping[name] = node;
+  }
+
+  addVariableToScope(name: string, type: ts.Type | undefined): void {
     this.variableNameMapping[name] = {
       type,
       name,
-      repr: statik ? "static" : "var",
     };
   }
 
@@ -38,14 +45,18 @@ export class Context {
     if (name in this.variableNameMapping) {
       const obj = this.variableNameMapping[name];
 
-      if (obj.repr === "var") {
-        return S.GetLocal("i32", obj.name);
-      } else {
-        throw new Error("Cant handle statically known variables, yet.")
-      }
+      return S.GetLocal("i32", obj.name);
     } else {
       throw new Error(`variable name ${ name } not found in context!`);
     }
+  }
+
+  getFunction(name: string): FunctionDeclaration {
+    if (name in this.functionNameToNodeMapping) {
+      return this.functionNameToNodeMapping[name];
+    }
+
+    throw new Error(`No function named ${ name }.`);
   }
 }
 
@@ -94,12 +105,50 @@ export class Program {
 
   parse(): string {
     const ctx = new Context(this.typeChecker, {});
+    const source = this.program.getSourceFile("file.ts");
+
+    if (!source) {
+      throw new Error("source undefined, something has gone horribly wrong!!!");
+    }
 
     const sexpr = new Rewriter(
-      this.program.getSourceFile("file.ts")!,
+      source,
       ctx
     ).parse();
 
     return sexprToString(sexpr);
   }
 }
+
+
+/*
+    //const emitResolver = getDiagnosticsProducingTypeChecker().getEmitResolver((options.outFile || options.out) ? undefined : sourceFile, cancellationToken);
+
+    const transform = ts.transform(source, [
+      (fufu: any) => {
+        console.log(fufu.getEmitResolver());
+
+        return (ts as any).transformTypeScript(fufu)
+      },
+      (ts as any).transformES2015,
+      (ts as any).transformGenerators,
+      // (ts as any).transformES2015Module,
+      (ts as any).transformES5,
+    ], {
+      "target": ScriptTarget.ES5,
+    });
+
+    const basdlf = (ts as any).transformNodes( )
+
+    console.log("Trans!", transform.transformed.length)
+    console.log(transform.transformed[0].getText())
+
+function betterTransform<T extends Node>(source: T | T[], transformers: TransformerFactory<T>[], compilerOptions?: CompilerOptions) {
+  const diagnostics: DiagnosticWithLocation[] = [];
+  compilerOptions = (ts as any).fixupCompilerOptions(compilerOptions!, diagnostics); // TODO: GH#18217
+  const nodes = isArray(source) ? source : [source];
+  const result = (ts as any).transformNodes(undefined, undefined, compilerOptions, nodes, transformers, true);
+  result.diagnostics = concatenate(result.diagnostics, diagnostics);
+  return result;
+}
+*/
