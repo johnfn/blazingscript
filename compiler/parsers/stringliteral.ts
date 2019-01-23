@@ -3,7 +3,7 @@ import { StringLiteral } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
 
 export function parseStringLiteral(ctx: Context, sl: StringLiteral): Sexpr {
-  return S.Wrap("i32", [
+  return S("i32", "block", S("[]", "result", "i32"), 
     S.SetLocal(
       "myslocal",
       S("i32", "call", "$malloc", S.Const("i32", sl.text.length + 4))
@@ -19,5 +19,5 @@ export function parseStringLiteral(ctx: Context, sl: StringLiteral): Sexpr {
       sl.text
     ),
     ctx.getVariable("myslocal")
-  ]);
+ );
 }

@@ -150,8 +150,7 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
       });
     }
 
-    return S.Wrap(
-      "i32", [
+    return S.Block([
         // store all args into memory
 
         ...flatten(logArgs.map(obj => obj.putValueInMemory)),
@@ -167,8 +166,7 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
               S("i32", "i32.add", obj.start, obj.size),
             ])
           ),
-        ),
-        S.Const("i32", 0)
+        )
       ]
     );
   } else {

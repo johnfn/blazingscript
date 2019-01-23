@@ -1,5 +1,22 @@
 // these will be added by native 
 
+interface String {
+  readonly length: number;
+
+  /**
+    * Returns the character at the specified index.
+    * @param pos The zero-based index of the desired character.
+    */
+  charAt(pos: number): string;
+
+  /**
+    * Returns the Unicode value of the character at the specified location.
+    * @param index The zero-based index of the desired character. If there is no character at the specified index, NaN is returned.
+    */
+  charCodeAt(index: number): number;
+
+}
+
 declare type clogType = string | number;
 declare const clog    : (a: clogType, b?: clogType, c?: clogType) => void;
 declare const mset    : (pos: number, val: number) => void;
@@ -30,6 +47,23 @@ function malloc(size: number): number {
 
 function __strlen(str: string): number {
   return mget(str as any as number);
+}
+
+function __strEq(str1: string, str2: string): boolean {
+  const str1Len = __strlen(str1);
+  const str2Len = __strlen(str2);
+
+  if (str1Len !== str2Len) {
+    return false;
+  }
+
+  for (let i = 0; i < str1Len; i++) {
+    if (str1.charCodeAt(i) !== str2.charCodeAt(i)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function __charCodeAt(str: string, i: number): number {
@@ -189,7 +223,26 @@ function test_str_array_access() {
   )
 }
 
-/*
+function test_str_eq() {
+  const a = "abc";
+  const b = "abc";
+
+  return (a === b);
+}
+
+function test_str_neq1() {
+  let a = "abcde";
+  let b = "abcdef";
+
+  return a !== b;
+}
+
+function test_str_neq2() {
+  let a = "abcdef";
+  let b = "abcdeg";
+
+  return a !== b;
+}
 
 function test_string_charAt() {
   const x = "abcde";
@@ -205,6 +258,8 @@ function test_string_charAt() {
     char2.charCodeAt(0) === 98
   );
 }
+
+/*
 
 function test_for_loop_no_init() {
   let x = 0;

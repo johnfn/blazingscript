@@ -25,23 +25,14 @@ export function S(type: "i32" | "f32" | "[]", name: string, ...body: (string | S
   };
 }
 
-S.Wrap = (type: "i32", body: Sexpr[]): Sexpr =>
+S.Block = (body: Sexpr[]): Sexpr =>
   body.length === 1
     ? body[0]
     : S(
-      type,
+      "[]",
       "block",
-      S(type, "result", type),
       ...body
     );
-
-S.WrapWithType = (type: "i32", body: Sexpr[]): Sexpr => S(
-  type,
-  "block",
-  S(type, "result", type),
-  ...body,
-  S.Const("i32", 0),
-);
 
 S.Const = (type: "i32", value: number): Sexpr => S(
   type,

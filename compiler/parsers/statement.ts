@@ -23,10 +23,11 @@ export function parseStatement(ctx: Context, statement: Statement): Sexpr | null
       return parseIfStatement(ctx, statement as IfStatement);
     case SyntaxKind.VariableStatement:
       return parseVariableStatement(ctx, statement as VariableStatement);
-    case SyntaxKind.TypeAliasDeclaration:
-      return null;
     case SyntaxKind.ForStatement:
       return parseForStatement(ctx, statement as ForStatement);
+    case SyntaxKind.TypeAliasDeclaration:
+    case SyntaxKind.InterfaceDeclaration:
+      return null;
     default:
       throw new Error(`unhandled statement! ${ SyntaxKind[statement.kind] }`);
   }

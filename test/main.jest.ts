@@ -58,7 +58,7 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
           }
         }
 
-        console.log("[clog]:", ...res);
+        console.log("test/testcontents.ts log:", ...res);
       },
     },
     js: { mem: memory },

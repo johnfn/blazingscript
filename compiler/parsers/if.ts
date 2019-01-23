@@ -8,21 +8,20 @@ export function parseIfStatement(ctx: Context, node: IfStatement): Sexpr {
   let thn = parseStatement(ctx, node.thenStatement) || S.Const("i32", 0);
   let els = node.elseStatement ? parseStatement(ctx, node.elseStatement) : undefined;
 
-  if (thn.type !== "i32") {
-    thn = S.WrapWithType("i32", [thn]);
+  if (thn.type !== "[]") {
+    thn = S.Drop(thn);
   }
 
-  if (els && els.type !== "i32") {
-    els = S.WrapWithType("i32", [els]);
+  if (els && els.type !== "[]") {
+    els = S.Drop(els);
   }
 
   const result = S(
-    "i32",
+    "[]",
     "if",
-    "(result i32)",
     parseExpression(ctx, node.expression),
-    S("i32", "then", thn),
-    S("i32", "else", els ? els : S.Const("i32", 0)),
+    S("[]", "then", thn),
+    S("[]", "else", els ? els : S("[]", "nop"))
   );
 
   return result;

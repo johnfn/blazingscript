@@ -1,4 +1,4 @@
-import { FunctionDeclaration, NodeArray, ParameterDeclaration, SyntaxKind, TypeFlags, VariableDeclaration, ForStatement, VariableDeclarationList, VariableStatement, BindingName, Identifier, createTextChangeRange } from "typescript";
+import { FunctionDeclaration, NodeArray, ParameterDeclaration, SyntaxKind, TypeFlags, VariableDeclaration, ForStatement, VariableDeclarationList, VariableStatement, BindingName, Identifier, createTextChangeRange, createBigIntLiteral, Statement } from "typescript";
 import { Sexpr, Param, S } from "../sexpr";
 import { Context } from "../program";
 import { parseStatementList } from "./statementlist";
@@ -48,6 +48,13 @@ export function parseFunction(
 
   const params = parseParameterList(ctx, node.parameters, functionName)
   const sb = parseStatementList(ctx, node.body!.statements);
+  let last: Sexpr | null = null;
+
+  if (sb.length > 0) {
+    last = sb[sb.length - 1];
+  }
+
+  const ret = (last && last.type === "i32") ? undefined : S.Const("i32", 0);
 
   return S.Func({
     name: functionName,
@@ -55,7 +62,8 @@ export function parseFunction(
     body: [
       ...(allVarDecls.map(decl => S.DeclareLocal(decl.name.getText(), decl.type))),
       S.DeclareLocal("myslocal", "i32"), // TODO: check ahead of time rather than blindly adding them all now.
-      ...sb
+      ...sb,
+      ...(ret ? [ret] : []),
     ],
   });
 }

@@ -3,8 +3,12 @@ import { Program } from './program';
 
 // TODO:
 // * add imports so that my code isnt such a mess
+// * clog: 
+//   * get correct file name.
+//   * pull line number ha!
 // * rewrite clog to use malloc so its not a ticking time bomb!!!!!!! it was overwriting my malloc offset and causing everything to explode.
 //    * i think i can do it much better now.
+// * ok im like 99% sure that my stupid if statement handling can be improved.
 // * define lib.d.ts for bs
 //   * ok... bs is a pretty bad acronym...
 // X add simple memory allocator
@@ -15,6 +19,10 @@ import { Program } from './program';
 //       use from the same pile rather than having a ton of unnecessary ones.
 // * which gets added to every program
 // * figure out how to do simple dispatches on strings, like length
+
+// * fun optimization ideas:
+//   * pull out constant expressions that are repeatedly evaluated
+//   * inline functions
 
 // TODO: double pass: convert to reasonable data structure first, then convert to sexprs
 // First pass: 
