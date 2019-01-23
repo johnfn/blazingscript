@@ -137,6 +137,14 @@ export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr
           "i32.eqz", 
           S("i32", "call", "$__strEq", leftParsed, rightParsed)
         );
+      case SyntaxKind.PlusToken:
+        return S(
+          "i32", 
+          "call", 
+          "$__strCat", 
+          leftParsed, 
+          rightParsed
+        );
       default:
         throw new Error(`unsupported binary expression ${ be.getText() }`);
     }

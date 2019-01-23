@@ -80,6 +80,25 @@ function __charAt(str: string, i: number): string {
   return newStr as any as string;
 }
 
+function __strCat(str1: string, str2: string): string {
+  const str1Len = str1.length;
+  const str2Len = str2.length;
+  const newLength = str1Len + str2Len;
+  const newStr = malloc(newLength + 4);
+
+  mset(newStr + 0, newLength);
+
+  for (let i = 0; i < str1.length; i++) {
+    mset(newStr + 4 + i, str1.charCodeAt(i));
+  }
+
+  for (let j = 0; j < str2.length; j++) {
+    mset(newStr + 4 + str1Len + j, str2.charCodeAt(j));
+  }
+
+  return newStr as any as string;
+}
+
 function test_malloc() {
   const x = malloc(5);
   const y = malloc(5);
@@ -247,16 +266,26 @@ function test_str_neq2() {
 function test_string_charAt() {
   const x = "abcde";
 
-  // TODO i think these explicit type errors are because i'm not including any
-  // lib.d.ts when compiling TS... should probably define my own library.d.ts at
-  // some point
-  const char1: string = x.charAt(0);
-  const char2: string = x.charAt(1);
+  return (x.charAt(0) === "a" && x.charAt(1) === "b");
+}
 
-  return (
-    char1.charCodeAt(0) === 97 &&
-    char2.charCodeAt(0) === 98
-  );
+function test_strcat() {
+  const a = "abc";
+  const b = "def";
+
+  const res = a + b;
+
+  return res === "abcdef";
+}
+
+function test_strcat3() {
+  const a = "abc";
+  const b = "def";
+  const c = "ghi";
+
+  const res = a + b + c;
+
+  return res === "abcdefghi";
 }
 
 /*
