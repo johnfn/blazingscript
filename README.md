@@ -21,6 +21,7 @@ We fix #2 by simply not allowing bad patterns.
 
 * `var` statement? That's an error.
 * `==`? Use `===`.
+* Using `["foo"]` to dynamically add properties to things you don't own? Nope. Declare them ahead of time, and keep them safe.
 
 ## What's the difference between BlazingScript and [AssemblyScript](https://github.com/AssemblyScript/assemblyscript)? 
 
