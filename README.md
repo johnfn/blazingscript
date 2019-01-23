@@ -13,7 +13,7 @@ However, TypeScript's position as being saddled on top of JavaScript comes with 
 
 2. **It's has a bunch of JavaScript cruft.** JavaScript is a pretty good language today - it's got destructuring, lambdas, async/await, etc. But it wasn't always great, and TypeScript has to deal with dumb stuff like == vs === and `var` statements in loops not properly being captured by closures. 
 
-BlazingScript can fix both of these problems!
+### BlazingScript can fix both of these problems!
 
 We fix #1 by compiling to WebAssembly, which is super fast and lets us make our own memory management decisions.
 
