@@ -3,12 +3,16 @@ import { Program } from './program';
 
 // TODO:
 // * add imports so that my code isnt such a mess
+// * assertEquals() rather than just returning true from inside code blocks
+// * pushScope and popScope should be a with() sort of thing.
 // * clog: 
 //   * get correct file name.
 //   * pull line number ha!
+// * hard stuff
+//   * closures
 // * rewrite clog to use malloc so its not a ticking time bomb!!!!!!! it was overwriting my malloc offset and causing everything to explode.
 //    * i think i can do it much better now.
-// * ok im like 99% sure that my stupid if statement handling can be improved.
+// X ok im like 99% sure that my stupid if statement handling can be improved.
 // * define lib.d.ts for bs
 //   * ok... bs is a pretty bad acronym...
 // X add simple memory allocator

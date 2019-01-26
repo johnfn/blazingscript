@@ -120,16 +120,20 @@ if (!('test' in global)) {
 
 test('all tests', async () => {
   const result = await runProgram(fs.readFileSync("test/testcontents.ts").toString());
-  let anyfail = false;
+  let anyfail = Object.keys(result).map(key => !result[key]).filter(x => x).length > 0;
 
-  for (const key of Object.keys(result)) {
-    if (result[key]) {
-      console.log(`pass ${ key }`);
-    } else {
-      console.log(`FAIL ${ key } got ${ result[key] }`);
+  if (anyfail) {
+    console.log("FAIL!");
 
-      anyfail = true;
+    for (const key of Object.keys(result)) {
+      if (result[key]) {
+        // console.log(`pass ${ key }`);
+      } else {
+        console.log(`FAIL ${ key } got ${ result[key] }`);
+      }
     }
+  } else {
+    console.log("All pass! :-)");
   }
 
   expect(anyfail).toBe(false);

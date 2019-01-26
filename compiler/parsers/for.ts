@@ -1,5 +1,5 @@
 import { Context } from "../program";
-import { ForStatement, SyntaxKind, VariableDeclarationList } from "typescript";
+import { ForStatement, SyntaxKind, VariableDeclarationList, validateLocaleAndSetLanguage } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseExpression } from "./expression";
 import { parseStatement } from "./statement";
@@ -22,30 +22,35 @@ export function parseForStatement(ctx: Context, fs: ForStatement): Sexpr {
         }
       }
     } else {
-      throw new Error("got non vdl for for loop")
+      initializerSexprs.push(parseExpression(ctx, fs.initializer));
     }
   }
 
-  // "statement" is the entire for statement body (a single block)
+  const inc = fs.incrementor ? parseExpression(ctx, fs.incrementor) : null;
+
+  // TODO - we generate an increment with every continue statement. im sure
+  // there's a better way!
+
+  ctx.addToLoopStack(inc);
 
   const body = parseStatement(ctx, fs.statement);
   const cond = fs.condition ? parseExpression(ctx, fs.condition) : null;
-  const inc = fs.incrementor ? parseExpression(ctx, fs.incrementor) : null;
-  const wasmBody = [
-    ...(body ? [body] : []),
-    ...(inc ? [inc] : []),
-    ...(cond ? [
-      S("[]", "br_if", "$block", S("i32", "i32.eqz", cond))
-    ] : []),
-    S("[]", "br", "$loop"),
-  ];
 
-  return S(
+  const result = S(
     "i32",
-    "block", "$block",
+    "block", ctx.getLoopBreakLabel(),
     ...initializerSexprs,
-    S("[]", "loop", "$loop",
-      ...wasmBody,
+    S("[]", "loop", ctx.getLoopContinueLabel(),
+      ...(cond ? [
+        S("[]", "br_if", ctx.getLoopBreakLabel(), S("i32", "i32.eqz", cond))
+      ] : []),
+      ...(body ? [body] : []),
+      ...(inc  ? [inc] : []),
+      S("[]", "br", ctx.getLoopContinueLabel()),
     )
   );
+
+  ctx.popFromLoopStack();
+
+  return result;
 }

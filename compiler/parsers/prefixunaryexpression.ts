@@ -7,10 +7,11 @@ export function parsePrefixUnaryExpression(ctx: Context, pue: PrefixUnaryExpress
   switch (pue.operator) {
     case SyntaxKind.ExclamationToken:
       return S("i32", "i32.eqz", parseExpression(ctx, pue.operand));
+    case SyntaxKind.MinusToken:
+      return S("i32", "i32.sub", S.Const("i32", 0), parseExpression(ctx, pue.operand));
     case SyntaxKind.PlusPlusToken:
     case SyntaxKind.MinusMinusToken:
     case SyntaxKind.PlusToken:
-    case SyntaxKind.MinusToken:
     case SyntaxKind.TildeToken:
       throw new Error(`unhandled unary prefix ${ pue.getText() }`);
   }

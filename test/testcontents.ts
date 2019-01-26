@@ -2,20 +2,12 @@
 
 interface String {
   readonly length: number;
-
-  /**
-    * Returns the character at the specified index.
-    * @param pos The zero-based index of the desired character.
-    */
   charAt(pos: number): string;
-
-  /**
-    * Returns the Unicode value of the character at the specified location.
-    * @param index The zero-based index of the desired character. If there is no character at the specified index, NaN is returned.
-    */
   charCodeAt(index: number): number;
-
+  indexOf(searchString: string, position?: number): number;
 }
+
+// class __String { }
 
 declare type clogType = string | number;
 declare const clog    : (a: clogType, b?: clogType, c?: clogType) => void;
@@ -97,6 +89,33 @@ function __strCat(str1: string, str2: string): string {
   }
 
   return newStr as any as string;
+}
+
+function __strIndexOf(haystack: string, needle: string): number {
+  const needleLen = needle.length;
+  const haystackLen = haystack.length;
+
+  for (let haystackStartPos = 0; haystackStartPos < haystackLen; haystackStartPos++) {
+    let curPos = 0;
+
+    for (curPos = haystackStartPos; curPos < haystackStartPos + needleLen; curPos++) {
+      if (curPos > haystackLen) { 
+        break;
+      }
+
+      if (haystack.charAt(curPos) === needle.charAt(curPos - haystackStartPos)) {
+        continue;
+      } else {
+        break;
+      }
+    }
+
+    if (curPos === haystackStartPos + needleLen) {
+      return haystackStartPos;
+    }
+  }
+
+  return -1;
 }
 
 function test_malloc() {
@@ -288,6 +307,56 @@ function test_strcat3() {
   return res === "abcdefghi";
 }
 
+function test_nested_for_loop() {
+  let sum = 0;
+
+  for (let i = 0; i < 5; i++) {
+    for (let j = 0; j < 5; j++) {
+      sum = sum + 1;
+    }
+  }
+
+  return sum === 25;
+}
+
+function test_break() {
+  let sum = 0; 
+
+  for (let i = 0; i < 10; i++) {
+    sum = sum + i;
+
+    if (i === 4) { 
+      break; 
+    }
+  }
+
+  return sum === 10;
+}
+
+function test_continue() {
+  let sum = 0; 
+
+  for (let i = 0; i < 10; i++) {
+    if (i % 2 === 1) {
+      continue;
+    }
+
+    sum = sum + 1;
+  }
+
+  return sum === 5;
+}
+
+function test_indexOf() {
+  const a = "testing blah foo";
+
+  return (
+    a.indexOf("test") === 0 &&
+    a.indexOf("blah") === 8 &&
+    a.indexOf("foo")  === 13
+  );
+}
+
 /*
 
 function test_for_loop_no_init() {
@@ -301,18 +370,6 @@ function test_for_loop_no_init() {
   clog(x);
 
   return x === 65;
-}
-
-function test_nested_for_loop() {
-  let sum = 0;
-
-  for (let i = 0; i < 5; i++) {
-    for (let j = 0; j < 5; j++) {
-      sum += (i + j);
-    }
-  }
-
-  return sum = 123;
 }
 
 function test_compound_assignment() {

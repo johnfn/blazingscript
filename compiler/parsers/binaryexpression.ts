@@ -150,7 +150,7 @@ export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr
     }
   }
 
-  throw new Error(`unhandled types for binary expression ${ be.getText() }`);
+  throw new Error(`unhandled types for binary expression ${ be.getText() }.`);
 }
 
 
