@@ -44,14 +44,14 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
     }
   }
 
-  if (ce.expression.getText() === "mset") {
+  if (ce.expression.getText() === "memwrite") {
     const res = S.Store(
       parseExpression(ctx, ce.arguments[0]),
       parseExpression(ctx, ce.arguments[1]),
     );
 
     return res;
-  } else if (ce.expression.getText() === "mget") {
+  } else if (ce.expression.getText() === "memread") {
     return S.Load(
       "i32",
       parseExpression(ctx, ce.arguments[0]),
@@ -70,7 +70,7 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
           )
       )
     );
-  } else if (ce.expression.getText() === "clog") {
+  } else if (ce.expression.getText() === "log") {
     const logArgs: {
       size: Sexpr;
       start: Sexpr;
@@ -120,7 +120,7 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
             ],
           });
         } else {
-          throw new Error(`dont know how to clog that!! ${TypeFlags[type.flags]}... ${type.flags & TypeFlags.String} in ${arg.getText()}`);
+          throw new Error(`dont know how to log that!! ${TypeFlags[type.flags]}... ${type.flags & TypeFlags.String} in ${arg.getText()}`);
         }
 
         offset += 4;
@@ -158,7 +158,7 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
         S(
           "[]",
           "call",
-          "$clog",
+          "$log",
           ...flatten(
             logArgs.map(obj => [
               S.Const("i32", obj.type),

@@ -7,12 +7,12 @@ import { Program } from './program';
 // * going to have to do a preparse of all functions to ADD them before i process them, because
 //   functions can refer to other functions that don't yet exist.
 // * pushScope and popScope should be a with() sort of thing.
-// * clog: 
+// * log: 
 //   * get correct file name.
 //   * pull line number ha!
 // * hard stuff
 //   * closures
-// * rewrite clog to use malloc so its not a ticking time bomb!!!!!!! it was overwriting my malloc offset and causing everything to explode.
+// * rewrite log to use malloc so its not a ticking time bomb!!!!!!! it was overwriting my malloc offset and causing everything to explode.
 //    * i think i can do it much better now.
 // X ok im like 99% sure that my stupid if statement handling can be improved.
 // * define lib.d.ts for bs
@@ -51,10 +51,10 @@ import { Program } from './program';
 const p = new Program(`
   function foo() {
     if (true) {
-      mset(0, 1);
+      memwrite(0, 1);
     } 
 
-    return mget(0) === 1;
+    return memread(0) === 1;
   }
 `);
 

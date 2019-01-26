@@ -1,18 +1,21 @@
-function operator(type: "+" | "===" | "!==") {
-  return function __decorator(target: any, propertyKey: string, descriptor: PropertyDescriptor) { 
+// types specially handled by the BlazingScript compiler
 
-  };
-}
+declare type LogType  = string | number;
+declare const log     : (a: LogType, b?: LogType, c?: LogType) => void;
+declare const memwrite: (pos: number, val: number) => void;
+declare const memread : (pos: number) => number;
+declare const divfloor: (a: number, b: number) => number;
+declare const operator: (type: "+" | "===" | "!==") => ((target: any, propertyKey: string, descriptor: PropertyDescriptor) => void);
 
 class __String { 
   readonly length: number = 0;
 
   strLen(): number {
-    return mget(this as any as number);
+    return memread(this as any as number);
   }
 
   charCodeAt(i: number): number {
-    return mget((this as any as number) + 4 + i) & 0x000000ff;
+    return memread((this as any as number) + 4 + i) & 0x000000ff;
   }
 
   @operator("===")
@@ -39,11 +42,11 @@ class __String {
   }
 
   charAt(i: number): string {
-    const charCode = mget((this as any as number) + 4 + i) & 0x000000ff;
+    const charCode = memread((this as any as number) + 4 + i) & 0x000000ff;
     const newStr = malloc(4 + 1);
 
-    mset(newStr + 0, 1);
-    mset(newStr + 4, charCode);
+    memwrite(newStr + 0, 1);
+    memwrite(newStr + 4, charCode);
 
     return newStr as any as string;
   }
@@ -82,14 +85,14 @@ class __String {
     const newLength = myLen + otherLen;
     const newStr = malloc(newLength + 4);
 
-    mset(newStr + 0, newLength);
+    memwrite(newStr + 0, newLength);
 
     for (let i = 0; i < this.length; i++) {
-      mset(newStr + 4 + i, this.charCodeAt(i));
+      memwrite(newStr + 4 + i, this.charCodeAt(i));
     }
 
     for (let j = 0; j < other.length; j++) {
-      mset(newStr + 4 + myLen + j, other.charCodeAt(j));
+      memwrite(newStr + 4 + myLen + j, other.charCodeAt(j));
     }
 
     return newStr as any as string;
@@ -103,18 +106,12 @@ interface String extends __String {
   indexOf(searchString: string, position: number): number;
 }
 
-declare type clogType = string | number;
-declare const clog    : (a: clogType, b?: clogType, c?: clogType) => void;
-declare const mset    : (pos: number, val: number) => void;
-declare const mget    : (pos: number) => number;
-declare const divfloor: (a: number, b: number) => number;
-
 function getOffset(): number {
-  return mget(0);
+  return memread(0);
 }
 
 function setOffset(val: number): number {
-  mset(0, val);
+  memwrite(0, val);
 
   return 0;
 }
@@ -214,7 +211,7 @@ function test_call() {
 
 function test_oneBranchIf() {
   if (true) {
-    mset(0, 0);
+    memwrite(0, 0);
   }
 
   return true;
@@ -380,7 +377,7 @@ function test_for_loop_no_init() {
     x += i;
   }
 
-  clog(x);
+  log(x);
 
   return x === 65;
 }
@@ -417,15 +414,15 @@ const z = malloc(7);
 
 const foo = 1;
 
-clog("malloced:", x);
+log("malloced:", x);
 */
 
 /*
 function test_ifCall() {
   if (true) {
-    mset(0, 1);
+    memwrite(0, 1);
   } 
 
-  return mget(0) === 1;
+  return memread(0) === 1;
 }
 */

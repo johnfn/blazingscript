@@ -26,9 +26,8 @@ export function parseSourceFile(ctx: Context, sf: SourceFile): Sexpr {
     "[]",
     "module",
     S("[]", "import", '"js"', '"mem"', S("[]", "memory", "1")),
-    S("[]", "import", '"console"', '"log"', S("[]", "func", "$log", S("[]", "param", "i32"))),
     S("[]", "import", '"c"', '"log"', 
-      S("[]", "func", "$clog", ...[...Array(9).keys()].map(_ => S("[]", "param", "i32"))
+      S("[]", "func", "$log", ...[...Array(9).keys()].map(_ => S("[]", "param", "i32"))
     )),
     ...functions.map(fn => { 
       if (fn.node.kind === SyntaxKind.MethodDeclaration) {
