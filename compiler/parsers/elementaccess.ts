@@ -1,6 +1,6 @@
 import { PropertyAccessExpression, TypeFlags, ElementAccessExpression } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../program";
+import { Context } from "../context";
 import { parseExpression } from "./expression";
 
 export function parseElementAccess(ctx: Context, pa: ElementAccessExpression): Sexpr {

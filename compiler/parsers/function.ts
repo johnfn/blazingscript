@@ -1,6 +1,6 @@
 import { forEachChild, FunctionDeclaration, Node, NodeArray, ParameterDeclaration, SyntaxKind, TypeFlags, VariableDeclaration, ForStatement, VariableDeclarationList, VariableStatement, BindingName, Identifier, createTextChangeRange, createBigIntLiteral, Statement } from "typescript";
 import { Sexpr, Param, S } from "../sexpr";
-import { Context } from "../program";
+import { Context } from "../context";
 import { parseStatementList } from "./statementlist";
 
 export function parseFunction(

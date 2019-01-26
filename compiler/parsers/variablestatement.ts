@@ -1,6 +1,6 @@
 import { VariableStatement, SyntaxKind } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../program";
+import { Context } from "../context";
 import { parseExpression } from "./expression";
 
 export function parseVariableStatement(ctx: Context, vs: VariableStatement): Sexpr | null {

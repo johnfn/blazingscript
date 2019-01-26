@@ -1,6 +1,6 @@
 import { IfStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../program";
+import { Context } from "../context";
 import { parseStatement } from "./statement";
 import { parseExpression } from "./expression";
 

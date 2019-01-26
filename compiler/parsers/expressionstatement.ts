@@ -1,4 +1,4 @@
-import { Context } from "../program";
+import { Context } from "../context";
 import { ExpressionStatement } from "typescript";
 import { Sexpr } from "../sexpr";
 import { parseExpression } from "./expression";

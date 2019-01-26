@@ -1,6 +1,7 @@
 import { ClassDeclaration, MethodDeclaration, SyntaxKind, CallExpression } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context, THIS_NAME } from "../program";
+import { Context } from "../context";
+import { THIS_NAME } from "../program";
 import { parseStatementList } from "./statementlist";
 import { addDeclarationsToContext, addParameterListToContext } from "./function";
 import { assertNever } from "../util";

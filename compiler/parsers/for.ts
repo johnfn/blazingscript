@@ -1,4 +1,4 @@
-import { Context } from "../program";
+import { Context } from "../context";
 import { ForStatement, SyntaxKind, VariableDeclarationList, validateLocaleAndSetLanguage } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseExpression } from "./expression";

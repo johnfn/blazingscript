@@ -1,7 +1,7 @@
 import { ReturnStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseExpression } from "./expression";
-import { Context } from "../program";
+import { Context } from "../context";
 
 export function parseReturnStatement(ctx: Context, rs: ReturnStatement): Sexpr {
   if (rs.expression) {

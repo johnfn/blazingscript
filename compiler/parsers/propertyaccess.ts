@@ -1,6 +1,6 @@
 import { PropertyAccessExpression, TypeFlags } from "typescript";
 import { Sexpr } from "../sexpr";
-import { Context } from "../program";
+import { Context } from "../context";
 
 export function parsePropertyAccess(ctx: Context, pa: PropertyAccessExpression): Sexpr {
   const expType = ctx.typeChecker.getTypeAtLocation(pa.expression);

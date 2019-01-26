@@ -1,4 +1,4 @@
-import { Context } from "../program";
+import { Context } from "../context";
 import { SyntaxKind, Expression, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, PropertyAccessExpression, ParenthesizedExpression, ElementAccessExpression, ThisExpression } from "typescript";
 import { parseBinaryExpression } from "./binaryexpression";
 import { parseCallExpression } from "./callexpression";

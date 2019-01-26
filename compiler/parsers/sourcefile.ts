@@ -1,10 +1,9 @@
 import { Node, SourceFile, SyntaxKind, FunctionDeclaration, MethodDeclaration, forEachChild, NodeFlags, ModifierFlags, ClassDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseStatementList } from "./statementlist";
-import { Context } from "../program";
+import { Context } from "../context";
 import { parseFunction } from "./function";
 import { parseMethod } from "./method";
-import { removeNull } from "../util";
 
 type FunctionDecl = {
   node    : FunctionDeclaration | MethodDeclaration;

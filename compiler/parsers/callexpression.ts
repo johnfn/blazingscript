@@ -1,4 +1,4 @@
-import { Context } from "../program";
+import { Context } from "../context";
 import { CallExpression, SyntaxKind, TypeFlags, PropertyAccessExpression } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
 import { flatten } from "../rewriter";

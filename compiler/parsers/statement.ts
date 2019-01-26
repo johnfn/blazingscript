@@ -1,4 +1,4 @@
-import { Context } from "../program";
+import { Context } from "../context";
 import { Statement, SyntaxKind, ExpressionStatement, ReturnStatement, FunctionDeclaration, Block, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, ClassDeclaration } from "typescript";
 import { Sexpr } from "../sexpr";
 import { parseExpressionStatement } from "./expressionstatement";
