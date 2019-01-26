@@ -7,6 +7,7 @@ export function parseFunction(
   ctx : Context,
   node: FunctionDeclaration
 ): Sexpr {
+
   ctx.pushScope();
 
   ctx.addFunction(node);

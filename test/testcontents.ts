@@ -1,3 +1,9 @@
+function operator(type: "+" | "===" | "!==") {
+  return function __decorator(target: any, propertyKey: string, descriptor: PropertyDescriptor) { 
+
+  };
+}
+
 class __String { 
   readonly length: number = 0;
 
@@ -9,6 +15,7 @@ class __String {
     return mget((this as any as number) + 4 + i) & 0x000000ff;
   }
 
+  @operator("===")
   strEq(str2: string): boolean {
     const str1Len = this.length;
     const str2Len = str2.length;
@@ -24,6 +31,11 @@ class __String {
     }
 
     return true;
+  }
+
+  @operator("!==")
+  strNeq(str: string): boolean {
+    return !this.strEq(str);
   }
 
   charAt(i: number): string {

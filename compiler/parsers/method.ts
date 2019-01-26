@@ -1,8 +1,19 @@
-import { ClassDeclaration, MethodDeclaration } from "typescript";
-import { Sexpr, Param, S } from "../sexpr";
+import { ClassDeclaration, MethodDeclaration, SyntaxKind, CallExpression } from "typescript";
+import { Sexpr, S } from "../sexpr";
 import { Context, THIS_NAME } from "../program";
 import { parseStatementList } from "./statementlist";
 import { addDeclarationsToContext, addParameterListToContext } from "./function";
+import { assertNever } from "../util";
+
+export enum Operator {
+  "===" = "===",
+  "!==" = "!==",
+  "+"   = "+",
+}
+
+export type OperatorOverload = {
+  operator: Operator;
+};
 
 export function parseMethod(
   ctx   : Context,
@@ -11,7 +22,39 @@ export function parseMethod(
 ): Sexpr {
   ctx.pushScope();
 
-  ctx.addMethod({ node, parent });
+  let overload: OperatorOverload | null = null;
+
+  for (const deco of (node.decorators || [])) {
+    if (deco.expression.kind === SyntaxKind.CallExpression) {
+      const ce = deco.expression as CallExpression;
+
+      if (ce.expression.getText() === "operator") {
+        const opName: Operator = ce.arguments[0].getText().slice(1, -1) as Operator;
+
+        if (opName === Operator["!=="]) {
+          overload = {
+            operator: Operator["!=="]
+          };
+        } else if (opName === Operator["+"]) {
+          overload = {
+            operator: Operator["+"]
+          };
+        } else if (opName === Operator["==="]) {
+          overload = {
+            operator: Operator["==="]
+          };
+        } else {
+          assertNever(opName)
+        }
+      }
+    }
+  }
+
+  ctx.addMethod({ 
+    node, 
+    parent,
+    overload,
+  });
 
   addDeclarationsToContext(node, ctx);
 

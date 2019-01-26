@@ -2,6 +2,7 @@ import { BinaryExpression, SyntaxKind, BinaryOperator, TypeFlags, AssignmentExpr
 import { Sexpr, S } from "../sexpr";
 import { parseExpression } from "./expression";
 import { Context } from "../program";
+import { Operator } from "./method";
 
 export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr {
   const leftType    = ctx.typeChecker.getTypeAtLocation(be.left);
@@ -130,23 +131,19 @@ export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr
   if ((leftType.flags & TypeFlags.StringLike) && (rightType.flags & TypeFlags.StringLike)) {
     switch (be.operatorToken.kind) {
       case SyntaxKind.EqualsEqualsEqualsToken:
-        return ctx.callMethod({
+        return ctx.callMethodByOperator({
           className: "__String",
-          methodName: "strEq",
+          opName: Operator["==="],
           thisExpr: be.left,
           argExprs: [be.right],
         });
       case SyntaxKind.ExclamationEqualsEqualsToken:
-        return S(
-          "i32", 
-          "i32.eqz", 
-          ctx.callMethod({
-            className: "__String",
-            methodName: "strEq",
-            thisExpr: be.left,
-            argExprs: [be.right],
-          }),
-        );
+        return ctx.callMethodByOperator({
+          className: "__String",
+          opName: Operator["!=="],
+          thisExpr: be.left,
+          argExprs: [be.right],
+        });
       case SyntaxKind.PlusToken:
         return S(
           "i32", 

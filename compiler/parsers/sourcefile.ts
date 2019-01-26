@@ -4,6 +4,7 @@ import { parseStatementList } from "./statementlist";
 import { Context } from "../program";
 import { parseFunction } from "./function";
 import { parseMethod } from "./method";
+import { removeNull } from "../util";
 
 type FunctionDecl = {
   node    : FunctionDeclaration | MethodDeclaration;
@@ -58,12 +59,16 @@ function findAllFunctions(node: Node): FunctionDecl[] {
         throw new Error(`dont handle anonymous functions yet: ${ node.getText() }`)
       }
 
-      decls.push({
-        node: fd,
-        name: fd.name.getText(),
-        exported: true, //  fd.modifiers && fd.modifiers.find(tok => tok.kind === SyntaxKind.Export) .indexOf(ModifierFlags.Export) > -1
-        parent,
-      });
+      // TODO: Remove this special case when we can handle this sort of thing.
+
+      if (fd.name.getText() !== "operator") {
+        decls.push({
+          node: fd,
+          name: fd.name.getText(),
+          exported: true, //  fd.modifiers && fd.modifiers.find(tok => tok.kind === SyntaxKind.Export) .indexOf(ModifierFlags.Export) > -1
+          parent,
+        });
+      }
     }
 
     if (node.kind === SyntaxKind.MethodDeclaration) {

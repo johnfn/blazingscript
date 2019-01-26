@@ -3,6 +3,7 @@ import { Rewriter } from './rewriter';
 import { sexprToString, Sexpr, S } from './sexpr';
 import { add } from "./util"
 import { parseExpression } from './parsers/expression';
+import { OperatorOverload, Operator } from './parsers/method';
 
 export const THIS_NAME = "__this";
 
@@ -18,6 +19,7 @@ type Function = {
   className: string | null;
   fnName   : string;
   bsname   : string;
+  overload : OperatorOverload | null;
 }
 
 type Loop = {
@@ -132,10 +134,11 @@ export class Context {
   }
 
   addMethod(props: {
-    node: MethodDeclaration;
-    parent: ClassDeclaration
+    node    : MethodDeclaration;
+    parent  : ClassDeclaration;
+    overload: OperatorOverload | null;
   }): void {
-    const { node, parent } = props;
+    const { node, parent, overload } = props;
 
     let fqName: string;
     let fnName: string;
@@ -156,6 +159,7 @@ export class Context {
       node,
       fnName,
       className,
+      overload,
     });
   }
 
@@ -168,6 +172,25 @@ export class Context {
     const { className, methodName, thisExpr: thisNode, argExprs } = props;
 
     const fn = this.getMethodByNames(className, methodName);
+
+    return S(
+      "i32",
+      "call",
+      fn.bsname,
+      parseExpression(this, thisNode), // always pass this as first arg
+      ...(argExprs.map(arg => parseExpression(this, arg))),
+    );
+  }
+
+  callMethodByOperator(props: {
+    className : string;
+    opName    : Operator;
+    thisExpr  : Expression;
+    argExprs  : Expression[];
+  }): Sexpr {
+    const { className, thisExpr: thisNode, opName, argExprs } = props;
+
+    const fn = this.getMethodByOperator(className, opName);
 
     return S(
       "i32",
@@ -203,6 +226,7 @@ export class Context {
       node,
       fnName,
       className,
+      overload: null,
     });
   }
 
@@ -228,6 +252,18 @@ export class Context {
     }
 
     throw new Error(`Failed to find function ref by class name ${ className } and method name ${ methodName }`);
+  }
+
+  getMethodByOperator(className: string, operator: Operator): Function {
+    for (const scope of this.scopes) {
+      for (const fn of scope.functionNameMapping) {
+        if (fn.className === className && fn.overload && fn.overload.operator === operator) {
+          return fn;
+        }
+      }
+    }
+
+    throw new Error(`Failed to find function ref by class name ${ className } and operator name ${ operator }`);
   }
 
   addVariableToScope(name: string, tsType: ts.Type | undefined, wasmType: "i32", parameter = false): void {
