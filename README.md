@@ -5,11 +5,13 @@ BlazingScript compiles a subset of TypeScript to WebAssembly.
 
 ## Why?
 
-TypeScript is an awesome language. It's highly expressive, the tooling is amazing, and the way it lets you go from a prototype all the way to a production app is amazing. There's a reason it's one of the [most loved techologies on StackOverflow](https://insights.stackoverflow.com/survey/2018/). 
+TypeScript is an awesome language. It's highly expressive, the tooling is amazing, and the way it lets you go from a prototype all the way to a production app is amazing. It's got access to the largest module ecosystem in all of programming. There's a reason it's one of the [most loved techologies on StackOverflow](https://insights.stackoverflow.com/survey/2018/). 
 
-However, TypeScript's position as being saddled on top of JavaScript comes with two major drawbacks:
+*Except.*
 
-1. **It is only as fast as JavaScript.** Games will be slower and GC'd. High performance apps will probably not be written in TypeScript as is.
+TypeScript has two major drawbacks:
+
+1. **It is only as fast as JavaScript.** High performance apps will probably not be written in TypeScript as is. For instance, games will be slower and subject to garbage collection hiccups.
 
 2. **It's has a bunch of JavaScript cruft.** JavaScript is a pretty good language today - it's got destructuring, lambdas, async/await, etc. But it wasn't always great, and TypeScript has to deal with dumb stuff like == vs === and `var` statements in loops not properly being captured by closures. 
 
