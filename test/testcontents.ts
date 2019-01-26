@@ -6,7 +6,9 @@ declare const memwrite: (pos: number, val: number) => void;
 declare const memread : (pos: number) => number;
 declare const divfloor: (a: number, b: number) => number;
 declare const operator: (type: "+" | "===" | "!==") => ((target: any, propertyKey: string, descriptor: PropertyDescriptor) => void);
+declare const jsType: (x: string) => (<T extends { new (...args: any[]) : {} }>(constructor: T) => T);
 
+@jsType("String")
 class __String { 
   readonly length: number = 0;
 

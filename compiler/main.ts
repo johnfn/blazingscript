@@ -3,6 +3,7 @@ import { Program } from './program';
 
 // TODO:
 // * add imports so that my code isnt such a mess
+// * use jsType
 // * assertEquals() rather than just returning true from inside code blocks
 // * going to have to do a preparse of all functions to ADD them before i process them, because
 //   functions can refer to other functions that don't yet exist.
@@ -14,7 +15,7 @@ import { Program } from './program';
 //   * closures
 // * rewrite log to use malloc so its not a ticking time bomb!!!!!!! it was overwriting my malloc offset and causing everything to explode.
 //    * i think i can do it much better now.
-// X ok im like 99% sure that my stupid if statement handling can be improved.
+// * use data segment
 // * define lib.d.ts for bs
 //   * ok... bs is a pretty bad acronym...
 // X add simple memory allocator
