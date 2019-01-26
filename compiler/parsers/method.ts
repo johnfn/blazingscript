@@ -11,7 +11,7 @@ export function parseMethod(
 ): Sexpr {
   ctx.pushScope();
 
-  ctx.addFunction(node, true, parent);
+  ctx.addFunction(node, parent);
 
   addDeclarationsToContext(node, ctx);
 

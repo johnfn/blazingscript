@@ -108,18 +108,10 @@ export class Context {
     return loopStack[loopStack.length - 1].continueLabel;
   }
 
-  addFunction(node: FunctionDeclaration | MethodDeclaration, isMethod: boolean, parent: ClassDeclaration | null): void {
+  addFunction(node: FunctionDeclaration | MethodDeclaration, parent: ClassDeclaration | null): void {
     let bsname: string;
 
-    if (node.kind & SyntaxKind.FunctionDeclaration) {
-      const fd = node as FunctionDeclaration;
-
-      if (!fd.name) {
-        throw new Error("anonymous functions not supported yet!")
-      }
-
-      bsname = "$" + fd.name!.text;
-    } else if (node.kind & SyntaxKind.MethodDeclaration) {
+    if (node.kind === SyntaxKind.MethodDeclaration) {
       const md = node as MethodDeclaration;
 
       if (!md.name) throw new Error("anonymous methods not supported yet!")
@@ -127,6 +119,14 @@ export class Context {
       if (!parent.name) throw new Error("dont support classes without names yet");
 
       bsname = "$" + parent.name.text + "__" + md.name!.getText();
+    } else if (node.kind === SyntaxKind.FunctionDeclaration) {
+      const fd = node as FunctionDeclaration;
+
+      if (!fd.name) {
+        throw new Error("anonymous functions not supported yet!")
+      }
+
+      bsname = "$" + fd.name!.text;
     } else {
       throw new Error("unhandled function node type in context.");
     }
