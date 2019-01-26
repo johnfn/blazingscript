@@ -16,16 +16,16 @@ class __String {
   }
 
   @operator("===")
-  strEq(str2: string): boolean {
-    const str1Len = this.length;
-    const str2Len = str2.length;
+  __equals(other: string): boolean {
+    const myLen = this.length;
+    const otherLen = other.length;
 
-    if (str1Len !== str2Len) {
+    if (myLen !== otherLen) {
       return false;
     }
 
-    for (let i = 0; i < str1Len; i++) {
-      if (this.charCodeAt(i) !== str2.charCodeAt(i)) {
+    for (let i = 0; i < myLen; i++) {
+      if (this.charCodeAt(i) !== other.charCodeAt(i)) {
         return false;
       }
     }
@@ -34,8 +34,8 @@ class __String {
   }
 
   @operator("!==")
-  strNeq(str: string): boolean {
-    return !this.strEq(str);
+  __notEquals(str: string): boolean {
+    return !this.__equals(str);
   }
 
   charAt(i: number): string {
@@ -74,25 +74,26 @@ class __String {
 
     return -1;
   }
-}
 
-function __strCat(str1: string, str2: string): string {
-  const str1Len = str1.length;
-  const str2Len = str2.length;
-  const newLength = str1Len + str2Len;
-  const newStr = malloc(newLength + 4);
+  @operator("+")
+  __concat(other: string): string {
+    const myLen = this.length;
+    const otherLen = other.length;
+    const newLength = myLen + otherLen;
+    const newStr = malloc(newLength + 4);
 
-  mset(newStr + 0, newLength);
+    mset(newStr + 0, newLength);
 
-  for (let i = 0; i < str1.length; i++) {
-    mset(newStr + 4 + i, str1.charCodeAt(i));
+    for (let i = 0; i < this.length; i++) {
+      mset(newStr + 4 + i, this.charCodeAt(i));
+    }
+
+    for (let j = 0; j < other.length; j++) {
+      mset(newStr + 4 + myLen + j, other.charCodeAt(j));
+    }
+
+    return newStr as any as string;
   }
-
-  for (let j = 0; j < str2.length; j++) {
-    mset(newStr + 4 + str1Len + j, str2.charCodeAt(j));
-  }
-
-  return newStr as any as string;
 }
 
 interface String extends __String {

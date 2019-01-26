@@ -145,13 +145,12 @@ export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr
           argExprs: [be.right],
         });
       case SyntaxKind.PlusToken:
-        return S(
-          "i32", 
-          "call", 
-          "$__strCat", 
-          leftParsed, 
-          rightParsed
-        );
+        return ctx.callMethodByOperator({
+          className: "__String",
+          opName: Operator["+"],
+          thisExpr: be.left,
+          argExprs: [be.right],
+        });
       default:
         throw new Error(`unsupported binary expression ${ be.getText() }`);
     }
