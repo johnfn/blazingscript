@@ -1,12 +1,33 @@
-// these will be added by native 
-
 class __String { 
-  charCodeAt(str: string, i: number): number {
-    return mget((str as any as number) + 4 + i) & 0x000000ff;
+  readonly length: number = 0;
+
+  strLen(): number {
+    return mget(this as any as number);
   }
 
-  charAt(str: string, i: number): string {
-    const charCode = mget((str as any as number) + 4 + i) & 0x000000ff;
+  charCodeAt(i: number): number {
+    return mget((this as any as number) + 4 + i) & 0x000000ff;
+  }
+
+  strEq(str2: string): boolean {
+    const str1Len = this.length;
+    const str2Len = str2.length;
+
+    if (str1Len !== str2Len) {
+      return false;
+    }
+
+    for (let i = 0; i < str1Len; i++) {
+      if (this.charCodeAt(i) !== str2.charCodeAt(i)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  charAt(i: number): string {
+    const charCode = mget((this as any as number) + 4 + i) & 0x000000ff;
     const newStr = malloc(4 + 1);
 
     mset(newStr + 0, 1);
@@ -15,9 +36,9 @@ class __String {
     return newStr as any as string;
   }
 
-  indexOf(haystack: string, needle: string): number {
+  indexOf(needle: string): number {
     const needleLen = needle.length;
-    const haystackLen = haystack.length;
+    const haystackLen = this.length;
 
     for (let haystackStartPos = 0; haystackStartPos < haystackLen; haystackStartPos++) {
       let curPos = 0;
@@ -27,7 +48,7 @@ class __String {
           break;
         }
 
-        if (haystack.charAt(curPos) === needle.charAt(curPos - haystackStartPos)) {
+        if (this.charAt(curPos) === needle.charAt(curPos - haystackStartPos)) {
           continue;
         } else {
           break;
@@ -95,27 +116,6 @@ function malloc(size: number): number {
   setOffset(offset + size);
 
   return offset;
-}
-
-function __strlen(str: string): number {
-  return mget(str as any as number);
-}
-
-function __strEq(str1: string, str2: string): boolean {
-  const str1Len = __strlen(str1);
-  const str2Len = __strlen(str2);
-
-  if (str1Len !== str2Len) {
-    return false;
-  }
-
-  for (let i = 0; i < str1Len; i++) {
-    if (str1.charCodeAt(i) !== str2.charCodeAt(i)) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 function test_malloc() {
@@ -228,7 +228,7 @@ function test_basic_string() {
   let x = "abcd";
   const y = "12345";
 
-  if (__strlen(x) === 4 && __strlen(y) === 5) {
+  if (x.length === 4 && y.length === 5) {
     return true;
   }
 

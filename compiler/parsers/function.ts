@@ -126,7 +126,6 @@ export function addParameterListToContext(
     result.push({
       name       : n.name.getText(),
       type       : wasmType,
-      declaration: n,
     });
 
     ctx.addVariableToScope(n.name.getText(), type, wasmType, true);

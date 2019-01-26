@@ -1,19 +1,26 @@
 import { PropertyAccessExpression, TypeFlags } from "typescript";
-import { Sexpr, S } from "../sexpr";
+import { Sexpr } from "../sexpr";
 import { Context } from "../program";
-import { parseExpression } from "./expression";
 
 export function parsePropertyAccess(ctx: Context, pa: PropertyAccessExpression): Sexpr {
   const expType = ctx.typeChecker.getTypeAtLocation(pa.expression);
   const property = pa.name.text;
 
-  if (expType.flags & TypeFlags.StringLike) {
+  if (
+    (expType.flags & TypeFlags.StringLike) ||
+    (expType.symbol.name === "__String") // for this types
+  ) {
     if (property === "length") {
-      return S("i32", "call", "$__strlen", parseExpression(ctx, pa.expression));
+      return ctx.callMethod({
+        className: "__String",
+        methodName: "strLen",
+        thisExpr: pa.expression,
+        argExprs: [],
+      })
     }
   }
 
-  throw new Error("Todo");
+  throw new Error(`Todo ${ pa.getText() } ${ expType.flags }`);
 
   // return S.Const("i32", Number(flt.text));
 }

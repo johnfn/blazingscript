@@ -11,10 +11,6 @@ export type Sexpr = {
 export interface Param {
   name       : string;
   type       : string;
-
-  optional  ?: boolean;
-
-  declaration: ParameterDeclaration;
 }
 
 export function S(type: "i32" | "f32" | "[]", name: string, ...body: (string | Sexpr)[]): Sexpr {

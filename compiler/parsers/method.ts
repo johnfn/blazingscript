@@ -1,6 +1,6 @@
-import { ClassDeclaration, forEachChild, FunctionDeclaration, Node, NodeArray, ParameterDeclaration, SyntaxKind, TypeFlags, VariableDeclaration, ForStatement, VariableDeclarationList, VariableStatement, BindingName, Identifier, createTextChangeRange, createBigIntLiteral, Statement, MethodDeclaration } from "typescript";
+import { ClassDeclaration, MethodDeclaration } from "typescript";
 import { Sexpr, Param, S } from "../sexpr";
-import { Context } from "../program";
+import { Context, THIS_NAME } from "../program";
 import { parseStatementList } from "./statementlist";
 import { addDeclarationsToContext, addParameterListToContext } from "./function";
 
@@ -27,7 +27,13 @@ export function parseMethod(
 
   const result = S.Func({
     name: ctx.getFunctionByNode(node).bsname,
-    params: params,
+    params: [
+      {
+        name: THIS_NAME,
+        type: "i32",
+      },
+      ...params
+    ],
     body: [
       ...(ctx.getVariablesInCurrentScope(false).map(decl => S.DeclareLocal(decl.bsname, decl.wasmType))),
       ...sb,

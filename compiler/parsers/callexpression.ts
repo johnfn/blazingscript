@@ -31,16 +31,16 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
     const justBar       = castedExpr.name;
     const fooDotBarType = ctx.typeChecker.getTypeAtLocation(fooDotBar);
 
-    if (fooDotBarType.flags & TypeFlags.StringLike) {
-      const fn = ctx.getMethodByNames("__String", justBar.getText());
-
-      return S(
-        "i32",
-        "call",
-        fn.bsname,
-        parseExpression(ctx, fooDotBar),
-        ...(ce.arguments.map(arg => parseExpression(ctx, arg))),
-      );
+    if (
+      (fooDotBarType.flags & TypeFlags.StringLike) || 
+      (fooDotBarType.symbol.name === "__String") // for this types
+      ) {
+      return ctx.callMethod({
+        className : "__String",
+        methodName: justBar.getText(),
+        thisExpr  : fooDotBar,
+        argExprs  : [...ce.arguments],
+      })
     }
   }
 

@@ -6,17 +6,15 @@ import { parseExpression } from "./expression";
 export function parseElementAccess(ctx: Context, pa: ElementAccessExpression): Sexpr {
   const arg   = pa.argumentExpression;
   const array = pa.expression;
-
   const arrayType = ctx.typeChecker.getTypeAtLocation(array);
 
   if (arrayType.flags & TypeFlags.StringLike) {
-    return S(
-      "i32", 
-      "call", 
-      "$__String__charAt", 
-      parseExpression(ctx, array),
-      parseExpression(ctx, arg)
-    );
+    return ctx.callMethod({
+      className: "__String",
+      methodName: "charAt",
+      thisExpr: array,
+      argExprs: [arg],
+    });
   }
 
   throw new Error(`Dont know how to index into anything other than strings. ${ pa.getText() }`);

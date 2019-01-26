@@ -1,5 +1,5 @@
 import { Context } from "../program";
-import { SyntaxKind, Expression, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, PropertyAccessExpression, ParenthesizedExpression, ElementAccessExpression } from "typescript";
+import { SyntaxKind, Expression, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, PropertyAccessExpression, ParenthesizedExpression, ElementAccessExpression, ThisExpression } from "typescript";
 import { parseBinaryExpression } from "./binaryexpression";
 import { parseCallExpression } from "./callexpression";
 import { parseIdentifier } from "./identifier";
@@ -11,6 +11,7 @@ import { parsePrefixUnaryExpression } from "./prefixunaryexpression";
 import { parseStringLiteral } from "./stringliteral";
 import { parsePropertyAccess } from "./propertyaccess";
 import { parseElementAccess } from "./elementaccess";
+import { parseThisKeyword } from "./this";
 
 export function parseExpression(ctx: Context, expression: Expression): Sexpr {
   switch (expression.kind) {
@@ -42,6 +43,8 @@ export function parseExpression(ctx: Context, expression: Expression): Sexpr {
       return parsePropertyAccess(ctx, expression as PropertyAccessExpression);
     case SyntaxKind.ElementAccessExpression:
       return parseElementAccess(ctx, expression as ElementAccessExpression);
+    case SyntaxKind.ThisKeyword:
+      return parseThisKeyword(ctx, expression as ThisExpression);
     default:
     throw new Error(`Unhandled expression! ${ SyntaxKind[expression.kind] } in ${ expression.getText() }`);
   }

@@ -130,12 +130,22 @@ export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr
   if ((leftType.flags & TypeFlags.StringLike) && (rightType.flags & TypeFlags.StringLike)) {
     switch (be.operatorToken.kind) {
       case SyntaxKind.EqualsEqualsEqualsToken:
-        return S("i32", "call", "$__strEq", leftParsed, rightParsed);
+        return ctx.callMethod({
+          className: "__String",
+          methodName: "strEq",
+          thisExpr: be.left,
+          argExprs: [be.right],
+        });
       case SyntaxKind.ExclamationEqualsEqualsToken:
         return S(
           "i32", 
           "i32.eqz", 
-          S("i32", "call", "$__strEq", leftParsed, rightParsed)
+          ctx.callMethod({
+            className: "__String",
+            methodName: "strEq",
+            thisExpr: be.left,
+            argExprs: [be.right],
+          }),
         );
       case SyntaxKind.PlusToken:
         return S(

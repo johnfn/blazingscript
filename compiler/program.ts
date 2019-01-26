@@ -1,7 +1,10 @@
-import ts, { Node, FunctionDeclaration, ScriptTarget, TransformerFactory, CompilerOptions, DiagnosticWithLocation, MethodDeclaration, ClassDeclaration, isFunctionDeclaration, NodeFlags, SyntaxKind } from 'typescript';
+import ts, { Node, FunctionDeclaration, ScriptTarget, TransformerFactory, CompilerOptions, DiagnosticWithLocation, MethodDeclaration, ClassDeclaration, isFunctionDeclaration, NodeFlags, SyntaxKind, Expression, NodeArray } from 'typescript';
 import { Rewriter } from './rewriter';
 import { sexprToString, Sexpr, S } from './sexpr';
 import { add } from "./util"
+import { parseExpression } from './parsers/expression';
+
+export const THIS_NAME = "__this";
 
 type Variable = {
   tsType     : ts.Type | undefined;
@@ -133,6 +136,7 @@ export class Context {
     parent: ClassDeclaration
   }): void {
     const { node, parent } = props;
+
     let fqName: string;
     let fnName: string;
     let className: string;
@@ -153,6 +157,25 @@ export class Context {
       fnName,
       className,
     });
+  }
+
+  callMethod(props: {
+    className : string;
+    methodName: string;
+    thisExpr  : Expression;
+    argExprs  : Expression[];
+  }): Sexpr {
+    const { className, methodName, thisExpr: thisNode, argExprs } = props;
+
+    const fn = this.getMethodByNames(className, methodName);
+
+    return S(
+      "i32",
+      "call",
+      fn.bsname,
+      parseExpression(this, thisNode), // always pass this as first arg
+      ...(argExprs.map(arg => parseExpression(this, arg))),
+    );
   }
 
   addFunction(node: FunctionDeclaration): void {
