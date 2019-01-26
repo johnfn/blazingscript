@@ -4,10 +4,14 @@ interface String {
   readonly length: number;
   charAt(pos: number): string;
   charCodeAt(index: number): number;
-  indexOf(searchString: string, position?: number): number;
+  indexOf(searchString: string, position: number): number;
 }
 
-// class __String { }
+class __String { 
+  indexOf(position: number): number {
+    return 5;
+  }
+}
 
 declare type clogType = string | number;
 declare const clog    : (a: clogType, b?: clogType, c?: clogType) => void;

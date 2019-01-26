@@ -1,11 +1,17 @@
-import { Node, SourceFile, SyntaxKind, FunctionDeclaration, MethodDeclaration, forEachChild, NodeFlags, ModifierFlags } from "typescript";
+import { Node, SourceFile, SyntaxKind, FunctionDeclaration, MethodDeclaration, forEachChild, NodeFlags, ModifierFlags, ClassDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseStatementList } from "./statementlist";
 import { Context } from "../program";
 import { parseFunction } from "./function";
+import { parseMethod } from "./method";
 
 type FunctionDecl = {
   node    : FunctionDeclaration | MethodDeclaration;
+
+  /**
+   * The containing class (if there is one).
+   */
+  parent  : ClassDeclaration | null;
   name    : string;
   exported: boolean;
 }
@@ -26,12 +32,12 @@ export function parseSourceFile(ctx: Context, sf: SourceFile): Sexpr {
     )),
     ...functions.map(fn => { 
       if (fn.node.kind === SyntaxKind.MethodDeclaration) {
-        // return parseMethod(ctx, fn.node);
+        return parseMethod(ctx, fn.node, fn.parent!);
       } else if (fn.node.kind === SyntaxKind.FunctionDeclaration) {
         return parseFunction(ctx, fn.node)
       }
 
-      throw new Error("i dont handle methods yet (or whatever else i got here.)")
+      throw new Error("i got some weird type of function i cant handle.")
     }),
     ...parseStatementList(ctx, sf.statements),
     ...(
@@ -42,6 +48,7 @@ export function parseSourceFile(ctx: Context, sf: SourceFile): Sexpr {
 
 function findAllFunctions(node: Node): FunctionDecl[] {
   const decls: FunctionDecl[] = [];
+  let parent: ClassDeclaration | null = null;
 
   const helper = (node: Node) => {
     if (node.kind === SyntaxKind.FunctionDeclaration) {
@@ -55,6 +62,7 @@ function findAllFunctions(node: Node): FunctionDecl[] {
         node: fd,
         name: fd.name.getText(),
         exported: true, //  fd.modifiers && fd.modifiers.find(tok => tok.kind === SyntaxKind.Export) .indexOf(ModifierFlags.Export) > -1
+        parent,
       });
     }
 
@@ -69,10 +77,19 @@ function findAllFunctions(node: Node): FunctionDecl[] {
         node: md,
         name: md.name.getText(),
         exported: false,
+        parent,
       });
     }
 
+    const oldParent = parent;
+
+    if (node.kind === SyntaxKind.ClassDeclaration) {
+      parent = node as ClassDeclaration;
+    }
+
     forEachChild(node, helper);
+
+    parent = oldParent;
   }
 
   forEachChild(node, helper);

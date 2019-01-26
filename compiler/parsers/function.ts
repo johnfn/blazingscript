@@ -7,11 +7,9 @@ export function parseFunction(
   ctx : Context,
   node: FunctionDeclaration
 ): Sexpr {
-  const functionName = node.name!.text;
-
   ctx.pushScope();
 
-  ctx.addFunction(functionName, node, functionName.startsWith("__inline"));
+  ctx.addFunction(node, false, null);
 
   // traverse function ahead of time to find variable declarations, which need to go up front
 
@@ -19,7 +17,7 @@ export function parseFunction(
 
   // now that we've set up ctx with the appropriate variable mappings, build the function
 
-  const params = addParameterListToContext(ctx, node.parameters, functionName)
+  const params = addParameterListToContext(ctx, node.parameters)
   const sb = parseStatementList(ctx, node.body!.statements);
   let last: Sexpr | null = null;
 
@@ -30,10 +28,10 @@ export function parseFunction(
   const ret = (last && last.type === "i32") ? undefined : S.Const("i32", 0);
 
   const result = S.Func({
-    name: functionName,
+    name: ctx.getFunctionByNode(node).bsname,
     params: params,
     body: [
-      ...(ctx.getVariablesInCurrentScope().map(decl => S.DeclareLocal(decl.bsname, decl.wasmType))),
+      ...(ctx.getVariablesInCurrentScope(false).map(decl => S.DeclareLocal(decl.bsname, decl.wasmType))),
       ...sb,
       ...(ret ? [ret] : []),
     ],
@@ -44,7 +42,7 @@ export function parseFunction(
   return result;
 }
 
-function addDeclarationsToContext(node: Node, ctx: Context): VariableDeclaration[] {
+export function addDeclarationsToContext(node: Node, ctx: Context): VariableDeclaration[] {
   const decls: VariableDeclaration[] = [];
 
   // Step 1: gather all declarations
@@ -109,10 +107,9 @@ function addDeclarationsToContext(node: Node, ctx: Context): VariableDeclaration
   return decls;
 }
 
-function addParameterListToContext(
+export function addParameterListToContext(
   ctx: Context,
-  nodes: NodeArray<ParameterDeclaration>, 
-  functionName: string
+  nodes: NodeArray<ParameterDeclaration>
 ): Param[] {
   const result: Param[] = [];
 
@@ -123,11 +120,7 @@ function addParameterListToContext(
     if (type.flags & TypeFlags.Number || type.flags & TypeFlags.String) {
       wasmType = "i32";
     } else {
-      if (functionName !== "clog") {
-        throw new Error("Unsupported type!")
-      } else {
-        wasmType = "i32";
-      }
+      throw new Error("Unsupported type!")
     }
 
     result.push({

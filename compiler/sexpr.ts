@@ -74,7 +74,7 @@ S.Export = (name: string, type: "func"): Sexpr => S(
 S.Func = ({ name, body, params }: { name: string, body: Sexpr[], params: Param[] }): Sexpr => S(
   "[]",
   "func",
-  `\$${name}`,
+  name,
   ...Sx.Params(params),
   S("[]", "result", "i32"),
   ...body,

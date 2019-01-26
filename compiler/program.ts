@@ -1,19 +1,24 @@
-import ts, { Node, FunctionDeclaration, ScriptTarget, TransformerFactory, CompilerOptions, DiagnosticWithLocation } from 'typescript';
+import ts, { Node, FunctionDeclaration, ScriptTarget, TransformerFactory, CompilerOptions, DiagnosticWithLocation, MethodDeclaration, ClassDeclaration, isFunctionDeclaration, NodeFlags, SyntaxKind } from 'typescript';
 import { Rewriter } from './rewriter';
 import { sexprToString, Sexpr, S } from './sexpr';
 import { add } from "./util"
 
 type Variable = {
-  tsType: ts.Type | undefined;
-  wasmType: "i32";
-  bsname: string;
+  tsType     : ts.Type | undefined;
+  wasmType   : "i32";
+  bsname     : string;
   isParameter: boolean;
+}
+
+type Function = {
+  node  : FunctionDeclaration | MethodDeclaration;
+  bsname: string;
 }
 
 type Loop = {
   continueLabel: string;
-  breakLabel: string;
-  inc: Sexpr | null;
+  breakLabel   : string;
+  inc          : Sexpr | null;
 }
 
 type Class = {
@@ -22,7 +27,7 @@ type Class = {
 
 type Scope = {
   variableNameMapping: { [key: string]: Variable };
-  functionNameToNodeMapping: { [key: string]: FunctionDeclaration };
+  functionNameMapping: Function[];
   loopStack: Loop[];
   classStack: Class[];
 }
@@ -44,10 +49,10 @@ export class Context {
   private makeScope(): Scope {
     return {
       variableNameMapping: {},
-      functionNameToNodeMapping: {},
-      loopStack: [],
-      classStack: [],
-    }
+      functionNameMapping: [],
+      loopStack          : [],
+      classStack         : [],
+    };
   }
 
   scope(): Scope {
@@ -103,12 +108,51 @@ export class Context {
     return loopStack[loopStack.length - 1].continueLabel;
   }
 
-  addFunction(name: string, node: FunctionDeclaration, inline = false): void {
-    if (name in this.scope().functionNameToNodeMapping) {
-      throw new Error(`Redeclaring function named ${ name }.`);
+  addFunction(node: FunctionDeclaration | MethodDeclaration, isMethod: boolean, parent: ClassDeclaration | null): void {
+    let bsname: string;
+
+    if (node.kind & SyntaxKind.FunctionDeclaration) {
+      const fd = node as FunctionDeclaration;
+
+      if (!fd.name) {
+        throw new Error("anonymous functions not supported yet!")
+      }
+
+      bsname = "$" + fd.name!.text;
+    } else if (node.kind & SyntaxKind.MethodDeclaration) {
+      const md = node as MethodDeclaration;
+
+      if (!md.name) throw new Error("anonymous methods not supported yet!")
+      if (!parent) throw new Error("no parent provided to addFunction for method.");
+      if (!parent.name) throw new Error("dont support classes without names yet");
+
+      bsname = "$" + parent.name.text + "__" + md.name!.getText();
+    } else {
+      throw new Error("unhandled function node type in context.");
     }
 
-    this.scope().functionNameToNodeMapping[name] = node;
+    for (const fn of this.scope().functionNameMapping) {
+      if (fn.bsname === bsname) {
+        throw new Error(`Redeclaring function named ${ bsname }.`);
+      }
+    }
+
+    this.scope().functionNameMapping.push({
+      bsname,
+      node,
+    });
+  }
+
+  getFunctionByNode(node: FunctionDeclaration | MethodDeclaration): Function {
+    for (const scope of this.scopes) {
+      for (const fn of scope.functionNameMapping) {
+        if (fn.node === node) {
+          return fn;
+        }
+      }
+    }
+
+    throw new Error("Failed to find function by node");
   }
 
   addVariableToScope(name: string, tsType: ts.Type | undefined, wasmType: "i32", parameter = false): void {
@@ -148,18 +192,6 @@ export class Context {
 
       return true;
     });
-  }
-
-  getFunction(name: string): FunctionDeclaration {
-    const functionNamesList = this.scopes.slice().reverse().map(x => x.functionNameToNodeMapping);
-
-    for (const varNames of functionNamesList) {
-      if (name in varNames) {
-        return varNames[name];
-      }
-    }
-
-    throw new Error(`No function named ${ name }.`);
   }
 }
 

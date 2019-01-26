@@ -23,8 +23,6 @@ export function parseCallExpression(ctx: Context, ce: CallExpression): Sexpr {
 }
 
 function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression): Sexpr | null {
-  const type = ctx.typeChecker.getTypeAtLocation(ce.expression);
-
   if (ce.expression.kind === SyntaxKind.PropertyAccessExpression) {
     // If we have Foo.Bar
 
