@@ -53,6 +53,7 @@ function printScope(scope: Scope): void {
 export class Context {
   typeChecker: ts.TypeChecker;
   scopes: Scope[];
+  jsTypes: { [jsType: string]: string } = {};
 
   constructor(
     tc: ts.TypeChecker
@@ -62,6 +63,16 @@ export class Context {
     this.scopes = [
       this.makeScope()
     ];
+  }
+
+  // TODO: Somehow i want to ensure that this is actually targetting js
+  // names... but im not sure how??? There are so many.
+  addJsTypes(jsTypes: { [jsType: string]: string }): void {
+    this.jsTypes = jsTypes;
+  }
+
+  getNativeTypeName(jsTypeName: string): string {
+    return this.jsTypes[jsTypeName];
   }
 
   private makeScope(): Scope {

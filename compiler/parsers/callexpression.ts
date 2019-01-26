@@ -33,10 +33,10 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
 
     if (
       (fooDotBarType.flags & TypeFlags.StringLike) || 
-      (fooDotBarType.symbol.name === "__String") // for this types
-      ) {
+      (fooDotBarType.symbol.name === ctx.getNativeTypeName("String")) // for this types
+    ) {
       return ctx.callMethod({
-        className : "__String",
+        className: ctx.getNativeTypeName("String"),
         methodName: justBar.getText(),
         thisExpr  : fooDotBar,
         argExprs  : [...ce.arguments],

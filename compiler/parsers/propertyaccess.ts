@@ -8,11 +8,11 @@ export function parsePropertyAccess(ctx: Context, pa: PropertyAccessExpression):
 
   if (
     (expType.flags & TypeFlags.StringLike) ||
-    (expType.symbol.name === "__String") // for this types
+    (expType.symbol.name === ctx.getNativeTypeName("String")) // for this types
   ) {
     if (property === "length") {
       return ctx.callMethod({
-        className: "__String",
+        className: ctx.getNativeTypeName("String"), 
         methodName: "strLen",
         thisExpr: pa.expression,
         argExprs: [],

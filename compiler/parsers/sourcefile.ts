@@ -1,4 +1,4 @@
-import { Node, SourceFile, SyntaxKind, FunctionDeclaration, MethodDeclaration, forEachChild, NodeFlags, ModifierFlags, ClassDeclaration } from "typescript";
+import { Node, SourceFile, SyntaxKind, FunctionDeclaration, MethodDeclaration, forEachChild, NodeFlags, ModifierFlags, ClassDeclaration, CallExpression } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseStatementList } from "./statementlist";
 import { Context } from "../context";
@@ -21,6 +21,9 @@ export function parseSourceFile(ctx: Context, sf: SourceFile): Sexpr {
 
   const functions = findAllFunctions(sf);
   const exportedFunctions = functions.filter(f => f.exported);
+  const jsTypes = findAllJsTypes(sf);
+
+  ctx.addJsTypes(jsTypes);
 
   return S(
     "[]",
@@ -43,6 +46,38 @@ export function parseSourceFile(ctx: Context, sf: SourceFile): Sexpr {
       exportedFunctions.map(fn => S.Export(fn.name, "func"))
     )
   );
+}
+
+function findAllJsTypes(node: Node): { [jsType: string]: string } {
+  const jsTypes: { [jsType: string ]: string } = {};
+
+  const helper = (node: Node) => {
+    if (node.kind === SyntaxKind.ClassDeclaration) {
+      const cd = node as ClassDeclaration;
+
+      if (!cd.name) {
+        throw new Error("dont handle decorators on unnamed classes currently!");
+      }
+
+      for (const deco of (cd.decorators || [])) {
+        if (deco.expression.kind === SyntaxKind.CallExpression) {
+          const ce = deco.expression as CallExpression;
+    
+          if (ce.expression.getText() === "jsType") {
+            const jsTypeName: string = ce.arguments[0].getText().slice(1, -1);
+
+            jsTypes[jsTypeName] = cd.name!.getText();
+          }
+        }
+      }
+    }
+
+    forEachChild(node, helper);
+  };
+
+  forEachChild(node, helper);
+
+  return jsTypes;
 }
 
 function findAllFunctions(node: Node): FunctionDecl[] {

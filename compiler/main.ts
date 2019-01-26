@@ -4,6 +4,7 @@ import { Program } from './program';
 // TODO:
 // * add imports so that my code isnt such a mess
 // * use jsType
+// * rewrite AST to structure that has all the info we want.
 // * assertEquals() rather than just returning true from inside code blocks
 // * going to have to do a preparse of all functions to ADD them before i process them, because
 //   functions can refer to other functions that don't yet exist.

@@ -9,7 +9,7 @@ declare const operator: (type: "+" | "===" | "!==") => ((target: any, propertyKe
 declare const jsType: (x: string) => (<T extends { new (...args: any[]) : {} }>(constructor: T) => T);
 
 @jsType("String")
-class __String { 
+class StringInternal { 
   readonly length: number = 0;
 
   strLen(): number {
@@ -101,7 +101,7 @@ class __String {
   }
 }
 
-interface String extends __String {
+interface String extends StringInternal {
   readonly length: number;
   charAt(pos: number): string;
   charCodeAt(index: number): number;

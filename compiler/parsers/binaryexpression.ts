@@ -132,21 +132,21 @@ export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr
     switch (be.operatorToken.kind) {
       case SyntaxKind.EqualsEqualsEqualsToken:
         return ctx.callMethodByOperator({
-          className: "__String",
+          className: ctx.getNativeTypeName("String"),
           opName: Operator["==="],
           thisExpr: be.left,
           argExprs: [be.right],
         });
       case SyntaxKind.ExclamationEqualsEqualsToken:
         return ctx.callMethodByOperator({
-          className: "__String",
+          className: ctx.getNativeTypeName("String"),
           opName: Operator["!=="],
           thisExpr: be.left,
           argExprs: [be.right],
         });
       case SyntaxKind.PlusToken:
         return ctx.callMethodByOperator({
-          className: "__String",
+          className: ctx.getNativeTypeName("String"),
           opName: Operator["+"],
           thisExpr: be.left,
           argExprs: [be.right],

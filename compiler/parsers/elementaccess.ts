@@ -10,7 +10,7 @@ export function parseElementAccess(ctx: Context, pa: ElementAccessExpression): S
 
   if (arrayType.flags & TypeFlags.StringLike) {
     return ctx.callMethod({
-      className: "__String",
+      className: ctx.getNativeTypeName("String"),
       methodName: "charAt",
       thisExpr: array,
       argExprs: [arg],
