@@ -13,7 +13,7 @@ export function parseElementAccess(ctx: Context, pa: ElementAccessExpression): S
     return S(
       "i32", 
       "call", 
-      "$__charAt", 
+      "$__String__charAt", 
       parseExpression(ctx, array),
       parseExpression(ctx, arg)
     );

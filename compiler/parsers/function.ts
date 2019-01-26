@@ -9,7 +9,7 @@ export function parseFunction(
 ): Sexpr {
   ctx.pushScope();
 
-  ctx.addFunction(node, null);
+  ctx.addFunction(node);
 
   // traverse function ahead of time to find variable declarations, which need to go up front
 

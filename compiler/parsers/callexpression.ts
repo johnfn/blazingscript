@@ -32,17 +32,15 @@ function handleSpecialFunctions(ctx: Context, name: string, ce: CallExpression):
     const fooDotBarType = ctx.typeChecker.getTypeAtLocation(fooDotBar);
 
     if (fooDotBarType.flags & TypeFlags.StringLike) {
-      if (justBar.getText() === "charCodeAt") {
-        return S("i32", "call", "$__charCodeAt", parseExpression(ctx, fooDotBar), parseExpression(ctx, ce.arguments[0]));
-      }
+      const fn = ctx.getMethodByNames("__String", justBar.getText());
 
-      if (justBar.getText() === "charAt") {
-        return S("i32", "call", "$__charAt", parseExpression(ctx, fooDotBar), parseExpression(ctx, ce.arguments[0]));
-      }
-
-      if (justBar.getText() === "indexOf") {
-        return S("i32", "call", "$__strIndexOf", parseExpression(ctx, fooDotBar), parseExpression(ctx, ce.arguments[0]));
-      }
+      return S(
+        "i32",
+        "call",
+        fn.bsname,
+        parseExpression(ctx, fooDotBar),
+        ...(ce.arguments.map(arg => parseExpression(ctx, arg))),
+      );
     }
   }
 

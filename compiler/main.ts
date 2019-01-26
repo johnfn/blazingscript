@@ -4,6 +4,8 @@ import { Program } from './program';
 // TODO:
 // * add imports so that my code isnt such a mess
 // * assertEquals() rather than just returning true from inside code blocks
+// * going to have to do a preparse of all functions to ADD them before i process them, because
+//   functions can refer to other functions that don't yet exist.
 // * pushScope and popScope should be a with() sort of thing.
 // * clog: 
 //   * get correct file name.

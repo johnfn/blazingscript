@@ -1,16 +1,72 @@
 // these will be added by native 
 
-interface String {
+class __String { 
+  charCodeAt(str: string, i: number): number {
+    return mget((str as any as number) + 4 + i) & 0x000000ff;
+  }
+
+  charAt(str: string, i: number): string {
+    const charCode = mget((str as any as number) + 4 + i) & 0x000000ff;
+    const newStr = malloc(4 + 1);
+
+    mset(newStr + 0, 1);
+    mset(newStr + 4, charCode);
+
+    return newStr as any as string;
+  }
+
+  indexOf(haystack: string, needle: string): number {
+    const needleLen = needle.length;
+    const haystackLen = haystack.length;
+
+    for (let haystackStartPos = 0; haystackStartPos < haystackLen; haystackStartPos++) {
+      let curPos = 0;
+
+      for (curPos = haystackStartPos; curPos < haystackStartPos + needleLen; curPos++) {
+        if (curPos > haystackLen) { 
+          break;
+        }
+
+        if (haystack.charAt(curPos) === needle.charAt(curPos - haystackStartPos)) {
+          continue;
+        } else {
+          break;
+        }
+      }
+
+      if (curPos === haystackStartPos + needleLen) {
+        return haystackStartPos;
+      }
+    }
+
+    return -1;
+  }
+}
+
+function __strCat(str1: string, str2: string): string {
+  const str1Len = str1.length;
+  const str2Len = str2.length;
+  const newLength = str1Len + str2Len;
+  const newStr = malloc(newLength + 4);
+
+  mset(newStr + 0, newLength);
+
+  for (let i = 0; i < str1.length; i++) {
+    mset(newStr + 4 + i, str1.charCodeAt(i));
+  }
+
+  for (let j = 0; j < str2.length; j++) {
+    mset(newStr + 4 + str1Len + j, str2.charCodeAt(j));
+  }
+
+  return newStr as any as string;
+}
+
+interface String extends __String {
   readonly length: number;
   charAt(pos: number): string;
   charCodeAt(index: number): number;
   indexOf(searchString: string, position: number): number;
-}
-
-class __String { 
-  indexOf(position: number): number {
-    return 5;
-  }
 }
 
 declare type clogType = string | number;
@@ -60,66 +116,6 @@ function __strEq(str1: string, str2: string): boolean {
   }
 
   return true;
-}
-
-function __charCodeAt(str: string, i: number): number {
-  return mget((str as any as number) + 4 + i) & 0x000000ff;
-}
-
-function __charAt(str: string, i: number): string {
-  const charCode = mget((str as any as number) + 4 + i) & 0x000000ff;
-  const newStr = malloc(4 + 1);
-
-  mset(newStr + 0, 1);
-  mset(newStr + 4, charCode);
-
-  return newStr as any as string;
-}
-
-function __strCat(str1: string, str2: string): string {
-  const str1Len = str1.length;
-  const str2Len = str2.length;
-  const newLength = str1Len + str2Len;
-  const newStr = malloc(newLength + 4);
-
-  mset(newStr + 0, newLength);
-
-  for (let i = 0; i < str1.length; i++) {
-    mset(newStr + 4 + i, str1.charCodeAt(i));
-  }
-
-  for (let j = 0; j < str2.length; j++) {
-    mset(newStr + 4 + str1Len + j, str2.charCodeAt(j));
-  }
-
-  return newStr as any as string;
-}
-
-function __strIndexOf(haystack: string, needle: string): number {
-  const needleLen = needle.length;
-  const haystackLen = haystack.length;
-
-  for (let haystackStartPos = 0; haystackStartPos < haystackLen; haystackStartPos++) {
-    let curPos = 0;
-
-    for (curPos = haystackStartPos; curPos < haystackStartPos + needleLen; curPos++) {
-      if (curPos > haystackLen) { 
-        break;
-      }
-
-      if (haystack.charAt(curPos) === needle.charAt(curPos - haystackStartPos)) {
-        continue;
-      } else {
-        break;
-      }
-    }
-
-    if (curPos === haystackStartPos + needleLen) {
-      return haystackStartPos;
-    }
-  }
-
-  return -1;
 }
 
 function test_malloc() {

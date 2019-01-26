@@ -11,8 +11,10 @@ type Variable = {
 }
 
 type Function = {
-  node  : FunctionDeclaration | MethodDeclaration;
-  bsname: string;
+  node     : FunctionDeclaration | MethodDeclaration;
+  className: string | null;
+  fnName   : string;
+  bsname   : string;
 }
 
 type Loop = {
@@ -30,6 +32,20 @@ type Scope = {
   functionNameMapping: Function[];
   loopStack: Loop[];
   classStack: Class[];
+}
+
+function printScope(scope: Scope): void {
+  const vars = scope.variableNameMapping;
+  const fns = scope.functionNameMapping;
+
+  if (Object.keys(vars).length === 0 && fns.length === 0) {
+    console.log("Empty Scope");
+
+    return;
+  }
+
+  console.log("Variables: ", Object.keys(vars).map(key => vars[key].bsname).join(", "));
+  console.log("Functions: ", fns.map(fn => fn.bsname).join(", "));
 }
 
 export class Context {
@@ -55,8 +71,12 @@ export class Context {
     };
   }
 
-  scope(): Scope {
+  localScope(): Scope {
     return this.scopes[this.scopes.length - 1];
+  }
+
+  globalScope(): Scope {
+    return this.scopes[0];
   }
 
   pushScope(): void {
@@ -74,7 +94,7 @@ export class Context {
   addToLoopStack(inc: Sexpr | null) {
     const totalLoopCount = add(this.scopes.map(scope => scope.loopStack.length));
 
-    this.scope().loopStack.push({
+    this.localScope().loopStack.push({
       continueLabel: `$loopcontinue${ totalLoopCount }`,
       breakLabel   : `$loopbreak${ totalLoopCount }`,
       inc          ,
@@ -82,11 +102,11 @@ export class Context {
   }
 
   popFromLoopStack() {
-    this.scope().loopStack.pop();
+    this.localScope().loopStack.pop();
   }
 
   getLoopContinue(): Sexpr {
-    const loopInfo = this.scope().loopStack[this.scope().loopStack.length - 1];
+    const loopInfo = this.localScope().loopStack[this.localScope().loopStack.length - 1];
 
     const res = S.Block([
       ...(loopInfo.inc ? [loopInfo.inc] : []),
@@ -97,49 +117,69 @@ export class Context {
   }
 
   getLoopBreakLabel(): string {
-    const loopStack = this.scope().loopStack;
+    const loopStack = this.localScope().loopStack;
 
     return loopStack[loopStack.length - 1].breakLabel;
   }
 
   getLoopContinueLabel(): string {
-    const loopStack = this.scope().loopStack;
+    const loopStack = this.localScope().loopStack;
 
     return loopStack[loopStack.length - 1].continueLabel;
   }
 
-  addFunction(node: FunctionDeclaration | MethodDeclaration, parent: ClassDeclaration | null): void {
-    let bsname: string;
+  addMethod(props: {
+    node: MethodDeclaration;
+    parent: ClassDeclaration
+  }): void {
+    const { node, parent } = props;
+    let fqName: string;
+    let fnName: string;
+    let className: string;
 
-    if (node.kind === SyntaxKind.MethodDeclaration) {
-      const md = node as MethodDeclaration;
+    const md = node as MethodDeclaration;
 
-      if (!md.name) throw new Error("anonymous methods not supported yet!")
-      if (!parent) throw new Error("no parent provided to addFunction for method.");
-      if (!parent.name) throw new Error("dont support classes without names yet");
+    if (!md.name) throw new Error("anonymous methods not supported yet!")
+    if (!parent) throw new Error("no parent provided to addFunction for method.");
+    if (!parent.name) throw new Error("dont support classes without names yet");
 
-      bsname = "$" + parent.name.text + "__" + md.name!.getText();
-    } else if (node.kind === SyntaxKind.FunctionDeclaration) {
-      const fd = node as FunctionDeclaration;
+    fqName = "$" + parent.name.text + "__" + md.name!.getText();
+    fnName = md.name!.getText();
+    className = parent.name.text;
 
-      if (!fd.name) {
-        throw new Error("anonymous functions not supported yet!")
-      }
-
-      bsname = "$" + fd.name!.text;
-    } else {
-      throw new Error("unhandled function node type in context.");
-    }
-
-    for (const fn of this.scope().functionNameMapping) {
-      if (fn.bsname === bsname) {
-        throw new Error(`Redeclaring function named ${ bsname }.`);
-      }
-    }
-
-    this.scope().functionNameMapping.push({
-      bsname,
+    this.globalScope().functionNameMapping.push({
+      bsname: fqName,
       node,
+      fnName,
+      className,
+    });
+  }
+
+  addFunction(node: FunctionDeclaration): void {
+    let fqName: string;
+    let fnName: string;
+    let className: string | null = null;
+
+    const fd = node as FunctionDeclaration;
+
+    if (!fd.name) {
+      throw new Error("anonymous functions not supported yet!")
+    }
+
+    fqName = "$" + fd.name!.text;
+    fnName = fd.name!.text;
+
+    for (const fn of this.localScope().functionNameMapping) {
+      if (fn.bsname === fqName) {
+        throw new Error(`Redeclaring function named ${ fqName }.`);
+      }
+    }
+
+    this.localScope().functionNameMapping.push({
+      bsname: fqName,
+      node,
+      fnName,
+      className,
     });
   }
 
@@ -155,8 +195,20 @@ export class Context {
     throw new Error("Failed to find function by node");
   }
 
+  getMethodByNames(className: string, methodName: string): Function {
+    for (const scope of this.scopes) {
+      for (const fn of scope.functionNameMapping) {
+        if (fn.className === className && fn.fnName === methodName) {
+          return fn;
+        }
+      }
+    }
+
+    throw new Error(`Failed to find function ref by class name ${ className } and method name ${ methodName }`);
+  }
+
   addVariableToScope(name: string, tsType: ts.Type | undefined, wasmType: "i32", parameter = false): void {
-    const mapping = this.scope().variableNameMapping;
+    const mapping = this.localScope().variableNameMapping;
 
     if (name in mapping) {
       throw new Error(`Already added ${ name } to scope!`);
