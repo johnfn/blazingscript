@@ -1,8 +1,9 @@
-import { BinaryExpression, SyntaxKind, BinaryOperator, TypeFlags, AssignmentExpression, EqualsToken, Identifier } from "typescript";
+import { BinaryExpression, SyntaxKind, TypeFlags, AssignmentExpression, EqualsToken, Identifier } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { parseExpression } from "./expression";
+import { parseExpression, BSExpression } from "./expression";
 import { Operator } from "./method";
 import { Context } from "../context";
+import { BSNode } from "../rewriter";
 
 export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr {
   const leftType    = ctx.typeChecker.getTypeAtLocation(be.left);
@@ -159,6 +160,20 @@ export function parseBinaryExpression(ctx: Context, be: BinaryExpression): Sexpr
   throw new Error(`unhandled types for binary expression ${ be.getText() }.`);
 }
 
+export class BSBinaryExpression extends BSNode {
+  children: BSNode[];
+  left    : BSExpression;
+  right   : BSExpression;
+
+  constructor(node: BinaryExpression) {
+    super();
+
+    this.left  = new BSExpression(node.left);
+    this.right = new BSExpression(node.right);
+
+    this.children = [this.left, this.right];
+  }
+}
 
 /*
 full list

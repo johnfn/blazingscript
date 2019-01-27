@@ -2,6 +2,27 @@ import { forEachChild, FunctionDeclaration, Node, NodeArray, ParameterDeclaratio
 import { Sexpr, Param, S } from "../sexpr";
 import { Context } from "../context";
 import { parseStatementList } from "./statementlist";
+import { BSNode } from "../rewriter";
+import { BSParameter } from "./parameter";
+import { BSBlock } from "./block";
+
+export class BSFunctionDeclaration extends BSNode {
+  children  : BSNode[];
+  parameters: BSParameter[];
+  body      : BSBlock | null;
+
+  constructor(node: FunctionDeclaration) {
+    super();
+
+    this.body = node.body ? new BSBlock(node.body) : null;
+    this.parameters = [...node.parameters].map(param => new BSParameter(param));
+
+    this.children = [
+      ...this.parameters,
+      ...(this.body ? [this.body] : []),
+    ];
+  }
+}
 
 export function parseFunction(
   ctx : Context,

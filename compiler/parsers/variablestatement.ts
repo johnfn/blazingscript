@@ -2,6 +2,20 @@ import { VariableStatement, SyntaxKind } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { parseExpression } from "./expression";
+import { BSNode } from "../rewriter";
+import { BSVariableDeclarationList } from "./variabledeclarationlist";
+
+export class BSVariableStatement extends BSNode {
+  children: BSNode[];
+  list    : BSNode;
+
+  constructor(node: VariableStatement) {
+    super();
+
+    this.list = new BSVariableDeclarationList(node.declarationList);
+    this.children = [this.list];
+  }
+}
 
 export function parseVariableStatement(ctx: Context, vs: VariableStatement): Sexpr | null {
   for (const mod of vs.modifiers || []) {

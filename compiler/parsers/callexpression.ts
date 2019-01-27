@@ -1,8 +1,24 @@
 import { Context } from "../context";
 import { CallExpression, SyntaxKind, TypeFlags, PropertyAccessExpression } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
-import { flatten } from "../rewriter";
+import { flatten, BSNode, BSExpression } from "../rewriter";
 import { parseExpression } from "./expression";
+
+export class BSCallExpression extends BSNode {
+  children  : BSNode[];
+  
+  expression: BSExpression;
+  arguments : BSExpression[];
+
+  constructor(node: CallExpression) {
+    super();
+
+    this.expression = new BSExpression(node.expression);
+    this.arguments = [...node.arguments].map(arg => new BSExpression(arg));
+
+    this.children = [this.expression, ...this.arguments];
+  }
+}
 
 export function parseCallExpression(ctx: Context, ce: CallExpression): Sexpr {
   // TODO: This is wrong, I actualy have to resolve the lhs

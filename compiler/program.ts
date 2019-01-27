@@ -2,6 +2,7 @@ import ts, { Node, FunctionDeclaration, ScriptTarget, TransformerFactory, Compil
 import { Rewriter } from './rewriter';
 import { sexprToString, Sexpr, S } from './sexpr';
 import { Context } from './context';
+import { parseSourceFile } from './parsers/sourcefile';
 
 export const THIS_NAME = "__this";
 
@@ -56,15 +57,11 @@ export class Program {
       throw new Error("source undefined, something has gone horribly wrong!!!");
     }
 
-    const sexpr = new Rewriter(
-      source,
-      ctx
-    ).parse();
+    const r = new Rewriter(source);
 
-    return sexprToString(sexpr);
+    return sexprToString(parseSourceFile(ctx, source));
   }
 }
-
 
 /*
     //const emitResolver = getDiagnosticsProducingTypeChecker().getEmitResolver((options.outFile || options.out) ? undefined : sourceFile, cancellationToken);

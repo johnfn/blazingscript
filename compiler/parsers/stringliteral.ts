@@ -1,6 +1,18 @@
 import { Context } from "../context";
 import { StringLiteral } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
+import { BSNode } from "../rewriter";
+
+export class BSStringLiteral extends Node {
+  children: BSNode[] = [];
+  text    : string;
+
+  constructor(node: StringLiteral) {
+    super();
+
+    this.text = node.text;
+  }
+}
 
 export function parseStringLiteral(ctx: Context, sl: StringLiteral): Sexpr {
   return S("i32", "block", S("[]", "result", "i32"), 

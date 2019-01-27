@@ -1,9 +1,11 @@
-import { Node, SourceFile, SyntaxKind, FunctionDeclaration, MethodDeclaration, forEachChild, NodeFlags, ModifierFlags, ClassDeclaration, CallExpression } from "typescript";
+import { Node, SourceFile, SyntaxKind, FunctionDeclaration, MethodDeclaration, forEachChild, NodeFlags, ModifierFlags, ClassDeclaration, CallExpression, NodeArray, Modifier } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseStatementList } from "./statementlist";
 import { Context } from "../context";
 import { parseFunction } from "./function";
 import { parseMethod } from "./method";
+import { BSNode } from "../rewriter";
+import { BSStatement } from "./statement";
 
 type FunctionDecl = {
   node    : FunctionDeclaration | MethodDeclaration;
@@ -15,6 +17,21 @@ type FunctionDecl = {
   name    : string;
   exported: boolean;
 }
+
+export class BSSourceFile extends BSNode {
+  children: BSNode[];
+  modifiers: NodeArray<Modifier> | null;
+  fileName : string;
+
+  constructor(file: SourceFile) {
+    super();
+
+    this.modifiers  = file.modifiers || null,
+    this.fileName   = file.fileName,
+    this.children = [...file.statements].map(statement => new BSStatement(statement));
+  }
+}
+
 
 export function parseSourceFile(ctx: Context, sf: SourceFile): Sexpr {
   // find all exported functions

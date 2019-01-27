@@ -3,11 +3,9 @@ import { Program } from './program';
 
 // TODO:
 // * add imports so that my code isnt such a mess
-// * use jsType
+//   * http://fredkschott.com/post/2014/06/require-and-the-module-system/
 // * rewrite AST to structure that has all the info we want.
 // * assertEquals() rather than just returning true from inside code blocks
-// * going to have to do a preparse of all functions to ADD them before i process them, because
-//   functions can refer to other functions that don't yet exist.
 // * pushScope and popScope should be a with() sort of thing.
 // * log: 
 //   * get correct file name.

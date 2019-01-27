@@ -1,7 +1,5 @@
-import ts, { SyntaxKind, FunctionDeclaration, ParameterDeclaration, Block, Statement, ReturnStatement, Expression, BinaryExpression, Identifier, SourceFile, NodeArray, ExpressionStatement, CallExpression, LiteralExpression, VariableStatement, IfStatement, ConditionalExpression, PostfixUnaryExpression, StringLiteral, PrefixUnaryExpression, FlowFlags, ObjectLiteralExpression, AsExpression, ForStatement, VariableDeclaration, VariableDeclarationList, AssignmentExpression, EqualsToken, TypeFlags, NumericLiteral } from 'typescript';
-import { Sexpr, Sx, S } from './sexpr';
-import { parseSourceFile } from './parsers/sourcefile';
-import { Context } from './program';
+import ts, { SyntaxKind, FunctionDeclaration, ParameterDeclaration, Block, Statement, ReturnStatement, Expression, BinaryExpression, Identifier, NodeArray, ExpressionStatement, CallExpression, LiteralExpression, VariableStatement, IfStatement, ConditionalExpression, PostfixUnaryExpression, StringLiteral, PrefixUnaryExpression, FlowFlags, ObjectLiteralExpression, AsExpression, ForStatement, VariableDeclaration, VariableDeclarationList, AssignmentExpression, EqualsToken, TypeFlags, NumericLiteral, isSourceFile, SourceFile, Modifier, ModifierFlags, ElementAccessExpression, PropertyAccessExpression, ParenthesizedExpression, ThisExpression, BreakStatement, ContinueStatement, InterfaceDeclaration, TypeAliasDeclaration, ClassDeclaration, ClassElement } from 'typescript';
+import { BSSourceFile } from './parsers/sourcefile';
 
 function assert(x: boolean, msg = "") {
   if (x !== true) {
@@ -32,15 +30,12 @@ function sn(node: ts.Node): string {
   return node.getChildren().map(x => `[${ x.getText() }]`).join(", ")
 }
 
-export class Rewriter {
-  constructor(
-    private root: ts.Node,
-    private ctx : Context
-  ) {
-    this.ctx = ctx;
-  }
+export class BSNode {
+  children: BSNode[] = [];
+}
 
-  parse(): Sexpr {
-    return parseSourceFile(this.ctx, this.root as SourceFile);
+export class Rewriter {
+  constructor(file: SourceFile) {
+    const root = new BSSourceFile(file )
   }
 }
