@@ -3,7 +3,11 @@ import { Program } from "./program";
 
 // TODO:
 // * rewrite AST to structure that has all the info we want.
+// * build up context on the first pass. 
+//   * dont pop from the context, just move up and down.
+// * the initial pass to add functions to the file is now entirely unnecessary
 // * statements can return null, but expressions cant. lots of stuff can be cleaned up!
+// * rename terrible variable names like fd vdl etc etc etc 
 // * add imports so that my code isnt such a mess
 //   * http://fredkschott.com/post/2014/06/require-and-the-module-system/
 // * remove all !

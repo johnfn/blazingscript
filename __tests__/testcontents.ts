@@ -366,8 +366,6 @@ function test_continue() {
 function test_indexOf() {
   const a = "testing blah foo";
 
-  log(a, 1, a + "hi");
-
   return (
     a.indexOf("test") === 0 &&
     a.indexOf("blah") === 8 &&

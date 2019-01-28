@@ -7,14 +7,14 @@ import { BSNode } from "./bsnode";
 
 export class BSVariableStatement extends BSNode {
   children: BSNode[];
-  list: BSNode;
+  declarationList: BSVariableDeclarationList;
   nodeREMOVE: VariableStatement;
 
   constructor(ctx: Context, node: VariableStatement) {
     super(ctx, node);
 
-    this.list = new BSVariableDeclarationList(ctx, node.declarationList);
-    this.children = [this.list];
+    this.declarationList = new BSVariableDeclarationList(ctx, node.declarationList);
+    this.children = [this.declarationList];
     this.nodeREMOVE = node;
   }
 

@@ -8,6 +8,7 @@ import { Node, Type } from "typescript";
 export abstract class BSNode {
   abstract children: BSNode[];
   tsType: Type;
+  fullText: string;
 
   constructor(ctx: Context, node: Node) {
     if (node.parent) {
@@ -16,6 +17,8 @@ export abstract class BSNode {
       // TODO: SHould handle this better.
       this.tsType = undefined as any;
     }
+
+    this.fullText = node.getFullText();
   }
 
   forEachChild(callback: (node: BSNode) => void): void {

@@ -3,16 +3,13 @@ import {
   MethodDeclaration,
   SyntaxKind,
   CallExpression,
-  FunctionDeclaration
+  FunctionDeclaration,
+  Decorator
 } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { THIS_NAME } from "../program";
 import { parseStatementList } from "./statementlist";
-import {
-  addDeclarationsToContext,
-  addParameterListToContext
-} from "./function";
 import { assertNever } from "../util";
 import { BSNode } from "./bsnode";
 import { BSParameter } from "./parameter";
@@ -29,15 +26,21 @@ export type OperatorOverload = {
 };
 
 export class BSMethodDeclaration extends BSNode {
-  children: BSNode[];
+  children  : BSNode[];
   parameters: BSParameter[];
-  body: BSBlock | null;
+  body      : BSBlock | null;
 
-  name: string | null;
-  fullText: string;
+  /**
+   * Name of the method.
+   */
+  name      : string | null;
+  fullText  : string;
 
   nodeREMOVE: MethodDeclaration;
   parentNodeREMOVE: ClassDeclaration;
+
+  // TODO should be a node!
+  decoratorsCLEANUP: Decorator[];
 
   constructor(
     ctx: Context,
@@ -45,6 +48,8 @@ export class BSMethodDeclaration extends BSNode {
     parentNode: ClassDeclaration
   ) {
     super(ctx, node);
+
+    this.decoratorsCLEANUP = [...(node.decorators || [])];
 
     this.body = node.body ? new BSBlock(ctx, node.body) : null;
     this.parameters = [...node.parameters].map(
@@ -60,84 +65,76 @@ export class BSMethodDeclaration extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    return parseMethod(ctx, this.nodeREMOVE, this.parentNodeREMOVE);
-  }
-}
+    ctx.pushScope();
 
-export function parseMethod(
-  ctx: Context,
-  node: MethodDeclaration,
-  parent: ClassDeclaration
-): Sexpr {
-  ctx.pushScope();
+    let overload: OperatorOverload | null = null;
 
-  let overload: OperatorOverload | null = null;
+    for (const deco of this.decoratorsCLEANUP) {
+      if (deco.expression.kind === SyntaxKind.CallExpression) {
+        const ce = deco.expression as CallExpression;
 
-  for (const deco of node.decorators || []) {
-    if (deco.expression.kind === SyntaxKind.CallExpression) {
-      const ce = deco.expression as CallExpression;
+        if (ce.expression.getText() === "operator") {
+          const opName: Operator = ce.arguments[0]
+            .getText()
+            .slice(1, -1) as Operator;
 
-      if (ce.expression.getText() === "operator") {
-        const opName: Operator = ce.arguments[0]
-          .getText()
-          .slice(1, -1) as Operator;
-
-        if (opName === Operator["!=="]) {
-          overload = {
-            operator: Operator["!=="]
-          };
-        } else if (opName === Operator["+"]) {
-          overload = {
-            operator: Operator["+"]
-          };
-        } else if (opName === Operator["==="]) {
-          overload = {
-            operator: Operator["==="]
-          };
-        } else {
-          assertNever(opName);
+          if (opName === Operator["!=="]) {
+            overload = {
+              operator: Operator["!=="]
+            };
+          } else if (opName === Operator["+"]) {
+            overload = {
+              operator: Operator["+"]
+            };
+          } else if (opName === Operator["==="]) {
+            overload = {
+              operator: Operator["==="]
+            };
+          } else {
+            assertNever(opName);
+          }
         }
       }
     }
+
+    ctx.addMethod({
+      node: this,
+      parent: this.parentNodeREMOVE,
+      overload
+    });
+
+    ctx.addDeclarationsToContext(this);
+
+    const params = ctx.addParameterListToContext(this.nodeREMOVE.parameters);
+    const sb = parseStatementList(ctx, this.nodeREMOVE.body!.statements);
+    let last: Sexpr | null = null;
+
+    if (sb.length > 0) {
+      last = sb[sb.length - 1];
+    }
+
+    const ret = last && last.type === "i32" ? undefined : S.Const("i32", 0);
+
+    const result = S.Func({
+      name: ctx.getFunctionByNode(this).bsname,
+      params: [
+        {
+          name: THIS_NAME,
+          type: "i32"
+        },
+        ...params
+      ],
+      body: [
+        ...ctx
+          .getVariablesInCurrentScope(false)
+          .map(decl => S.DeclareLocal(decl.bsname, decl.wasmType)),
+        ...sb,
+        ...(ret ? [ret] : [])
+      ]
+    });
+
+    ctx.popScope();
+
+    return result;
   }
-
-  ctx.addMethod({
-    node,
-    parent,
-    overload
-  });
-
-  addDeclarationsToContext(node, ctx);
-
-  const params = addParameterListToContext(ctx, node.parameters);
-  const sb = parseStatementList(ctx, node.body!.statements);
-  let last: Sexpr | null = null;
-
-  if (sb.length > 0) {
-    last = sb[sb.length - 1];
-  }
-
-  const ret = last && last.type === "i32" ? undefined : S.Const("i32", 0);
-
-  const result = S.Func({
-    name: ctx.getFunctionByNode(node).bsname,
-    params: [
-      {
-        name: THIS_NAME,
-        type: "i32"
-      },
-      ...params
-    ],
-    body: [
-      ...ctx
-        .getVariablesInCurrentScope(false)
-        .map(decl => S.DeclareLocal(decl.bsname, decl.wasmType)),
-      ...sb,
-      ...(ret ? [ret] : [])
-    ]
-  });
-
-  ctx.popScope();
-
-  return result;
 }

@@ -11,8 +11,8 @@ import {
 import { Sexpr, S } from "../sexpr";
 import { parseStatementList, parseStatementListBS } from "./statementlist";
 import { Context } from "../context";
-import { parseFunction, BSFunctionDeclaration } from "./function";
-import { parseMethod, BSMethodDeclaration } from "./method";
+import { BSFunctionDeclaration } from "./function";
+import { BSMethodDeclaration } from "./method";
 import { BSStatement } from "./statement";
 import { BSNode } from "./bsnode";
 import { BSClassDeclaration } from "./class";
@@ -163,9 +163,9 @@ export class BSSourceFile extends BSNode {
       ),
       ...functions.map(fn => {
         if (fn.node.kind === SyntaxKind.MethodDeclaration) {
-          return parseMethod(ctx, fn.node, fn.parent!);
+          return new BSMethodDeclaration(ctx, fn.node, fn.parent!).compile(ctx);
         } else if (fn.node.kind === SyntaxKind.FunctionDeclaration) {
-          return parseFunction(ctx, fn.node);
+          return new BSFunctionDeclaration(ctx, fn.node).compile(ctx);
         }
 
         throw new Error("i got some weird type of function i cant handle.");

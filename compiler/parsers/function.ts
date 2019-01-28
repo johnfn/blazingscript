@@ -18,7 +18,7 @@ import {
 } from "typescript";
 import { Sexpr, Param, S } from "../sexpr";
 import { Context } from "../context";
-import { parseStatementList } from "./statementlist";
+import { parseStatementList, parseStatementListBS } from "./statementlist";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
 import { BSNode } from "./bsnode";
@@ -49,151 +49,42 @@ export class BSFunctionDeclaration extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    return parseFunction(ctx, this.nodeREMOVE);
-  }
-}
+    ctx.pushScope();
 
-export function parseFunction(ctx: Context, node: FunctionDeclaration): Sexpr {
-  ctx.pushScope();
+    ctx.addFunction(this);
 
-  ctx.addFunction(node);
+    // Add local variables to scope.
 
-  // traverse function ahead of time to find variable declarations, which need to go up front
+    ctx.addDeclarationsToContext(this);
 
-  addDeclarationsToContext(node, ctx);
+    // Build the function.
 
-  // now that we've set up ctx with the appropriate variable mappings, build the function
+    const params = ctx.addParameterListToContext(this.nodeREMOVE.parameters);
+    const sb = parseStatementListBS(ctx, this.body!.children);
+    let last: Sexpr | null = null;
 
-  const params = addParameterListToContext(ctx, node.parameters);
-  const sb = parseStatementList(ctx, node.body!.statements);
-  let last: Sexpr | null = null;
-
-  if (sb.length > 0) {
-    last = sb[sb.length - 1];
-  }
-
-  const ret = last && last.type === "i32" ? undefined : S.Const("i32", 0);
-
-  const result = S.Func({
-    name: ctx.getFunctionByNode(node).bsname,
-    params: params,
-    body: [
-      ...ctx
-        .getVariablesInCurrentScope(false)
-        .map(decl => S.DeclareLocal(decl.bsname, decl.wasmType)),
-      ...sb,
-      ...(ret ? [ret] : [])
-    ]
-  });
-
-  ctx.popScope();
-
-  return result;
-}
-
-export function addDeclarationsToContext(
-  node: Node,
-  ctx: Context
-): VariableDeclaration[] {
-  const decls: VariableDeclaration[] = [];
-
-  // Step 1: gather all declarations
-
-  const helper = (node: Node) => {
-    if (node.kind === SyntaxKind.ForStatement) {
-      const fs = node as ForStatement;
-
-      if (
-        fs.initializer &&
-        fs.initializer.kind === SyntaxKind.VariableDeclarationList
-      ) {
-        for (const decl of (fs.initializer as VariableDeclarationList)
-          .declarations) {
-          decls.push(decl);
-        }
-      }
+    if (sb.length > 0) {
+      last = sb[sb.length - 1];
     }
 
-    if (node.kind === SyntaxKind.VariableStatement) {
-      const vs = node as VariableStatement;
+    const ret = last && last.type === "i32" ? undefined : S.Const("i32", 0);
 
-      for (const decl of vs.declarationList.declarations) {
-        decls.push(decl);
-      }
-    }
-
-    // skip recursing into functions!
-
-    if (
-      node.kind === SyntaxKind.FunctionDeclaration ||
-      node.kind === SyntaxKind.FunctionExpression
-    ) {
-      return;
-    }
-
-    forEachChild(node, helper);
-  };
-
-  forEachChild(node, helper);
-
-  // Step 2: Add each declaration to our context
-
-  for (const decl of decls) {
-    const type = ctx.typeChecker.getTypeAtLocation(decl);
-
-    if (
-      type.flags & TypeFlags.Number ||
-      type.flags & TypeFlags.NumberLiteral ||
-      type.flags & TypeFlags.StringLiteral ||
-      type.flags & TypeFlags.String
-    ) {
-      if (decl.kind & SyntaxKind.Identifier) {
-        ctx.addVariableToScope((decl.name as Identifier).text, type, "i32");
-      } else {
-        throw new Error(
-          `do not know how to handle that type of declaration identifier: ${
-            SyntaxKind[decl.kind]
-          }`
-        );
-      }
-    } else {
-      throw new Error(
-        `Do not know how to handle that type: ${
-          TypeFlags[type.flags]
-        } for ${decl.getText()}`
-      );
-    }
-  }
-
-  // TODO: check ahead of time rather than blindly adding them all now.
-  ctx.addVariableToScope("myslocal", undefined, "i32");
-
-  return decls;
-}
-
-export function addParameterListToContext(
-  ctx: Context,
-  nodes: NodeArray<ParameterDeclaration>
-): Param[] {
-  const result: Param[] = [];
-
-  for (const n of nodes) {
-    const type = ctx.typeChecker.getTypeAtLocation(n);
-    let wasmType: "i32";
-
-    if (type.flags & TypeFlags.Number || type.flags & TypeFlags.String) {
-      wasmType = "i32";
-    } else {
-      throw new Error("Unsupported type!");
-    }
-
-    result.push({
-      name: n.name.getText(),
-      type: wasmType
+    const result = S.Func({
+      name: ctx.getFunctionByNode(this).bsname,
+      params: params,
+      body: [
+        ...ctx
+          .getVariablesInCurrentScope(false)
+          .map(decl => S.DeclareLocal(decl.bsname, decl.wasmType)),
+        ...sb,
+        ...(ret ? [ret] : [])
+      ]
     });
 
-    ctx.addVariableToScope(n.name.getText(), type, wasmType, true);
+    ctx.popScope();
+
+    return result;
   }
 
-  return result;
+
 }

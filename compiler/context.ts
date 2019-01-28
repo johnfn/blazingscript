@@ -11,35 +11,49 @@ import ts, {
   NodeFlags,
   SyntaxKind,
   Expression,
-  NodeArray
+  NodeArray,
+  TypeFlags,
+  ParameterDeclaration,
+  Identifier,
+  forEachChild,
+  VariableDeclaration,
+  ForStatement,
+  VariableDeclarationList,
+  VariableStatement
 } from "typescript";
-import { sexprToString, Sexpr, S } from "./sexpr";
+import { sexprToString, Sexpr, S, Param } from "./sexpr";
 import { add } from "./util";
-import { parseExpression, BSExpressionNode } from "./parsers/expression";
-import { OperatorOverload, Operator } from "./parsers/method";
+import { BSExpressionNode } from "./parsers/expression";
+import { OperatorOverload, Operator, BSMethodDeclaration } from "./parsers/method";
 import { parseStatementListBS } from "./parsers/statementlist";
 import { BSNode } from "./parsers/bsnode";
-import { BSThisKeyword } from "./parsers/this";
+import { BSFunctionDeclaration } from "./parsers/function";
+import { BSForStatement } from "./parsers/for";
+import { BSVariableDeclarationList } from "./parsers/variabledeclarationlist";
+import { BSVariableDeclaration } from "./parsers/variabledeclaration";
+import { BSVariableStatement } from "./parsers/variablestatement";
+import { BSFunctionExpression } from "./parsers/functionexpression";
+import { BSIdentifier } from "./parsers/identifier";
 
 type Variable = {
-  tsType: ts.Type | undefined;
-  wasmType: "i32";
-  bsname: string;
+  tsType     : ts.Type | undefined;
+  wasmType   : "i32";
+  bsname     : string;
   isParameter: boolean;
 };
 
 type Function = {
-  node: FunctionDeclaration | MethodDeclaration;
+  node     : BSFunctionDeclaration | BSMethodDeclaration;
   className: string | null;
-  fnName: string;
-  bsname: string;
-  overload: OperatorOverload | null;
+  fnName   : string;
+  bsname   : string;
+  overload : OperatorOverload | null;
 };
 
 type Loop = {
   continueLabel: string;
-  breakLabel: string;
-  inc: Sexpr | null;
+  breakLabel   : string;
+  inc          : Sexpr | null;
 };
 
 type Class = {
@@ -164,7 +178,7 @@ export class Context {
   }
 
   addMethod(props: {
-    node: MethodDeclaration;
+    node: BSMethodDeclaration;
     parent: ClassDeclaration;
     overload: OperatorOverload | null;
   }): void {
@@ -174,15 +188,12 @@ export class Context {
     let fnName: string;
     let className: string;
 
-    const md = node as MethodDeclaration;
+    if (!node.name) { throw new Error("anonymous methods not supported yet!"); }
+    if (!parent) { throw new Error("no parent provided to addFunction for method."); }
+    if (!parent.name) { throw new Error("dont support classes without names yet"); }
 
-    if (!md.name) throw new Error("anonymous methods not supported yet!");
-    if (!parent)
-      throw new Error("no parent provided to addFunction for method.");
-    if (!parent.name) throw new Error("dont support classes without names yet");
-
-    fqName = "$" + parent.name.text + "__" + md.name!.getText();
-    fnName = md.name!.getText();
+    fqName    = "$" + parent.name.text + "__" + node.name;
+    fnName    = node.name;
     className = parent.name.text;
 
     this.globalScope().functionNameMapping.push({
@@ -242,19 +253,17 @@ export class Context {
     );
   }
 
-  addFunction(node: FunctionDeclaration): void {
+  addFunction(fd: BSFunctionDeclaration): void {
     let fqName: string;
     let fnName: string;
     let className: string | null = null;
-
-    const fd = node as FunctionDeclaration;
 
     if (!fd.name) {
       throw new Error("anonymous functions not supported yet!");
     }
 
-    fqName = "$" + fd.name!.text;
-    fnName = fd.name!.text;
+    fqName = "$" + fd.name;
+    fnName = fd.name;
 
     for (const fn of this.localScope().functionNameMapping) {
       if (fn.bsname === fqName) {
@@ -264,14 +273,14 @@ export class Context {
 
     this.localScope().functionNameMapping.push({
       bsname: fqName,
-      node,
+      node: fd,
       fnName,
       className,
       overload: null
     });
   }
 
-  getFunctionByNode(node: FunctionDeclaration | MethodDeclaration): Function {
+  getFunctionByNode(node: BSFunctionDeclaration | BSMethodDeclaration): Function {
     for (const scope of this.scopes) {
       for (const fn of scope.functionNameMapping) {
         if (fn.node === node) {
@@ -363,4 +372,90 @@ export class Context {
         return true;
       });
   }
+
+  addDeclarationsToContext(
+    node: BSFunctionDeclaration | BSMethodDeclaration
+  ): BSVariableDeclaration[] {
+    const decls: BSVariableDeclaration[] = [];
+
+    // Step 1: gather all declarations
+
+    const helper = (node: BSNode) => {
+      if (node instanceof BSForStatement) {
+        if (node.initializer && node.initializer instanceof BSVariableDeclarationList) {
+          for (const decl of node.initializer.declarations) {
+            decls.push(decl);
+          }
+        }
+      }
+
+      if (node instanceof BSVariableStatement) {
+        for (const decl of node.declarationList.declarations) {
+          decls.push(decl);
+        }
+      }
+
+      // skip recursing into functions!
+
+      if (node instanceof BSFunctionDeclaration || node instanceof BSFunctionExpression) {
+        return;
+      }
+
+      
+      node.forEachChild(helper)
+    };
+
+    node.forEachChild(helper);
+
+    // Step 2: Add each declaration to our context
+
+    for (const decl of decls) {
+      if (
+        decl.tsType.flags & TypeFlags.Number ||
+        decl.tsType.flags & TypeFlags.NumberLiteral ||
+        decl.tsType.flags & TypeFlags.StringLiteral ||
+        decl.tsType.flags & TypeFlags.String
+      ) {
+        this.addVariableToScope(decl.name, decl.tsType, "i32");
+      } else {
+        throw new Error(
+          `Do not know how to handle that type: ${
+            TypeFlags[decl.tsType.flags]
+          } for ${decl}`
+        );
+      }
+    }
+
+    // TODO: check ahead of time rather than blindly adding them all now.
+    this.addVariableToScope("myslocal", undefined, "i32");
+
+    return decls;
+  }
+
+  addParameterListToContext(
+    nodes: NodeArray<ParameterDeclaration>
+  ): Param[] {
+    const result: Param[] = [];
+
+    for (const n of nodes) {
+      const type = this.typeChecker.getTypeAtLocation(n);
+      let wasmType: "i32";
+
+      if (type.flags & TypeFlags.Number || type.flags & TypeFlags.String) {
+        wasmType = "i32";
+      } else {
+        throw new Error("Unsupported type!");
+      }
+
+      result.push({
+        name: n.name.getText(),
+        type: wasmType
+      });
+
+      this.addVariableToScope(n.name.getText(), type, wasmType, true);
+    }
+
+    return result;
+  }
+
 }

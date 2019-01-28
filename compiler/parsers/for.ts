@@ -19,8 +19,6 @@ export class BSForStatement extends BSNode {
   condition: BSExpressionNode | null;
   body: BSStatement | null;
 
-  nodeREMOVE: ForStatement;
-
   constructor(ctx: Context, node: ForStatement) {
     super(ctx, node);
 
@@ -56,8 +54,6 @@ export class BSForStatement extends BSNode {
 
       this.body
     ];
-
-    this.nodeREMOVE = node;
   }
 
 
