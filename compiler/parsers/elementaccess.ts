@@ -1,37 +1,49 @@
-import { PropertyAccessExpression, TypeFlags, ElementAccessExpression } from "typescript";
+import {
+  PropertyAccessExpression,
+  TypeFlags,
+  ElementAccessExpression
+} from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
-import { parseExpression, BSExpression } from "./expression";
-import { BSNode } from "../rewriter";
+import { BSNode } from "./bsnode";
+import { getExpressionNode, BSExpressionNode } from "./expression";
 
 export class BSElementAccessExpression extends BSNode {
-  children : BSNode[];
-  element  : BSExpression;
-  argument : BSExpression;
+  children: BSNode[];
+  element: BSExpressionNode;
+  argument: BSExpressionNode;
 
-  constructor(node: ElementAccessExpression) {
-    super();
+  fullText: string;
 
-    this.element = new BSExpression(node.expression);
-    this.argument = new BSExpression(node.argumentExpression);
+  constructor(ctx: Context, node: ElementAccessExpression) {
+    super(ctx, node);
+
+    this.element = getExpressionNode(ctx, node.expression);
+    this.argument = getExpressionNode(ctx, node.argumentExpression);
 
     this.children = [this.element, this.argument];
-  }
-}
 
-export function parseElementAccess(ctx: Context, pa: ElementAccessExpression): Sexpr {
-  const arg   = pa.argumentExpression;
-  const array = pa.expression;
-  const arrayType = ctx.typeChecker.getTypeAtLocation(array);
-
-  if (arrayType.flags & TypeFlags.StringLike) {
-    return ctx.callMethod({
-      className: ctx.getNativeTypeName("String"),
-      methodName: "charAt",
-      thisExpr: array,
-      argExprs: [arg],
-    });
+    this.fullText = node.getFullText();
   }
 
-  throw new Error(`Dont know how to index into anything other than strings. ${ pa.getText() }`);
+  compile(ctx: Context): Sexpr {
+    const arg = this.argument;
+    const array = this.element;
+    const arrayType = this.element.tsType;
+
+    if (arrayType.flags & TypeFlags.StringLike) {
+      return ctx.callMethod({
+        className: ctx.getNativeTypeName("String"),
+        methodName: "charAt",
+        thisExpr: array,
+        argExprs: [arg]
+      });
+    }
+
+    throw new Error(
+      `Dont know how to index into anything other than strings. ${
+        this.fullText
+      } ${arrayType.flags}`
+    );
+  }
 }

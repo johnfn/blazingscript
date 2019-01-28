@@ -1,52 +1,78 @@
-import ts, { Node, FunctionDeclaration, ScriptTarget, TransformerFactory, CompilerOptions, DiagnosticWithLocation, MethodDeclaration, ClassDeclaration, isFunctionDeclaration, NodeFlags, SyntaxKind, Expression, NodeArray } from 'typescript';
-import { Rewriter } from './rewriter';
-import { sexprToString, Sexpr, S } from './sexpr';
-import { Context } from './context';
-import { parseSourceFile } from './parsers/sourcefile';
+import ts from "typescript";
+import { sexprToString, Sexpr, S } from "./sexpr";
+import { Context } from "./context";
+import { BSSourceFile } from "./parsers/sourcefile";
 
 export const THIS_NAME = "__this";
 
 export class Program {
   code: string;
-  
+
   typeChecker: ts.TypeChecker;
-  program    : ts.Program;
+  program: ts.Program;
 
   constructor(code: string) {
     this.code = code;
 
     const outputs = [];
 
-    this.program = ts.createProgram(["file.ts"], {}, {
-      readFile: (fileName: string) => {
-        return code;
+    this.program = ts.createProgram(
+      ["file.ts"],
+      {
+        experimentalDecorators: true
       },
-      getSourceFile: function (filename, languageVersion) {
-        if (filename === "file.ts") {
-          return ts.createSourceFile(filename, code, ts.ScriptTarget.Latest, true);
+      {
+        readFile: (fileName: string) => {
+          return code;
+        },
+        getSourceFile: function(filename, languageVersion) {
+          if (filename === "file.ts") {
+            return ts.createSourceFile(
+              filename,
+              code,
+              ts.ScriptTarget.Latest,
+              true
+            );
+          }
+
+          return undefined;
+        },
+        writeFile: function(name, text, writeByteOrderMark) {
+          outputs.push({
+            name: name,
+            text: text,
+            writeByteOrderMark: writeByteOrderMark
+          });
+        },
+        getDirectories: () => {
+          return [];
+        },
+        fileExists: (fileName: string) => {
+          if (fileName === "file.ts") {
+            return true;
+          }
+
+          return false;
+        },
+        getDefaultLibFileName: function() {
+          return "lib.d.ts";
+        },
+        useCaseSensitiveFileNames: function() {
+          return false;
+        },
+        getCanonicalFileName: function(filename) {
+          return filename;
+        },
+        getCurrentDirectory: function() {
+          return "";
+        },
+        getNewLine: function() {
+          return "\n";
         }
+      }
+    );
 
-        return undefined;
-      },
-      writeFile: function (name, text, writeByteOrderMark) {
-          outputs.push({ name: name, text: text, writeByteOrderMark: writeByteOrderMark });
-      },
-      getDirectories: () => { return [] },
-      fileExists: (fileName: string) => {
-        if (fileName === "file.ts") {
-          return true;
-        }
-
-        return false;
-      },
-      getDefaultLibFileName: function () { return "lib.d.ts"; },
-      useCaseSensitiveFileNames: function () { return false; },
-      getCanonicalFileName: function (filename) { return filename; },
-      getCurrentDirectory: function () { return ""; },
-      getNewLine: function () { return "\n"; },
-    });
-
-    this.typeChecker = this.program.getTypeChecker()
+    this.typeChecker = this.program.getTypeChecker();
   }
 
   parse(): string {
@@ -57,9 +83,9 @@ export class Program {
       throw new Error("source undefined, something has gone horribly wrong!!!");
     }
 
-    const r = new Rewriter(source);
+    const result = new BSSourceFile(ctx, source).compile(ctx);
 
-    return sexprToString(parseSourceFile(ctx, source));
+    return sexprToString(result);
   }
 }
 

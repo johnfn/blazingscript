@@ -1,12 +1,12 @@
-import fs from 'fs';
-import { Program } from '../compiler/program';
-import { exec } from 'child_process';
+import fs from "fs";
+import { Program } from "../compiler/program";
+import { exec } from "child_process";
 
 async function runProgram(str: string): Promise<{ [test: string]: number }> {
-  const results: { [test: string]: number } = {}
-  
+  const results: { [test: string]: number } = {};
+
   const memory = new WebAssembly.Memory({
-    initial: 10, 
+    initial: 10,
     maximum: 100
   });
 
@@ -19,18 +19,24 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
 
     c: {
       log: (
-        t1: number, s1: number, e1: number,
-        t2: number, s2: number, e2: number,
-        t3: number, s3: number, e3: number,
+        t1: number,
+        s1: number,
+        e1: number,
+        t2: number,
+        s2: number,
+        e2: number,
+        t3: number,
+        s3: number,
+        e3: number
       ) => {
         const args: {
           type: number;
           start: number;
-          end: number
+          end: number;
         }[] = [
           { type: t1, start: s1, end: e1 },
           { type: t2, start: s2, end: e2 },
-          { type: t3, start: s3, end: e3 },
+          { type: t3, start: s3, end: e3 }
         ];
 
         let res: string[] = [];
@@ -44,10 +50,14 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
           } else if (type === 1 /* i32 */) {
             const data = new Int32Array(memory.buffer.slice(start, end))[0];
 
-            res.push(String(data))
+            res.push(String(data));
           } else if (type === 2 /* mem str */) {
-            const buffLen = new Int32Array(memory.buffer.slice(start, start + 4))[0];
-            const strbuff = new Int8Array(memory.buffer.slice(start + 4, start + 4 + buffLen));
+            const buffLen = new Int32Array(
+              memory.buffer.slice(start, start + 4)
+            )[0];
+            const strbuff = new Int8Array(
+              memory.buffer.slice(start + 4, start + 4 + buffLen)
+            );
             const str = [...strbuff].map(x => String.fromCharCode(x)).join("");
 
             res.push(str);
@@ -59,7 +69,7 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
         }
 
         console.log("test/testcontents.ts log:", ...res);
-      },
+      }
     },
     js: { mem: memory },
     imports: {
@@ -75,8 +85,8 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
 
   let fail = false;
 
-  await new Promise((resolve) => {
-    exec('wat2wasm temp -o test.wasm', (err, stdout, stderr) => {
+  await new Promise(resolve => {
+    exec("wat2wasm temp -o test.wasm", (err, stdout, stderr) => {
       if (stderr) {
         console.log(stderr);
 
@@ -84,14 +94,14 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
       }
 
       resolve();
-    })
+    });
   });
 
   if (fail) {
     return {};
   }
 
-  const buff = fs.readFileSync("test.wasm")
+  const buff = fs.readFileSync("test.wasm");
 
   // return {};
 
@@ -100,27 +110,33 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
   // const foo = fufu.parseWat("", sexprs);
   //   const bin = foo.toBinary(importObject);
 
-  await WebAssembly.instantiate(
-    buff,
-    importObject
-  ).then(result => {
-    for (const fn in result.instance.exports) {
-      if (!fn.includes('test_')) { continue; }
+  await WebAssembly.instantiate(buff, importObject)
+    .then(result => {
+      for (const fn in result.instance.exports) {
+        if (!fn.includes("test_")) {
+          continue;
+        }
 
-      results[fn] = result.instance.exports[fn]();
-    }
-  }).catch(e => console.log(e));
+        results[fn] = result.instance.exports[fn]();
+      }
+    })
+    .catch(e => console.log(e));
 
   return results;
 }
 
-if (!('test' in global)) {
+if (!("test" in global)) {
   (global as any).test = (name: string, fn: () => void) => fn();
 }
 
-test('all tests', async () => {
-  const result = await runProgram(fs.readFileSync("test/testcontents.ts").toString());
-  let anyfail = Object.keys(result).map(key => !result[key]).filter(x => x).length > 0;
+test("all tests", async () => {
+  const result = await runProgram(
+    fs.readFileSync("__tests__/testcontents.ts").toString()
+  );
+  let anyfail =
+    Object.keys(result)
+      .map(key => !result[key])
+      .filter(x => x).length > 0;
 
   if (anyfail) {
     console.log("FAIL!");
@@ -129,11 +145,11 @@ test('all tests', async () => {
       if (result[key]) {
         // console.log(`pass ${ key }`);
       } else {
-        console.log(`FAIL ${ key } got ${ result[key] }`);
+        console.log(`FAIL ${key} got ${result[key]}`);
       }
     }
   } else {
-    console.log("All pass! :-)");
+    console.log(`Pass ${Object.keys(result).length} tests`);
   }
 
   expect(anyfail).toBe(false);

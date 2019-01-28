@@ -1,27 +1,31 @@
 import { ReturnStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { parseExpression, BSExpression } from "./expression";
 import { Context } from "../context";
-import { BSNode } from "../rewriter";
+import { BSNode } from "./bsnode";
+import { getExpressionNode } from "./expression";
 
 export class BSReturnStatement extends BSNode {
   children: BSNode[];
-  expression: BSExpression | null;
+  expression: BSNode | null;
 
-  constructor(node: ReturnStatement) {
-    super();
+  constructor(ctx: Context, node: ReturnStatement) {
+    super(ctx, node);
 
-    this.expression = node.expression ? new BSExpression(node.expression) : null;
+    this.expression = node.expression
+      ? getExpressionNode(ctx, node.expression)
+      : null;
     this.children = this.expression ? [this.expression] : [];
   }
-}
 
-export function parseReturnStatement(ctx: Context, rs: ReturnStatement): Sexpr {
-  if (rs.expression) {
-    return S("[]", "return",
-      parseExpression(ctx, rs.expression),
-    );
-  } else {
+  compile(ctx: Context): Sexpr {
+    if (this.expression) {
+      const exprCompiled = this.expression.compile(ctx);
+
+      if (exprCompiled) {
+        return S("[]", "return", exprCompiled);
+      }
+    }
+
     return S("[]", "return");
   }
 }

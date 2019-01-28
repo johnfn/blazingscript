@@ -1,34 +1,59 @@
-import { forEachChild, FunctionDeclaration, Node, NodeArray, ParameterDeclaration, SyntaxKind, TypeFlags, VariableDeclaration, ForStatement, VariableDeclarationList, VariableStatement, BindingName, Identifier, createTextChangeRange, createBigIntLiteral, Statement } from "typescript";
+import {
+  forEachChild,
+  FunctionDeclaration,
+  Node,
+  NodeArray,
+  ParameterDeclaration,
+  SyntaxKind,
+  TypeFlags,
+  VariableDeclaration,
+  ForStatement,
+  VariableDeclarationList,
+  VariableStatement,
+  BindingName,
+  Identifier,
+  createTextChangeRange,
+  createBigIntLiteral,
+  Statement
+} from "typescript";
 import { Sexpr, Param, S } from "../sexpr";
 import { Context } from "../context";
 import { parseStatementList } from "./statementlist";
-import { BSNode } from "../rewriter";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
+import { BSNode } from "./bsnode";
 
 export class BSFunctionDeclaration extends BSNode {
-  children  : BSNode[];
+  children: BSNode[];
   parameters: BSParameter[];
-  body      : BSBlock | null;
+  body: BSBlock | null;
 
-  constructor(node: FunctionDeclaration) {
-    super();
+  name: string | null;
+  fullText: string;
 
-    this.body = node.body ? new BSBlock(node.body) : null;
-    this.parameters = [...node.parameters].map(param => new BSParameter(param));
+  nodeREMOVE: FunctionDeclaration;
 
-    this.children = [
-      ...this.parameters,
-      ...(this.body ? [this.body] : []),
-    ];
+  constructor(ctx: Context, node: FunctionDeclaration) {
+    super(ctx, node);
+
+    this.body = node.body ? new BSBlock(ctx, node.body) : null;
+    this.parameters = [...node.parameters].map(
+      param => new BSParameter(ctx, param)
+    );
+    this.children = [...this.parameters, ...(this.body ? [this.body] : [])];
+
+    this.name = node.name ? node.name.text : null;
+    this.fullText = node.getFullText();
+
+    this.nodeREMOVE = node;
+  }
+
+  compile(ctx: Context): Sexpr {
+    return parseFunction(ctx, this.nodeREMOVE);
   }
 }
 
-export function parseFunction(
-  ctx : Context,
-  node: FunctionDeclaration
-): Sexpr {
-
+export function parseFunction(ctx: Context, node: FunctionDeclaration): Sexpr {
   ctx.pushScope();
 
   ctx.addFunction(node);
@@ -39,7 +64,7 @@ export function parseFunction(
 
   // now that we've set up ctx with the appropriate variable mappings, build the function
 
-  const params = addParameterListToContext(ctx, node.parameters)
+  const params = addParameterListToContext(ctx, node.parameters);
   const sb = parseStatementList(ctx, node.body!.statements);
   let last: Sexpr | null = null;
 
@@ -47,16 +72,18 @@ export function parseFunction(
     last = sb[sb.length - 1];
   }
 
-  const ret = (last && last.type === "i32") ? undefined : S.Const("i32", 0);
+  const ret = last && last.type === "i32" ? undefined : S.Const("i32", 0);
 
   const result = S.Func({
     name: ctx.getFunctionByNode(node).bsname,
     params: params,
     body: [
-      ...(ctx.getVariablesInCurrentScope(false).map(decl => S.DeclareLocal(decl.bsname, decl.wasmType))),
+      ...ctx
+        .getVariablesInCurrentScope(false)
+        .map(decl => S.DeclareLocal(decl.bsname, decl.wasmType)),
       ...sb,
-      ...(ret ? [ret] : []),
-    ],
+      ...(ret ? [ret] : [])
+    ]
   });
 
   ctx.popScope();
@@ -64,7 +91,10 @@ export function parseFunction(
   return result;
 }
 
-export function addDeclarationsToContext(node: Node, ctx: Context): VariableDeclaration[] {
+export function addDeclarationsToContext(
+  node: Node,
+  ctx: Context
+): VariableDeclaration[] {
   const decls: VariableDeclaration[] = [];
 
   // Step 1: gather all declarations
@@ -73,9 +103,13 @@ export function addDeclarationsToContext(node: Node, ctx: Context): VariableDecl
     if (node.kind === SyntaxKind.ForStatement) {
       const fs = node as ForStatement;
 
-      if (fs.initializer && fs.initializer.kind === SyntaxKind.VariableDeclarationList) {
-        for (const decl of (fs.initializer as VariableDeclarationList).declarations) {
-          decls.push(decl)
+      if (
+        fs.initializer &&
+        fs.initializer.kind === SyntaxKind.VariableDeclarationList
+      ) {
+        for (const decl of (fs.initializer as VariableDeclarationList)
+          .declarations) {
+          decls.push(decl);
         }
       }
     }
@@ -92,13 +126,13 @@ export function addDeclarationsToContext(node: Node, ctx: Context): VariableDecl
 
     if (
       node.kind === SyntaxKind.FunctionDeclaration ||
-      node.kind === SyntaxKind.FunctionExpression 
+      node.kind === SyntaxKind.FunctionExpression
     ) {
       return;
     }
 
     forEachChild(node, helper);
-  }
+  };
 
   forEachChild(node, helper);
 
@@ -108,18 +142,26 @@ export function addDeclarationsToContext(node: Node, ctx: Context): VariableDecl
     const type = ctx.typeChecker.getTypeAtLocation(decl);
 
     if (
-      (type.flags & TypeFlags.Number) || 
-      (type.flags & TypeFlags.NumberLiteral) ||
-      (type.flags & TypeFlags.StringLiteral) || 
-      (type.flags & TypeFlags.String)
+      type.flags & TypeFlags.Number ||
+      type.flags & TypeFlags.NumberLiteral ||
+      type.flags & TypeFlags.StringLiteral ||
+      type.flags & TypeFlags.String
     ) {
       if (decl.kind & SyntaxKind.Identifier) {
         ctx.addVariableToScope((decl.name as Identifier).text, type, "i32");
       } else {
-        throw new Error(`do not know how to handle that type of declaration identifier: ${ SyntaxKind[decl.kind] }`);
+        throw new Error(
+          `do not know how to handle that type of declaration identifier: ${
+            SyntaxKind[decl.kind]
+          }`
+        );
       }
     } else {
-      throw new Error(`Do not know how to handle that type: ${ TypeFlags[type.flags] } for ${ decl.getText() }`);
+      throw new Error(
+        `Do not know how to handle that type: ${
+          TypeFlags[type.flags]
+        } for ${decl.getText()}`
+      );
     }
   }
 
@@ -142,12 +184,12 @@ export function addParameterListToContext(
     if (type.flags & TypeFlags.Number || type.flags & TypeFlags.String) {
       wasmType = "i32";
     } else {
-      throw new Error("Unsupported type!")
+      throw new Error("Unsupported type!");
     }
 
     result.push({
-      name       : n.name.getText(),
-      type       : wasmType,
+      name: n.name.getText(),
+      type: wasmType
     });
 
     ctx.addVariableToScope(n.name.getText(), type, wasmType, true);

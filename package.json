@@ -7,16 +7,14 @@
     "@types/jest": "^23.3.10",
     "@types/node": "^10.12.18",
     "@types/node-fetch": "^2.1.4",
+    "@types/typescript": "^2.0.0",
     "node-fetch": "^2.3.0",
     "recast": "^0.16.2",
     "wabt": "^1.0.8",
     "wasm-instantiate-streaming": "^1.0.2"
   },
   "scripts": {
-    "test": "jest --watch --runInBand"
-  },
-  "jest": {
-    "testEnvironment": "node"
+    "test": "jest --watch --runInBand __tests__/main.jest.ts"
   },
   "devDependencies": {
     "jest": "^23.6.0",

@@ -1,16 +1,19 @@
 import { Identifier } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
-import { BSNode } from "../rewriter";
+import { BSNode } from "./bsnode";
 
 export class BSIdentifier extends BSNode {
   children: BSNode[] = [];
+  text: string;
 
-  constructor(node: Identifier) {
-    super();
+  constructor(ctx: Context, node: Identifier) {
+    super(ctx, node);
+
+    this.text = node.text;
   }
-}
 
-export function parseIdentifier(ctx: Context, id: Identifier): Sexpr {
-  return ctx.getVariable(id.text);
+  compile(ctx: Context): Sexpr {
+    return ctx.getVariable(this.text);
+  }
 }

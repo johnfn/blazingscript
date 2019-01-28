@@ -1,37 +1,39 @@
 import { ConditionalExpression } from "typescript";
 import { Context } from "../context";
 import { Sexpr, S } from "../sexpr";
-import { parseExpression, BSExpression } from "./expression";
-import { BSNode } from "../rewriter";
+import { BSNode } from "./bsnode";
+import { getExpressionNode } from "./expression";
 
 export class BSConditionalExpression extends BSNode {
   children: BSNode[];
 
-  condition: BSExpression;
-  whenFalse: BSExpression;
-  whenTrue : BSExpression;
+  condition: BSNode;
+  whenFalse: BSNode;
+  whenTrue: BSNode;
 
-  constructor(node: ConditionalExpression) {
-    super();
+  constructor(ctx: Context, node: ConditionalExpression) {
+    super(ctx, node);
 
-    this.condition = new BSExpression(node.condition);
-    this.whenFalse = new BSExpression(node.whenFalse);
-    this.whenTrue  = new BSExpression(node.whenTrue);
+    this.condition = getExpressionNode(ctx, node.condition);
+    this.whenFalse = getExpressionNode(ctx, node.whenFalse);
+    this.whenTrue = getExpressionNode(ctx, node.whenTrue);
 
-    this.children = [
-      this.condition,
-      this.whenFalse,
-      this.whenTrue,
-    ];
+    this.children = [this.condition, this.whenFalse, this.whenTrue];
   }
-}
 
-export function parseConditionalExpression(ctx: Context, t: ConditionalExpression): Sexpr {
-  // TODO this is wrong because it always evaluates both sides
+  compile(ctx: Context): Sexpr {
+    // TODO this is wrong because it always evaluates both sides
 
-  return S("i32", "select",
-    parseExpression(ctx, t.whenTrue),
-    parseExpression(ctx, t.whenFalse),
-    parseExpression(ctx, t.condition),
-  );
+    const whenTrueExpr = this.whenTrue.compile(ctx);
+    const whenFalseExpr = this.whenFalse.compile(ctx);
+    const condExpr = this.condition.compile(ctx);
+
+    if (!whenTrueExpr)
+      throw new Error("no true expr in conditional expression.");
+    if (!whenFalseExpr)
+      throw new Error("no false expr in conditional expression.");
+    if (!condExpr) throw new Error("no cond expr in conditional expression.");
+
+    return S("i32", "select", whenTrueExpr, whenFalseExpr, condExpr);
+  }
 }

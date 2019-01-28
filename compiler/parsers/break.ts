@@ -1,18 +1,18 @@
 import { Block, BreakStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
-import { BSNode } from "../rewriter";
+import { BSNode } from "./bsnode";
 
 // TODO: Handle label.
 
 export class BSBreakStatement extends BSNode {
   children: BSNode[] = [];
 
-  constructor(node: BreakStatement) {
-    super();
+  constructor(ctx: Context, node: BreakStatement) {
+    super(ctx, node);
   }
-}
 
-export function parseBreak(ctx: Context, statement: BreakStatement): Sexpr {
-  return S("[]", "br", ctx.getLoopBreakLabel());
+  compile(ctx: Context): Sexpr {
+    return S("[]", "br", ctx.getLoopBreakLabel());
+  }
 }

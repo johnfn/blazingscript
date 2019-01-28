@@ -1,13 +1,20 @@
-import fs from 'fs'
-import { Program } from './program';
+import fs from "fs";
+import { Program } from "./program";
 
 // TODO:
+// * rewrite AST to structure that has all the info we want.
+// * statements can return null, but expressions cant. lots of stuff can be cleaned up!
 // * add imports so that my code isnt such a mess
 //   * http://fredkschott.com/post/2014/06/require-and-the-module-system/
-// * rewrite AST to structure that has all the info we want.
+// * remove all !
+// * rename parseStatementListBS
+// * for special functions (like log), we should ensure you actually imported them from somewhere,
+//   otherwise you dont get them.
 // * assertEquals() rather than just returning true from inside code blocks
 // * pushScope and popScope should be a with() sort of thing.
-// * log: 
+// * eventually eradicate all getText()
+// * myslocal is a huge hack, remove it!
+// * log:
 //   * get correct file name.
 //   * pull line number ha!
 // * hard stuff
@@ -25,14 +32,15 @@ import { Program } from './program';
 //       use from the same pile rather than having a ton of unnecessary ones.
 // * which gets added to every program
 // * figure out how to do simple dispatches on strings, like length
+// * generate straight wasm rather than wat
 
 // * fun optimization ideas:
 //   * pull out constant expressions that are repeatedly evaluated
 //   * inline functions
 
 // TODO: double pass: convert to reasonable data structure first, then convert to sexprs
-// First pass: 
-//   1. convert to reasonable data structure. 
+// First pass:
+//   1. convert to reasonable data structure.
 //   2. find all
 //     1. local variables
 //     2. exported functions
@@ -62,7 +70,7 @@ const result = p.parse();
 const file = process.argv[2];
 
 if (!file) {
-  console.log(`Usage: node ${ process.argv[1] } OUTFILE`);
+  console.log(`Usage: node ${process.argv[1]} OUTFILE`);
 } else {
-  fs.writeFileSync(file, result)
+  fs.writeFileSync(file, result);
 }

@@ -1,18 +1,18 @@
 import { ContinueStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
-import { BSNode } from "../rewriter";
+import { BSNode } from "./bsnode";
 
 // TODO: Handle label.
 
 export class BSContinueStatement extends BSNode {
   children: BSNode[] = [];
 
-  constructor(node: ContinueStatement) {
-    super();
+  constructor(ctx: Context, node: ContinueStatement) {
+    super(ctx, node);
   }
-}
 
-export function parseContinue(ctx: Context, statement: ContinueStatement): Sexpr {
-  return ctx.getLoopContinue();
+  compile(ctx: Context): Sexpr {
+    return ctx.getLoopContinue();
+  }
 }

@@ -1,23 +1,23 @@
 // types specially handled by the BlazingScript compiler
 
-declare type LogType  = string | number;
-declare const log     : (a: LogType, b?: LogType, c?: LogType) => void;
+declare type LogType = string | number;
+declare const log: (a: LogType, b?: LogType, c?: LogType) => void;
 declare const memwrite: (pos: number, val: number) => void;
-declare const memread : (pos: number) => number;
+declare const memread: (pos: number) => number;
 declare const divfloor: (a: number, b: number) => number;
 declare const operator: (type: "+" | "===" | "!==") => ((target: any, propertyKey: string, descriptor: PropertyDescriptor) => void);
-declare const jsType: (x: string) => (<T extends { new (...args: any[]) : {} }>(constructor: T) => T);
+declare const jsType: (x: string) => (<T extends { new (...args: any[]): {} }>(constructor: T) => T);
 
 @jsType("String")
-class StringInternal { 
+class StringInternal {
   readonly length: number = 0;
 
   strLen(): number {
-    return memread(this as any as number);
+    return memread((this as any) as number);
   }
 
   charCodeAt(i: number): number {
-    return memread((this as any as number) + 4 + i) & 0x000000ff;
+    return memread(((this as any) as number) + 4 + i) & 0x000000ff;
   }
 
   @operator("===")
@@ -44,24 +44,32 @@ class StringInternal {
   }
 
   charAt(i: number): string {
-    const charCode = memread((this as any as number) + 4 + i) & 0x000000ff;
+    const charCode = memread(((this as any) as number) + 4 + i) & 0x000000ff;
     const newStr = malloc(4 + 1);
 
     memwrite(newStr + 0, 1);
     memwrite(newStr + 4, charCode);
 
-    return newStr as any as string;
+    return (newStr as any) as string;
   }
 
   indexOf(needle: string): number {
     const needleLen = needle.length;
     const haystackLen = this.length;
 
-    for (let haystackStartPos = 0; haystackStartPos < haystackLen; haystackStartPos++) {
+    for (
+      let haystackStartPos = 0;
+      haystackStartPos < haystackLen;
+      haystackStartPos++
+    ) {
       let curPos = 0;
 
-      for (curPos = haystackStartPos; curPos < haystackStartPos + needleLen; curPos++) {
-        if (curPos > haystackLen) { 
+      for (
+        curPos = haystackStartPos;
+        curPos < haystackStartPos + needleLen;
+        curPos++
+      ) {
+        if (curPos > haystackLen) {
           break;
         }
 
@@ -97,11 +105,13 @@ class StringInternal {
       memwrite(newStr + 4 + myLen + j, other.charCodeAt(j));
     }
 
-    return newStr as any as string;
+    return (newStr as any) as string;
   }
 }
 
 interface String extends StringInternal {
+  [key: number]: string;
+
   readonly length: number;
   charAt(pos: number): string;
   charCodeAt(index: number): number;
@@ -135,11 +145,7 @@ function test_malloc() {
   const y = malloc(5);
   const z = malloc(5);
 
-  return (
-    y === x + 5 &&
-    z === y + 5 &&
-    z < 1000
-  );
+  return y === x + 5 && z === y + 5 && z < 1000;
 }
 
 function test_inc() {
@@ -182,7 +188,6 @@ function test_and2() {
   }
 }
 
-
 function test_and3() {
   if (true && false) {
     return false;
@@ -197,7 +202,7 @@ function test_not() {
 
 function test_multivar() {
   let x = 1;
-  let y = 2; 
+  let y = 2;
   let z = 3;
 
   return x + y + z === 6;
@@ -256,28 +261,27 @@ function test_string_length() {
 function test_string_charCodeAt() {
   const x = "abcde";
 
-  return x.charCodeAt(0) === 97 &&
-         x.charCodeAt(1) === 98 &&
-         x.charCodeAt(2) === 99 &&
-         x.charCodeAt(3) === 100;
+  return (
+    x.charCodeAt(0) === 97 &&
+    x.charCodeAt(1) === 98 &&
+    x.charCodeAt(2) === 99 &&
+    x.charCodeAt(3) === 100
+  );
 }
 
 function test_str_array_access() {
   const x = "abcde";
-  const char1: string = x[0];
-  const char2: string = x[1];
+  const char1 = x[0];
+  const char2 = x[1];
 
-  return (
-    char1.charCodeAt(0) === 97 &&
-    char2.charCodeAt(0) === 98
-  )
+  return char1.charCodeAt(0) === 97 && char2.charCodeAt(0) === 98;
 }
 
 function test_str_eq() {
   const a = "abc";
   const b = "abc";
 
-  return (a === b);
+  return a === b;
 }
 
 function test_str_neq1() {
@@ -297,7 +301,7 @@ function test_str_neq2() {
 function test_string_charAt() {
   const x = "abcde";
 
-  return (x.charAt(0) === "a" && x.charAt(1) === "b");
+  return x.charAt(0) === "a" && x.charAt(1) === "b";
 }
 
 function test_strcat() {
@@ -332,13 +336,13 @@ function test_nested_for_loop() {
 }
 
 function test_break() {
-  let sum = 0; 
+  let sum = 0;
 
   for (let i = 0; i < 10; i++) {
     sum = sum + i;
 
-    if (i === 4) { 
-      break; 
+    if (i === 4) {
+      break;
     }
   }
 
@@ -346,7 +350,7 @@ function test_break() {
 }
 
 function test_continue() {
-  let sum = 0; 
+  let sum = 0;
 
   for (let i = 0; i < 10; i++) {
     if (i % 2 === 1) {
@@ -362,10 +366,12 @@ function test_continue() {
 function test_indexOf() {
   const a = "testing blah foo";
 
+  log(a, 1, a + "hi");
+
   return (
     a.indexOf("test") === 0 &&
     a.indexOf("blah") === 8 &&
-    a.indexOf("foo")  === 13
+    a.indexOf("foo") === 13
   );
 }
 

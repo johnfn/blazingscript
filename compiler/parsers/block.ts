@@ -1,20 +1,22 @@
 import { Block } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { parseStatementList } from "./statementlist";
+import { parseStatementList, parseStatementListBS } from "./statementlist";
 import { Context } from "../context";
-import { BSNode } from "../rewriter";
 import { BSStatement } from "./statement";
+import { BSNode } from "./bsnode";
 
 export class BSBlock extends BSNode {
   children: BSNode[];
 
-  constructor(node: Block) {
-    super();
+  constructor(ctx: Context, node: Block) {
+    super(ctx, node);
 
-    this.children = node.statements.map(statement => new BSStatement(statement));
+    this.children = node.statements.map(
+      statement => new BSStatement(ctx, statement)
+    );
   }
-}
 
-export function parseBlock(ctx: Context, block: Block): Sexpr {
-  return S.Block(parseStatementList(ctx, block.statements));
+  compile(ctx: Context): Sexpr {
+    return S.Block(parseStatementListBS(ctx, this.children));
+  }
 }

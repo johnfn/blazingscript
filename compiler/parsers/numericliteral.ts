@@ -1,21 +1,21 @@
 import { NumericLiteral } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
-import { BSNode } from "../rewriter";
+import { BSNode } from "./bsnode";
 
 export class BSNumericLiteral extends BSNode {
   children: BSNode[] = [];
-  value   : number;
+  value: number;
 
-  constructor(node: NumericLiteral) {
-    super();
+  constructor(ctx: Context, node: NumericLiteral) {
+    super(ctx, node);
 
     // TODO: Won't handle weird literals?
 
     this.value = Number(node.text);
   }
-}
 
-export function parseNumericLiteral(ctx: Context, flt: NumericLiteral): Sexpr {
-  return S.Const("i32", Number(flt.text));
+  compile(ctx: Context): Sexpr {
+    return S.Const("i32", this.value);
+  }
 }

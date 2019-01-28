@@ -2,22 +2,31 @@ import { VariableStatement, SyntaxKind } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { parseExpression } from "./expression";
-import { BSNode } from "../rewriter";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
+import { BSNode } from "./bsnode";
 
 export class BSVariableStatement extends BSNode {
   children: BSNode[];
-  list    : BSNode;
+  list: BSNode;
+  nodeREMOVE: VariableStatement;
 
-  constructor(node: VariableStatement) {
-    super();
+  constructor(ctx: Context, node: VariableStatement) {
+    super(ctx, node);
 
-    this.list = new BSVariableDeclarationList(node.declarationList);
+    this.list = new BSVariableDeclarationList(ctx, node.declarationList);
     this.children = [this.list];
+    this.nodeREMOVE = node;
+  }
+
+  compile(ctx: Context): Sexpr | null {
+    return parseVariableStatement(ctx, this.nodeREMOVE);
   }
 }
 
-export function parseVariableStatement(ctx: Context, vs: VariableStatement): Sexpr | null {
+export function parseVariableStatement(
+  ctx: Context,
+  vs: VariableStatement
+): Sexpr | null {
   for (const mod of vs.modifiers || []) {
     switch (mod.kind) {
       case SyntaxKind.DeclareKeyword:
@@ -45,7 +54,12 @@ export function parseVariableStatement(ctx: Context, vs: VariableStatement): Sex
   if (decl.name.kind === SyntaxKind.Identifier) {
     const name = decl.name.getText();
 
-    return S.SetLocal(name, decl.initializer ? parseExpression(ctx, decl.initializer) : S.Const("i32", 0));
+    return S.SetLocal(
+      name,
+      decl.initializer!
+        ? parseExpression(ctx, decl.initializer!)!
+        : S.Const("i32", 0)
+    );
   } else {
     throw new Error("I dont handle destructuring in variable names");
   }

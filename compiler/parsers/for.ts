@@ -1,101 +1,113 @@
 import { Context } from "../context";
-import { ForStatement, SyntaxKind, VariableDeclarationList, validateLocaleAndSetLanguage } from "typescript";
+import {
+  ForStatement,
+  SyntaxKind,
+  VariableDeclarationList,
+  validateLocaleAndSetLanguage
+} from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { parseExpression, BSExpression } from "./expression";
 import { parseStatement, BSStatement } from "./statement";
-import { BSNode } from "../rewriter";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
+import { BSNode } from "./bsnode";
+import { getExpressionNode, parseExpression, BSExpressionNode } from "./expression";
 
 export class BSForStatement extends BSNode {
-  children   : BSNode[];
+  children: BSNode[];
 
-  initializer: BSVariableDeclarationList | BSExpression | null;
-  incrementor: BSExpression | null;
-  condition  : BSExpression | null;
-  body       : BSStatement  | null;
+  initializer: BSVariableDeclarationList | BSExpressionNode | null;
+  incrementor: BSNode | null;
+  condition: BSExpressionNode | null;
+  body: BSStatement | null;
 
-  constructor(node: ForStatement) {
-    super();
+  nodeREMOVE: ForStatement;
+
+  constructor(ctx: Context, node: ForStatement) {
+    super(ctx, node);
 
     if (node.initializer === undefined) {
       this.initializer = null;
     } else if (node.initializer.kind === SyntaxKind.VariableDeclarationList) {
-      this.initializer = new BSVariableDeclarationList(node.initializer as VariableDeclarationList);
+      this.initializer = new BSVariableDeclarationList(
+        ctx,
+        node.initializer as VariableDeclarationList
+      );
     } else {
-      this.initializer = new BSExpression(node.initializer);
+      this.initializer = getExpressionNode(ctx, node.initializer);
     }
 
     if (node.incrementor === undefined) {
       this.incrementor = null;
     } else {
-      this.incrementor = new BSExpression(node.incrementor);
+      this.incrementor = getExpressionNode(ctx, node.incrementor);
     }
 
     if (node.condition === undefined) {
       this.condition = null;
     } else {
-      this.condition = new BSExpression(node.condition);
+      this.condition = getExpressionNode(ctx, node.condition);
     }
 
-    this.body = new BSStatement(node.statement);
+    this.body = new BSStatement(ctx, node.statement);
 
     this.children = [
       ...(this.initializer ? [this.initializer] : []),
       ...(this.incrementor ? [this.incrementor] : []),
-      ...(this.condition   ? [this.condition  ] : []),
+      ...(this.condition ? [this.condition] : []),
 
       this.body
     ];
+
+    this.nodeREMOVE = node;
   }
-}
 
-export function parseForStatement(ctx: Context, fs: ForStatement): Sexpr {
-  const initializerSexprs: Sexpr[] = [];
 
-  if (fs.initializer) {
-    if (fs.initializer.kind === SyntaxKind.VariableDeclarationList) {
-      const vdl = fs.initializer as VariableDeclarationList;
+  compile(ctx: Context): Sexpr {
+    const initializerSexprs: Sexpr[] = [];
 
-      for (const v of vdl.declarations) {
-        if (v.initializer) {
-          initializerSexprs.push(
-            S.SetLocal(
-              v.name.getText(),
-              parseExpression(ctx, v.initializer)
-            )
-          );
+    if (this.initializer) {
+      if (this.initializer instanceof BSVariableDeclarationList) {
+        for (const v of this.initializer.declarations) {
+          if (v.initializer) {
+            initializerSexprs.push(
+              S.SetLocal(v.nameNode.text, v.initializer.compile(ctx))
+            );
+          }
         }
+      } else {
+        initializerSexprs.push(this.initializer.compile(ctx));
       }
-    } else {
-      initializerSexprs.push(parseExpression(ctx, fs.initializer));
     }
+
+    const inc = this.incrementor ? this.incrementor.compile(ctx) : null;
+
+    // TODO - we generate an increment with every continue statement. im sure
+    // there's a better way!
+
+    ctx.addToLoopStack(inc);
+
+    const bodyComp = this.body ? this.body.compile(ctx) : null;
+    const cond = this.condition ? this.condition.compile(ctx) : null;
+
+    const result = S(
+      "i32",
+      "block",
+      ctx.getLoopBreakLabel(),
+      ...initializerSexprs,
+      S(
+        "[]",
+        "loop",
+        ctx.getLoopContinueLabel(),
+        ...(cond
+          ? [S("[]", "br_if", ctx.getLoopBreakLabel(), S("i32", "i32.eqz", cond))]
+          : []),
+        ...(bodyComp ? [bodyComp] : []),
+        ...(inc ? [inc] : []),
+        S("[]", "br", ctx.getLoopContinueLabel())
+      )
+    );
+
+    ctx.popFromLoopStack();
+
+    return result;
   }
-
-  const inc = fs.incrementor ? parseExpression(ctx, fs.incrementor) : null;
-
-  // TODO - we generate an increment with every continue statement. im sure
-  // there's a better way!
-
-  ctx.addToLoopStack(inc);
-
-  const body = parseStatement(ctx, fs.statement);
-  const cond = fs.condition ? parseExpression(ctx, fs.condition) : null;
-
-  const result = S(
-    "i32",
-    "block", ctx.getLoopBreakLabel(),
-    ...initializerSexprs,
-    S("[]", "loop", ctx.getLoopContinueLabel(),
-      ...(cond ? [
-        S("[]", "br_if", ctx.getLoopBreakLabel(), S("i32", "i32.eqz", cond))
-      ] : []),
-      ...(body ? [body] : []),
-      ...(inc  ? [inc] : []),
-      S("[]", "br", ctx.getLoopContinueLabel()),
-    )
-  );
-
-  ctx.popFromLoopStack();
-
-  return result;
 }

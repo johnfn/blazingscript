@@ -2,8 +2,13 @@ import { Context } from "../context";
 import { NodeArray, Statement } from "typescript";
 import { Sexpr } from "../sexpr";
 import { parseStatement } from "./statement";
+import { BSNode } from "./bsnode";
 
-export function parseStatementList(ctx: Context, list: NodeArray<Statement>): Sexpr[] {
+// TODO can probably remove this entirely. and just use map. lol
+export function parseStatementList(
+  ctx: Context,
+  list: NodeArray<Statement>
+): Sexpr[] {
   let results: Sexpr[] = [];
 
   for (const statement of list) {
@@ -11,6 +16,20 @@ export function parseStatementList(ctx: Context, list: NodeArray<Statement>): Se
 
     if (parsed) {
       results = results.concat(parsed);
+    }
+  }
+
+  return results;
+}
+
+export function parseStatementListBS(ctx: Context, nodes: BSNode[]): Sexpr[] {
+  let results: Sexpr[] = [];
+
+  for (const statement of nodes) {
+    const compiled = statement.compile(ctx);
+
+    if (compiled) {
+      results = results.concat(compiled);
     }
   }
 

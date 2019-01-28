@@ -1,90 +1,130 @@
 import { Context } from "../context";
-import { Statement, SyntaxKind, ExpressionStatement, ReturnStatement, FunctionDeclaration, Block, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, ClassDeclaration, TypeAliasDeclaration, InterfaceDeclaration } from "typescript";
+import {
+  Statement,
+  SyntaxKind,
+  ExpressionStatement,
+  ReturnStatement,
+  FunctionDeclaration,
+  Block,
+  IfStatement,
+  VariableStatement,
+  ForStatement,
+  BreakStatement,
+  ContinueStatement,
+  ClassDeclaration,
+  TypeAliasDeclaration,
+  InterfaceDeclaration,
+  Expression
+} from "typescript";
 import { Sexpr } from "../sexpr";
-import { parseExpressionStatement, BSExpressionStatement } from "./expressionstatement";
-import { parseReturnStatement, BSReturnStatement } from "./return";
-import { parseBlock, BSBlock } from "./block";
+import { BSExpressionStatement } from "./expressionstatement";
+import { BSReturnStatement } from "./return";
+import { BSBlock } from "./block";
 import { parseIfStatement, BSIfStatement } from "./if";
-import { parseVariableStatement, BSVariableStatement } from "./variablestatement";
-import { parseForStatement, BSForStatement } from "./for";
-import { parseBreak, BSBreakStatement } from "./break";
-import { parseContinue, BSContinueStatement } from "./continue";
-import { BSNode } from "../rewriter";
+import {
+  parseVariableStatement,
+  BSVariableStatement
+} from "./variablestatement";
+import { BSForStatement } from "./for";
+import { BSBreakStatement } from "./break";
+import { BSContinueStatement } from "./continue";
 import { BSTypeAliasDeclaration } from "./typealias";
 import { BSInterfaceDeclaration } from "./interface";
 import { BSFunctionDeclaration } from "./function";
 import { BSClassDeclaration } from "./class";
+import { BSNode } from "./bsnode";
 
 export class BSStatement extends BSNode {
   children: BSNode[];
   readonly type = "Statement";
 
   statement: BSNode;
+  nodeREMOVE: Statement;
 
-  constructor(statement: Statement) {
-    super();
+  constructor(ctx: Context, statement: Statement) {
+    super(ctx, statement);
 
-    this.statement = this.getStatement(statement);
+    this.statement = this.getStatement(ctx, statement);
     this.children = [this.statement];
+
+    this.nodeREMOVE = statement;
   }
 
-  getStatement(statement: Statement): BSNode {
+  getStatement(ctx: Context, statement: Statement): BSNode {
     switch (statement.kind) {
       case SyntaxKind.ExpressionStatement:
-        return new BSExpressionStatement(statement as ExpressionStatement);
+        return new BSExpressionStatement(ctx, statement as ExpressionStatement);
       case SyntaxKind.ReturnStatement:
-        return new BSReturnStatement(statement as ReturnStatement);
+        return new BSReturnStatement(ctx, statement as ReturnStatement);
       case SyntaxKind.Block:
-        return new BSBlock(statement as Block);
+        return new BSBlock(ctx, statement as Block);
       case SyntaxKind.IfStatement:
-        return new BSIfStatement(statement as IfStatement);
+        return new BSIfStatement(ctx, statement as IfStatement);
       case SyntaxKind.VariableStatement:
-        return new BSVariableStatement(statement as VariableStatement);
+        return new BSVariableStatement(ctx, statement as VariableStatement);
       case SyntaxKind.ForStatement:
-        return new BSForStatement(statement as ForStatement);
+        return new BSForStatement(ctx, statement as ForStatement);
       case SyntaxKind.BreakStatement:
-        return new BSBreakStatement(statement as BreakStatement);
+        return new BSBreakStatement(ctx, statement as BreakStatement);
       case SyntaxKind.ContinueStatement:
-        return new BSContinueStatement(statement as ContinueStatement);
+        return new BSContinueStatement(ctx, statement as ContinueStatement);
 
       // these generate no code.
 
       case SyntaxKind.TypeAliasDeclaration:
-        return new BSTypeAliasDeclaration(statement as TypeAliasDeclaration);
+        return new BSTypeAliasDeclaration(
+          ctx,
+          statement as TypeAliasDeclaration
+        );
       case SyntaxKind.InterfaceDeclaration:
-        return new BSInterfaceDeclaration(statement as InterfaceDeclaration);
+        return new BSInterfaceDeclaration(
+          ctx,
+          statement as InterfaceDeclaration
+        );
 
       // these are preprocessed in parseSourceFile.
 
       case SyntaxKind.FunctionDeclaration:
-        return new BSFunctionDeclaration(statement as FunctionDeclaration);
+        return new BSFunctionDeclaration(ctx, statement as FunctionDeclaration);
       case SyntaxKind.ClassDeclaration:
-        return new BSClassDeclaration(statement as ClassDeclaration);
+        return new BSClassDeclaration(ctx, statement as ClassDeclaration);
       default:
-        throw new Error(`unhandled statement! ${ SyntaxKind[statement.kind] }`);
+        throw new Error(`unhandled statement! ${SyntaxKind[statement.kind]}`);
     }
+  }
+
+  compile(ctx: Context): Sexpr | null {
+    return parseStatement(ctx, this.nodeREMOVE);
   }
 }
 
-export function parseStatement(ctx: Context, statement: Statement): Sexpr | null {
+export function parseStatement(
+  ctx: Context,
+  statement: Statement
+): Sexpr | null {
   switch (statement.kind) {
     case SyntaxKind.ExpressionStatement:
-      return parseExpressionStatement(ctx, statement as ExpressionStatement);
+      return new BSExpressionStatement(
+        ctx,
+        statement as ExpressionStatement
+      ).compile(ctx);
     case SyntaxKind.ReturnStatement:
-      return parseReturnStatement(ctx, statement as ReturnStatement);
+      return new BSReturnStatement(ctx, statement as ReturnStatement).compile(
+        ctx
+      );
     //   return parseFunction(ctx, statement as FunctionDeclaration);
     case SyntaxKind.Block:
-      return parseBlock(ctx, statement as Block);
+      return new BSBlock(ctx, statement as Block).compile(ctx);
     case SyntaxKind.IfStatement:
       return parseIfStatement(ctx, statement as IfStatement);
     case SyntaxKind.VariableStatement:
       return parseVariableStatement(ctx, statement as VariableStatement);
     case SyntaxKind.ForStatement:
-      return parseForStatement(ctx, statement as ForStatement);
+      return new BSForStatement(ctx, statement as ForStatement).compile(ctx);
     case SyntaxKind.BreakStatement:
-      return parseBreak(ctx, statement as BreakStatement);
+      return new BSBreakStatement(ctx, statement as BreakStatement).compile(ctx);
     case SyntaxKind.ContinueStatement:
-      return parseContinue(ctx, statement as ContinueStatement);
+      return new BSContinueStatement(ctx, statement as ContinueStatement).compile(ctx);
 
     // these generate no code.
 
@@ -99,6 +139,6 @@ export function parseStatement(ctx: Context, statement: Statement): Sexpr | null
     case SyntaxKind.ClassDeclaration:
       return null;
     default:
-      throw new Error(`unhandled statement! ${ SyntaxKind[statement.kind] }`);
+      throw new Error(`unhandled statement! ${SyntaxKind[statement.kind]}`);
   }
 }

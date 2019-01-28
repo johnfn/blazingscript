@@ -1,31 +1,39 @@
 import { PostfixUnaryExpression } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
-import { parseExpression, BSExpression } from "./expression";
-import { BSNode } from "../rewriter";
+import { BSNode } from "./bsnode";
+import { getExpressionNode } from "./expression";
 
 export class BSPostfixUnaryExpression extends BSNode {
-  children  : BSNode[];
-  expression: BSExpression;
+  children: BSNode[];
+  expression: BSNode;
 
-  constructor(node: PostfixUnaryExpression) {
-    super();
+  operandName: string;
 
-    this.expression = new BSExpression(node.operand);
+  constructor(ctx: Context, node: PostfixUnaryExpression) {
+    super(ctx, node);
+
+    this.expression = getExpressionNode(ctx, node.operand);
     this.children = [this.expression];
+
+    this.operandName = node.operand.getText();
   }
-}
 
-export function parsePostfixUnaryExpression(ctx: Context, pue: PostfixUnaryExpression): Sexpr {
-  // TODO: Check types! (mostly vs f32 etc)
-  // TODO: Return previous value.
-  // TODO: consider ++ vs --
+  compile(ctx: Context): Sexpr {
+    // TODO: Check types! (mostly vs f32 etc)
+    // TODO: Return previous value.
+    // TODO: consider ++ vs --
+    // TODO: Should use context to set local, it's safer
 
-  return S.SetLocal(pue.operand.getText(), S(
-      "i32",
-      "i32.add",
-      parseExpression(ctx, pue.operand),
-      S.Const("i32", 1),
-    )
-  );
+    const exprCompiled = this.expression.compile(ctx);
+
+    if (!exprCompiled) {
+      throw new Error("lhs didnt compile???");
+    }
+
+    return S.SetLocal(
+      this.operandName,
+      S("i32", "i32.add", exprCompiled, S.Const("i32", 1))
+    );
+  }
 }

@@ -1,21 +1,23 @@
 import { Context } from "../context";
-import { ExpressionStatement } from "typescript";
+import { ExpressionStatement, isExpressionStatement } from "typescript";
 import { Sexpr } from "../sexpr";
-import { parseExpression, BSExpression } from "./expression";
-import { BSNode } from "../rewriter";
+import { BSNode } from "./bsnode";
+import { parseExpression, getExpressionNode } from "./expression";
 
 export class BSExpressionStatement extends BSNode {
   children: BSNode[];
-  expression: BSExpression;
+  expression: BSNode;
+  nodeREMOVE: ExpressionStatement;
 
-  constructor(node: ExpressionStatement) {
-    super();
+  constructor(ctx: Context, node: ExpressionStatement) {
+    super(ctx, node);
 
-    this.expression = new BSExpression(node.expression);
+    this.expression = getExpressionNode(ctx, node.expression);
     this.children = [this.expression];
+    this.nodeREMOVE = node;
   }
-}
 
-export function parseExpressionStatement(ctx: Context, es: ExpressionStatement): Sexpr {
-  return parseExpression(ctx, es.expression);
+  compile(ctx: Context): Sexpr | null {
+    return this.expression.compile(ctx);
+  }
 }
