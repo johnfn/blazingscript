@@ -253,17 +253,17 @@ export class Context {
     );
   }
 
-  addFunction(fd: BSFunctionDeclaration): void {
+  addFunction(node: BSFunctionDeclaration): void {
     let fqName: string;
     let fnName: string;
     let className: string | null = null;
 
-    if (!fd.name) {
+    if (!node.name) {
       throw new Error("anonymous functions not supported yet!");
     }
 
-    fqName = "$" + fd.name;
-    fnName = fd.name;
+    fqName = "$" + node.name;
+    fnName = node.name;
 
     for (const fn of this.localScope().functionNameMapping) {
       if (fn.bsname === fqName) {
@@ -273,7 +273,7 @@ export class Context {
 
     this.localScope().functionNameMapping.push({
       bsname: fqName,
-      node: fd,
+      node: node,
       fnName,
       className,
       overload: null
