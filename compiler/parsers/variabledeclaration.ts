@@ -2,7 +2,7 @@ import { getExpressionNode, BSExpressionNode } from "./expression";
 import { VariableDeclaration, BindingName, SyntaxKind } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
-import { BSIdentifier } from "./identifier";
+import { parseBindingNameNode, BSBindingName } from "./bindingname";
 
 export class BSVariableDeclaration extends BSNode {
   children   : BSNode[];
@@ -24,17 +24,5 @@ export class BSVariableDeclaration extends BSNode {
 
   compile(ctx: Context): null {
     throw new Error("cant compile variable declarations!");
-  }
-}
-
-// TODO: Add pattern matching stuff in here
-
-type BSBindingName = BSIdentifier;
-
-function parseBindingNameNode(ctx: Context, node: BindingName): BSIdentifier {
-  if (node.kind === SyntaxKind.Identifier) {
-    return new BSIdentifier(ctx, node);
-  } else {
-    throw new Error("Dont handle that kind of variable binding pattern!")
   }
 }

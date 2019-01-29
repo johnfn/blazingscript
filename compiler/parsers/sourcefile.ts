@@ -18,7 +18,7 @@ import { BSNode } from "./bsnode";
 import { BSClassDeclaration } from "./class";
 
 type FunctionDecl = {
-  node: FunctionDeclaration | MethodDeclaration;
+  node: BSFunctionDeclaration | MethodDeclaration;
 
   /**
    * The containing class (if there is one).
@@ -63,16 +63,14 @@ export class BSSourceFile extends BSNode {
           );
         }
 
-        // TODO: Remove this special case when we can handle this sort of thing.
+        // TODO: move this to constructor?
 
-        if (node.name !== "operator") {
-          decls.push({
-            node: node.nodeREMOVE,
-            name: node.name,
-            exported: true, //  fd.modifiers && fd.modifiers.find(tok => tok.kind === SyntaxKind.Export) .indexOf(ModifierFlags.Export) > -1
-            parent: parent ? parent.nodeREMOVE : null
-          });
-        }
+        decls.push({
+          node: node,
+          name: node.name,
+          exported: true, //  fd.modifiers && fd.modifiers.find(tok => tok.kind === SyntaxKind.Export) .indexOf(ModifierFlags.Export) > -1
+          parent: parent ? parent.nodeREMOVE : null
+        });
       }
 
       if (node instanceof BSMethodDeclaration) {
@@ -162,11 +160,11 @@ export class BSSourceFile extends BSNode {
         )
       ),
       ...functions.map(fn => {
-        if (fn.node.kind === SyntaxKind.MethodDeclaration) {
+        if (fn.node instanceof BSFunctionDeclaration) {
+          return fn.node.compile(ctx);
+        } else if (fn.node.kind === SyntaxKind.MethodDeclaration) {
           return new BSMethodDeclaration(ctx, fn.node, fn.parent!).compile(ctx);
-        } else if (fn.node.kind === SyntaxKind.FunctionDeclaration) {
-          return new BSFunctionDeclaration(ctx, fn.node).compile(ctx);
-        }
+        } 
 
         throw new Error("i got some weird type of function i cant handle.");
       }),

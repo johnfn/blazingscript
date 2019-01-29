@@ -105,7 +105,7 @@ export class BSMethodDeclaration extends BSNode {
 
     ctx.addDeclarationsToContext(this);
 
-    const params = ctx.addParameterListToContext(this.nodeREMOVE.parameters);
+    const params = ctx.addParameterListToContext(this.parameters);
     const sb = parseStatementList(ctx, this.nodeREMOVE.body!.statements);
     let last: Sexpr | null = null;
 

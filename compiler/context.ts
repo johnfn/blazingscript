@@ -34,6 +34,7 @@ import { BSVariableDeclaration } from "./parsers/variabledeclaration";
 import { BSVariableStatement } from "./parsers/variablestatement";
 import { BSFunctionExpression } from "./parsers/functionexpression";
 import { BSIdentifier } from "./parsers/identifier";
+import { BSParameter } from "./parsers/parameter";
 
 type Variable = {
   tsType     : ts.Type | undefined;
@@ -433,12 +434,12 @@ export class Context {
   }
 
   addParameterListToContext(
-    nodes: NodeArray<ParameterDeclaration>
+    nodes: BSParameter[]
   ): Param[] {
     const result: Param[] = [];
 
     for (const n of nodes) {
-      const type = this.typeChecker.getTypeAtLocation(n);
+      const type = n.tsType;
       let wasmType: "i32";
 
       if (type.flags & TypeFlags.Number || type.flags & TypeFlags.String) {
@@ -448,14 +449,13 @@ export class Context {
       }
 
       result.push({
-        name: n.name.getText(),
+        name: n.bindingName.text,
         type: wasmType
       });
 
-      this.addVariableToScope(n.name.getText(), type, wasmType, true);
+      this.addVariableToScope(n.bindingName.text, type, wasmType, true);
     }
 
     return result;
   }
-
 }

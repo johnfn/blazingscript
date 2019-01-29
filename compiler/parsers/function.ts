@@ -1,21 +1,4 @@
-import {
-  forEachChild,
-  FunctionDeclaration,
-  Node,
-  NodeArray,
-  ParameterDeclaration,
-  SyntaxKind,
-  TypeFlags,
-  VariableDeclaration,
-  ForStatement,
-  VariableDeclarationList,
-  VariableStatement,
-  BindingName,
-  Identifier,
-  createTextChangeRange,
-  createBigIntLiteral,
-  Statement
-} from "typescript";
+import { FunctionDeclaration } from "typescript";
 import { Sexpr, Param, S } from "../sexpr";
 import { Context } from "../context";
 import { parseStatementList, parseStatementListBS } from "./statementlist";
@@ -31,8 +14,6 @@ export class BSFunctionDeclaration extends BSNode {
   name: string | null;
   fullText: string;
 
-  nodeREMOVE: FunctionDeclaration;
-
   constructor(ctx: Context, node: FunctionDeclaration) {
     super(ctx, node);
 
@@ -44,8 +25,6 @@ export class BSFunctionDeclaration extends BSNode {
 
     this.name = node.name ? node.name.text : null;
     this.fullText = node.getFullText();
-
-    this.nodeREMOVE = node;
   }
 
   compile(ctx: Context): Sexpr {
@@ -59,7 +38,7 @@ export class BSFunctionDeclaration extends BSNode {
 
     // Build the function.
 
-    const params = ctx.addParameterListToContext(this.nodeREMOVE.parameters);
+    const params = ctx.addParameterListToContext(this.parameters);
     const sb = parseStatementListBS(ctx, this.body!.children);
     let last: Sexpr | null = null;
 
@@ -85,6 +64,4 @@ export class BSFunctionDeclaration extends BSNode {
 
     return result;
   }
-
-
 }
