@@ -1,16 +1,16 @@
-import { getExpressionNode, BSExpressionNode } from "./expression";
+import { getExpressionNode, BSExpression } from "./expression";
 import { AsExpression } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
 import { Sexpr } from "../sexpr";
 
 /**
- * e.g. "const x = "hi" as Foo"
- *                 ^^^^^^^^^^^
+ * e.g. const x = "hi" as Foo
+ *                ^^^^^^^^^^^
  */
 export class BSAsExpression extends BSNode {
   children: BSNode[];
-  expression: BSExpressionNode;
+  expression: BSExpression;
 
   constructor(ctx: Context, node: AsExpression) {
     super(ctx, node);

@@ -9,7 +9,7 @@ declare const log: (a: LogType, b?: LogType, c?: LogType) => void;
 declare const memwrite: (pos: number, val: number) => void;
 declare const memread: (pos: number) => number;
 declare const divfloor: (a: number, b: number) => number;
-declare const operator: (type: "+" | "===" | "!==") => ((target: any, propertyKey: string, descriptor: PropertyDescriptor) => void);
+declare const operator: (type: "+" | "===" | "!==" | "[]") => ((target: any, propertyKey: string, descriptor: PropertyDescriptor) => void);
 declare const jsType: (x: string) => (<T extends { new (...args: any[]): {} }>(constructor: T) => T);
 
 @jsType("String")
@@ -55,6 +55,12 @@ class StringInternal {
     memwrite(newStr + 4, charCode);
 
     return (newStr as any) as string;
+  }
+
+  [key: number]: string;
+  @operator("[]")
+  index(i: number): string {
+    return this.charAt(i);
   }
 
   indexOf(needle: string): number {
@@ -114,12 +120,33 @@ class StringInternal {
 }
 
 interface String extends StringInternal {
-  [key: number]: string;
-
   readonly length: number;
   charAt(pos: number): string;
   charCodeAt(index: number): number;
   indexOf(searchString: string, position: number): number;
+}
+
+@jsType("Array")
+class ArrayInternal<T> {
+  readonly length: number = 0;
+
+  arrLen(): number {
+    return memread((this as any) as number);
+  }
+
+  indexAt(i: number): number {
+    return memread(((this as any) as number) + 4 + i);
+  }
+
+  [key: number]: T;
+  @operator("[]")
+  index(i: number): T {
+    return memread(((this as any) as number) + 4 * 2 + i * 4) as any as T;
+  }
+}
+
+interface Array<T> extends ArrayInternal<T> {
+  [key: number]: T;
 }
 
 function getOffset(): number {
@@ -262,6 +289,15 @@ function test_string_length() {
   return x.length === 5;
 }
 
+function test_string_squarebrackets() {
+  const x = "abcde";
+
+  return (
+    x[0] === "a" &&
+    x[2] === "c"
+  );
+}
+
 function test_string_charCodeAt() {
   const x = "abcde";
 
@@ -377,6 +413,33 @@ function test_indexOf() {
   );
 }
 
+function test_statement_then_if() {
+  let x = "blah";
+  let y = x.length;
+
+  if (y === 4) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function test_basic_array() {
+  const array = [1, 2, 3, 4];
+
+  return array.length === 4;
+}
+
+function test_array_access() {
+  const array = [1, 2, 3, 4];
+
+  return (
+    array[0] === 1 &&
+    array[1] === 2 &&
+    array[2] === 3
+  );
+}
+
 /*
 
 function test_for_loop_no_init() {
@@ -393,7 +456,7 @@ function test_for_loop_no_init() {
 }
 
 function test_compound_assignment() {
-  let x = 1;
+  let x = 0;
 
   x += 5;
   x += 5;
@@ -405,16 +468,6 @@ function test_compound_assignment() {
 */
 
 /*
-function test_statement_then_if() {
-  let x = "blah";
-  let y = strlen(x);
-
-  if (y === 4) {
-    return true;
-  } else {
-    return false;
-  }
-}
 */
 
 /*

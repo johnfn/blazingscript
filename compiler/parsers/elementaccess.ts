@@ -6,7 +6,9 @@ import {
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
-import { getExpressionNode, BSExpressionNode } from "./expression";
+import { getExpressionNode, BSExpression } from "./expression";
+import { Operator } from "./method";
+import { isArrayType } from "./arrayliteral";
 
 /**
  * e.g. const x = myArray[5];
@@ -14,8 +16,8 @@ import { getExpressionNode, BSExpressionNode } from "./expression";
  */
 export class BSElementAccessExpression extends BSNode {
   children: BSNode[];
-  element : BSExpressionNode;
-  argument: BSExpressionNode;
+  element : BSExpression;
+  argument: BSExpression;
 
   fullText: string;
 
@@ -36,18 +38,23 @@ export class BSElementAccessExpression extends BSNode {
     const arrayType = this.element.tsType;
 
     if (arrayType.flags & TypeFlags.StringLike) {
-      return ctx.callMethod({
+      return ctx.callMethodByOperator({
         className: ctx.getNativeTypeName("String"),
-        methodName: "charAt",
-        thisExpr: array,
-        argExprs: [arg]
+        opName   : Operator["[]"],
+        thisExpr : array,
+        argExprs : [arg]
       });
     }
 
-    throw new Error(
-      `Dont know how to index into anything other than strings. ${
-        this.fullText
-      } ${arrayType.flags}`
-    );
+    if (isArrayType(ctx, arrayType)) {
+      return ctx.callMethodByOperator({
+        className: ctx.getNativeTypeName("Array"),
+        opName   : Operator["[]"],
+        thisExpr : array,
+        argExprs : [arg]
+      });
+    }
+
+    throw new Error(`Dont know how to index into anything other than strings and arrays. ${ this.fullText } ${arrayType.flags}`);
   }
 }

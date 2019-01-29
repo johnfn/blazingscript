@@ -1,5 +1,3 @@
-import { ParameterDeclaration } from "typescript";
-import { flatten } from "./rewriter";
 
 // TODO: turn into class
 export type Sexpr = {
@@ -28,8 +26,9 @@ export function S(
 S.Block = (body: Sexpr[]): Sexpr =>
   body.length === 1 ? body[0] : S("[]", "block", ...body);
 
-S.Const = (type: "i32", value: number): Sexpr =>
-  S(type, "i32.const", String(value));
+S.Const = (type: "i32", value: number): Sexpr => S(type, "i32.const", String(value));
+
+S.Add = (left: Sexpr, right: Sexpr): Sexpr => S("i32", "i32.add", left, right);
 
 S.Drop = (expr: Sexpr): Sexpr => S("[]", "drop", expr);
 

@@ -1,4 +1,4 @@
-import { getExpressionNode, BSExpressionNode } from "./expression";
+import { getExpressionNode, BSExpression } from "./expression";
 import { VariableDeclaration, BindingName, SyntaxKind } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
@@ -9,7 +9,7 @@ export class BSVariableDeclaration extends BSNode {
   children   : BSNode[];
   nameNode   : BSBindingName;
   name       : string;
-  initializer: BSExpressionNode | null;
+  initializer: BSExpression | null;
 
   constructor(ctx: Context, node: VariableDeclaration) {
     super(ctx, node);

@@ -5,7 +5,7 @@ import { flatten } from "../rewriter";
 import { BSNode } from "./bsnode";
 import {
   getExpressionNode,
-  BSExpressionNode
+  BSExpression
 } from "./expression";
 import { parseStatementListBS } from "./statementlist";
 import { BSIdentifier } from "./identifier";
@@ -18,8 +18,8 @@ import { BSStringLiteral } from "./stringliteral";
  */
 export class BSCallExpression extends BSNode {
   children  : BSNode[];
-  expression: BSExpressionNode;
-  arguments : BSExpressionNode[];
+  expression: BSExpression;
+  arguments : BSExpression[];
 
   constructor(ctx: Context, node: CallExpression) {
     super(ctx, node);

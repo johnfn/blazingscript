@@ -2,7 +2,7 @@ import { BSNode } from "./bsnode";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { Decorator } from "typescript";
-import { BSExpressionNode, getExpressionNode } from "./expression";
+import { BSExpression, getExpressionNode } from "./expression";
 
 /**
  * e.g. class MyClass { @foo myFunction() { } }
@@ -13,7 +13,7 @@ import { BSExpressionNode, getExpressionNode } from "./expression";
  */
 export class BSDecorator extends BSNode {
   children  : BSNode[];
-  expression: BSExpressionNode;
+  expression: BSExpression;
 
   constructor(ctx: Context, node: Decorator) {
     super(ctx, node);

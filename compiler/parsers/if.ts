@@ -3,7 +3,7 @@ import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { BSStatement, parseStatement } from "./statement";
 import { BSNode } from "./bsnode";
-import { getExpressionNode, BSExpressionNode } from "./expression";
+import { getExpressionNode, BSExpression } from "./expression";
 
 /**
  * e.g. if (foo) { bar() } else { baz() }
@@ -13,7 +13,7 @@ export class BSIfStatement extends BSNode {
   children  : BSNode[];
 
   nodeREMOVE: IfStatement;
-  condition : BSExpressionNode;
+  condition : BSExpression;
   ifTrue    : BSStatement;
   ifFalse   : BSStatement | null;
 

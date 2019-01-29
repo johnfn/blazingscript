@@ -2,7 +2,7 @@ import { ParenthesizedExpression } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
 import { Sexpr } from "../sexpr";
-import { getExpressionNode, BSExpressionNode } from "./expression";
+import { getExpressionNode, BSExpression } from "./expression";
 
 /**
  * e.g. const x = (1 + 2) * 3;
@@ -10,7 +10,7 @@ import { getExpressionNode, BSExpressionNode } from "./expression";
  */
 export class BSParenthesizedExpression extends BSNode {
   children  : BSNode[];
-  expression: BSExpressionNode;
+  expression: BSExpression;
 
   constructor(ctx: Context, node: ParenthesizedExpression) {
     super(ctx, node);

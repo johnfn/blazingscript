@@ -83,7 +83,7 @@ export class BSBinaryExpression extends BSNode {
     // }
 
     if (
-      this.leftType.flags & TypeFlags.NumberLike &&
+      this.leftType.flags  & TypeFlags.NumberLike &&
       this.rightType.flags & TypeFlags.NumberLike
     ) {
       switch (this.operatorToken.kind) {
@@ -143,7 +143,7 @@ export class BSBinaryExpression extends BSNode {
     }
 
     if (
-      this.leftType.flags & TypeFlags.BooleanLike &&
+      this.leftType.flags  & TypeFlags.BooleanLike &&
       this.rightType.flags & TypeFlags.BooleanLike
     ) {
       switch (this.operatorToken.kind) {
@@ -193,7 +193,7 @@ export class BSBinaryExpression extends BSNode {
       }
     }
 
-    throw new Error(`unhandled types for binary expression ${this.fullText}.`);
+    throw new Error(`unhandled types for binary expression ${this.fullText} ${ TypeFlags[this.leftType.flags] }.`);
   }
 }
 

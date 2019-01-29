@@ -30,12 +30,14 @@ export class BSClassDeclaration extends BSNode {
         return new BSMethodDeclaration(ctx, mem as MethodDeclaration, this.nodeREMOVE);
       } else if (mem.kind === SyntaxKind.PropertyDeclaration) {
         return new BSPropertyDeclaration(ctx, mem as PropertyDeclaration);
+      } else if (mem.kind === SyntaxKind.IndexSignature) {
+        return null;
       } else {
         console.log(mem.kind);
 
         throw new Error("Dont handle other things in classes yet.");
       }
-    });
+    }).filter(x => x) as BSNode[];
     this.children = [...this.members];
 
     if (node.name) {

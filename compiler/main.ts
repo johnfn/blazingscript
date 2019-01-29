@@ -2,7 +2,8 @@ import fs from "fs";
 import { Program } from "./program";
 
 // TODO:
-// * rewrite AST to structure that has all the info we want.
+// * put getExpressionNode on BaseNode
+// * myslocal is a huge hack, remove it!
 // * build up context on the first pass. 
 //   * dont pop from the context, just move up and down.
 // * the initial pass to add functions to the file is now entirely unnecessary
@@ -18,7 +19,6 @@ import { Program } from "./program";
 // * assertEquals() rather than just returning true from inside code blocks
 // * pushScope and popScope should be a with() sort of thing.
 // * eventually eradicate all getText()
-// * myslocal is a huge hack, remove it!
 // * log:
 //   * get correct file name.
 //   * pull line number ha!

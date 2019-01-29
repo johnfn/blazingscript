@@ -8,7 +8,7 @@ import { Sexpr, S } from "../sexpr";
 import { BSStatement } from "./statement";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
 import { BSNode } from "./bsnode";
-import { getExpressionNode, BSExpressionNode } from "./expression";
+import { getExpressionNode, BSExpression } from "./expression";
 
 /**
  * e.g. for (let x = 1; x < 5; x += 1) { console.log("hello"); }
@@ -17,9 +17,9 @@ import { getExpressionNode, BSExpressionNode } from "./expression";
 export class BSForStatement extends BSNode {
   children: BSNode[];
 
-  initializer: BSVariableDeclarationList | BSExpressionNode | null;
+  initializer: BSVariableDeclarationList | BSExpression | null;
   incrementor: BSNode | null;
-  condition: BSExpressionNode | null;
+  condition: BSExpression | null;
   body: BSStatement | null;
 
   constructor(ctx: Context, node: ForStatement) {

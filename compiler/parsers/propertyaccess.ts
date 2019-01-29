@@ -2,8 +2,9 @@ import { PropertyAccessExpression, TypeFlags } from "typescript";
 import { Sexpr } from "../sexpr";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
-import { getExpressionNode, BSExpressionNode } from "./expression";
+import { getExpressionNode, BSExpression } from "./expression";
 import { BSIdentifier } from "./identifier";
+import { isArrayType } from "./arrayliteral";
 
 /**
  * e.g. const x = foo.bar
@@ -11,7 +12,7 @@ import { BSIdentifier } from "./identifier";
  */
 export class BSPropertyAccessExpression extends BSNode {
   children  : BSNode[];
-  expression: BSExpressionNode;
+  expression: BSExpression;
   name      : BSIdentifier;
 
   constructor(ctx: Context, node: PropertyAccessExpression) {
@@ -36,6 +37,17 @@ export class BSPropertyAccessExpression extends BSNode {
         return ctx.callMethod({
           className : ctx.getNativeTypeName("String"),
           methodName: "strLen",
+          thisExpr  : this.expression,
+          argExprs  : []
+        });
+      }
+    }
+
+    if (isArrayType(ctx, this.expression.tsType)) {
+      if (property === "length") {
+        return ctx.callMethod({
+          className : ctx.getNativeTypeName("Array"),
+          methodName: "arrLen",
           thisExpr  : this.expression,
           argExprs  : []
         });

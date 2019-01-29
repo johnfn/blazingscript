@@ -2,7 +2,7 @@ import { PrefixUnaryExpression, SyntaxKind, PrefixUnaryOperator } from "typescri
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
-import { getExpressionNode, BSExpressionNode } from "./expression";
+import { getExpressionNode, BSExpression } from "./expression";
 
 /**
  * e.g. console.log(++x);
@@ -10,7 +10,7 @@ import { getExpressionNode, BSExpressionNode } from "./expression";
  */
 export class BSPrefixUnaryExpression extends BSNode {
   children  : BSNode[];
-  expression: BSExpressionNode;
+  expression: BSExpression;
   operator  : PrefixUnaryOperator;
 
   constructor(ctx: Context, node: PrefixUnaryExpression) {

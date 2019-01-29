@@ -15,7 +15,8 @@ import { BSStringLiteral } from "./stringliteral";
 export enum Operator {
   "===" = "===",
   "!==" = "!==",
-  "+" = "+"
+  "+"   = "+",
+  "[]"  = "[]",
 };
 
 export type OperatorOverload = {
@@ -101,6 +102,8 @@ export class BSMethodDeclaration extends BSNode {
           overload = { operator: Operator["+"] };
         } else if (opName === Operator["==="]) {
           overload = { operator: Operator["==="] };
+        } else if (opName === Operator["[]"]) {
+          overload = { operator: Operator["[]"] };
         } else {
           assertNever(opName);
         }

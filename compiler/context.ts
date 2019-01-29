@@ -23,7 +23,7 @@ import ts, {
 } from "typescript";
 import { sexprToString, Sexpr, S, Param } from "./sexpr";
 import { add } from "./util";
-import { BSExpressionNode } from "./parsers/expression";
+import { BSExpression } from "./parsers/expression";
 import { OperatorOverload, Operator, BSMethodDeclaration } from "./parsers/method";
 import { parseStatementListBS } from "./parsers/statementlist";
 import { BSNode } from "./parsers/bsnode";
@@ -35,6 +35,7 @@ import { BSVariableStatement } from "./parsers/variablestatement";
 import { BSFunctionExpression } from "./parsers/functionexpression";
 import { BSIdentifier } from "./parsers/identifier";
 import { BSParameter } from "./parsers/parameter";
+import { isArrayType } from "./parsers/arrayliteral";
 
 type Variable = {
   tsType     : ts.Type | undefined;
@@ -209,8 +210,8 @@ export class Context {
   callMethod(props: {
     className: string;
     methodName: string;
-    thisExpr: BSExpressionNode;
-    argExprs: BSExpressionNode[];
+    thisExpr: BSExpression;
+    argExprs: BSExpression[];
   }): Sexpr {
     const { className, methodName, thisExpr: thisNode, argExprs } = props;
 
@@ -232,9 +233,9 @@ export class Context {
 
   callMethodByOperator(props: {
     className: string;
-    opName: Operator;
-    thisExpr: BSNode;
-    argExprs: BSNode[];
+    opName   : Operator;
+    thisExpr : BSNode;
+    argExprs : BSNode[];
   }): Sexpr {
     const { className, thisExpr: thisNode, opName, argExprs } = props;
 
@@ -412,23 +413,27 @@ export class Context {
 
     for (const decl of decls) {
       if (
-        decl.tsType.flags & TypeFlags.Number ||
-        decl.tsType.flags & TypeFlags.NumberLiteral ||
-        decl.tsType.flags & TypeFlags.StringLiteral ||
-        decl.tsType.flags & TypeFlags.String
+        decl.tsType.flags & TypeFlags.NumberLike ||
+        decl.tsType.flags & TypeFlags.StringLike ||
+        isArrayType(this, decl.tsType)
       ) {
         this.addVariableToScope(decl.name, decl.tsType, "i32");
       } else {
-        throw new Error(
-          `Do not know how to handle that type: ${
-            TypeFlags[decl.tsType.flags]
-          } for ${decl}`
-        );
+        console.log(decl.fullText);
+
+        console.log(this.typeChecker.typeToString(decl.tsType));
+
+        if (decl.tsType.isLiteral()) {
+          console.log('aha', decl.tsType.regularType);
+        }
+
+        throw new Error(`Do not know how to handle that type: ${ TypeFlags[decl.tsType.flags] } for ${decl.fullText}`);
       }
     }
 
     // TODO: check ahead of time rather than blindly adding them all now.
     this.addVariableToScope("myslocal", undefined, "i32");
+    this.addVariableToScope("myalocal", undefined, "i32");
 
     return decls;
   }

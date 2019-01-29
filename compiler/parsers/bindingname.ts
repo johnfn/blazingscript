@@ -7,8 +7,8 @@ import { Context } from "../context";
 export type BSBindingName = BSIdentifier;
 
 /**
- * e.g. const x = 1 + 3
- *            ^  
+ * e.g. const foo = 1 + 3
+ *            ^^^  
  */
 export function parseBindingNameNode(ctx: Context, node: BindingName): BSIdentifier {
   if (node.kind === SyntaxKind.Identifier) {

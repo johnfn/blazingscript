@@ -14,7 +14,8 @@ import {
   PropertyAccessExpression,
   ParenthesizedExpression,
   ElementAccessExpression,
-  ThisExpression
+  ThisExpression,
+  ArrayLiteralExpression
 } from "typescript";
 import { BSBinaryExpression } from "./binaryexpression";
 import { BSCallExpression } from "./callexpression";
@@ -31,11 +32,13 @@ import { BSTrueKeyword } from "./true";
 import { BSFalseKeyword } from "./false";
 import { BSAsExpression } from "./as";
 import { BSParenthesizedExpression } from "./parentheses";
+import { BSArrayLiteral } from "./arrayliteral";
+import { S } from "../sexpr";
 
 /**
  * BSExpressionNode is a BSNode whos compile() always returns a Sexpr, not null.
  */ 
-export type BSExpressionNode =
+export type BSExpression =
   | BSBinaryExpression
   | BSCallExpression
   | BSIdentifier
@@ -55,7 +58,7 @@ export type BSExpressionNode =
 export function getExpressionNode(
   ctx: Context,
   expression: Expression
-): BSExpressionNode {
+): BSExpression {
   switch (expression.kind) {
     case SyntaxKind.BinaryExpression:
       return new BSBinaryExpression(ctx, expression as BinaryExpression);
@@ -87,6 +90,8 @@ export function getExpressionNode(
       return new BSElementAccessExpression(ctx, expression as ElementAccessExpression);
     case SyntaxKind.ThisKeyword:
       return new BSThisKeyword(ctx, expression as ThisExpression);
+    case SyntaxKind.ArrayLiteralExpression:
+      return new BSArrayLiteral(ctx, expression as ArrayLiteralExpression);
     default:
       throw new Error(`Unhandled expression! ${ SyntaxKind[expression.kind] } in ${expression.getText()}`);
   }
