@@ -3,49 +3,41 @@ import { Sexpr } from "../sexpr";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
 import { getExpressionNode, BSExpressionNode } from "./expression";
+import { BSIdentifier } from "./identifier";
 
 export class BSPropertyAccessExpression extends BSNode {
-  children: BSNode[];
+  children  : BSNode[];
   expression: BSExpressionNode;
-  name: string;
-  nodeREMOVE: PropertyAccessExpression;
+  name      : BSIdentifier;
 
   constructor(ctx: Context, node: PropertyAccessExpression) {
     super(ctx, node);
 
     this.expression = getExpressionNode(ctx, node.expression);
-    this.children = [this.expression];
-    this.name = node.name.text;
-    this.nodeREMOVE = node;
+    this.name       = new BSIdentifier(ctx, node.name);
+    this.children   = [
+      this.expression, 
+      this.name,
+    ];
   }
 
   compile(ctx: Context): Sexpr {
-    return parsePropertyAccess(ctx, this.nodeREMOVE);
-  }
-}
+    const property = this.name.text;
 
-export function parsePropertyAccess(
-  ctx: Context,
-  pa: PropertyAccessExpression
-): Sexpr {
-  const expType = ctx.typeChecker.getTypeAtLocation(pa.expression);
-  const property = pa.name.text;
-
-  if (
-    expType.flags & TypeFlags.StringLike ||
-    expType.symbol.name === ctx.getNativeTypeName("String") // for this types
-  ) {
-    if (property === "length") {
-      return ctx.callMethod({
-        className: ctx.getNativeTypeName("String"),
-        methodName: "strLen",
-        thisExpr: getExpressionNode(ctx, pa.expression),
-        argExprs: []
-      });
+    if (
+      this.expression.tsType.flags & TypeFlags.StringLike ||
+      this.expression.tsType.symbol.name === ctx.getNativeTypeName("String") // for this types
+    ) {
+      if (property === "length") {
+        return ctx.callMethod({
+          className : ctx.getNativeTypeName("String"),
+          methodName: "strLen",
+          thisExpr  : this.expression,
+          argExprs  : []
+        });
+      }
     }
+
+    throw new Error(`Todo ${this.fullText}`);
   }
-
-  throw new Error(`Todo ${pa.getText()} ${expType.flags}`);
-
-  // return S.Const("i32", Number(flt.text));
 }

@@ -28,7 +28,6 @@ import {
 } from "./prefixunaryexpression";
 import { BSStringLiteral } from "./stringliteral";
 import {
-  parsePropertyAccess,
   BSPropertyAccessExpression
 } from "./propertyaccess";
 import { BSElementAccessExpression } from "./elementaccess";
@@ -186,7 +185,7 @@ export function parseExpression(
         (expression as ParenthesizedExpression).expression
       );
     case SyntaxKind.PropertyAccessExpression:
-      return parsePropertyAccess(ctx, expression as PropertyAccessExpression);
+      return new BSPropertyAccessExpression(ctx, expression as PropertyAccessExpression).compile(ctx);
     case SyntaxKind.ElementAccessExpression:
       return new BSElementAccessExpression(
         ctx,
