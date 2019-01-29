@@ -63,7 +63,9 @@ export class BSExpression extends BSNode {
 }
 */
 
-// BSExpressionNode is the same as BSNode except compile() always returns a Sexpr, not null.
+/**
+ * BSExpressionNode is a BSNode whos compile() always returns a Sexpr, not null.
+ */ 
 export type BSExpressionNode =
   | BSBinaryExpression
   | BSCallExpression

@@ -13,9 +13,9 @@ import { BSPropertyAccessExpression } from "./propertyaccess";
 import { BSStringLiteral } from "./stringliteral";
 
 export class BSCallExpression extends BSNode {
-  children: BSNode[];
+  children  : BSNode[];
   expression: BSExpressionNode;
-  arguments: BSExpressionNode[];
+  arguments : BSExpressionNode[];
 
   constructor(ctx: Context, node: CallExpression) {
     super(ctx, node);

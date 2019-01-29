@@ -1,19 +1,19 @@
 import {
   ClassDeclaration,
   MethodDeclaration,
-  SyntaxKind,
-  CallExpression,
-  FunctionDeclaration,
-  Decorator
 } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { THIS_NAME } from "../program";
-import { parseStatementList, parseStatementListBS } from "./statementlist";
+import { parseStatementListBS } from "./statementlist";
 import { assertNever } from "../util";
 import { BSNode } from "./bsnode";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
+import { BSDecorator } from "./decorator";
+import { BSCallExpression } from "./callexpression";
+import { BSIdentifier } from "./identifier";
+import { BSStringLiteral } from "./stringliteral";
 
 export enum Operator {
   "===" = "===",
@@ -36,10 +36,9 @@ export class BSMethodDeclaration extends BSNode {
   name      : string | null;
   fullText  : string;
 
-  parentNodeREMOVE: ClassDeclaration;
+  decorators: BSDecorator[];
 
-  // TODO should be a node!
-  decoratorsCLEANUP: Decorator[];
+  parentNodeREMOVE: ClassDeclaration;
 
   constructor(
     ctx       : Context,
@@ -48,7 +47,7 @@ export class BSMethodDeclaration extends BSNode {
   ) {
     super(ctx, node);
 
-    this.decoratorsCLEANUP = [...(node.decorators || [])];
+    this.decorators = [...(node.decorators || [])].map(deco => new BSDecorator(ctx, deco));
 
     this.body = node.body ? new BSBlock(ctx, node.body) : null;
     this.parameters = [...node.parameters].map(
@@ -67,30 +66,34 @@ export class BSMethodDeclaration extends BSNode {
 
     let overload: OperatorOverload | null = null;
 
-    for (const deco of this.decoratorsCLEANUP) {
-      if (deco.expression.kind === SyntaxKind.CallExpression) {
-        const ce = deco.expression as CallExpression;
+    for (const deco of this.decorators) {
+      if (!(deco.expression instanceof BSCallExpression)) {
+        continue;
+      }
 
-        if (ce.expression.getText() === "operator") {
-          const opName: Operator = ce.arguments[0]
-            .getText()
-            .slice(1, -1) as Operator;
+      if (!(deco.expression.expression instanceof BSIdentifier)) {
+        continue;
+      }
 
-          if (opName === Operator["!=="]) {
-            overload = {
-              operator: Operator["!=="]
-            };
-          } else if (opName === Operator["+"]) {
-            overload = {
-              operator: Operator["+"]
-            };
-          } else if (opName === Operator["==="]) {
-            overload = {
-              operator: Operator["==="]
-            };
-          } else {
-            assertNever(opName);
-          }
+      const calledFunction = deco.expression.expression.text;
+
+      if (calledFunction === "operator") {
+        const firstArgument = deco.expression.arguments[0];
+
+        if (!(firstArgument instanceof BSStringLiteral)) {
+          continue;
+        }
+
+        const opName = firstArgument.text as Operator;
+
+        if (opName === Operator["!=="]) {
+          overload = { operator: Operator["!=="] };
+        } else if (opName === Operator["+"]) {
+          overload = { operator: Operator["+"] };
+        } else if (opName === Operator["==="]) {
+          overload = { operator: Operator["==="] };
+        } else {
+          assertNever(opName);
         }
       }
     }
