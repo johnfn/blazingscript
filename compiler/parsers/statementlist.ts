@@ -4,7 +4,7 @@ import { Sexpr } from "../sexpr";
 import { parseStatement } from "./statement";
 import { BSNode } from "./bsnode";
 
-// TODO can probably remove this entirely. and just use map. lol
+// TODO: Remove
 export function parseStatementList(
   ctx: Context,
   list: NodeArray<Statement>

@@ -5,7 +5,7 @@ import { BSNode } from "./bsnode";
 import { getExpressionNode } from "./expression";
 
 export class BSReturnStatement extends BSNode {
-  children: BSNode[];
+  children  : BSNode[];
   expression: BSNode | null;
 
   constructor(ctx: Context, node: ReturnStatement) {

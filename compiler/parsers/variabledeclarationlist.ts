@@ -4,7 +4,7 @@ import { BSNode } from "./bsnode";
 import { Context } from "../context";
 
 export class BSVariableDeclarationList extends BSNode {
-  children: BSNode[];
+  children    : BSNode[];
   declarations: BSVariableDeclaration[];
 
   constructor(ctx: Context, node: VariableDeclarationList) {

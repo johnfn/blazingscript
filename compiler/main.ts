@@ -6,6 +6,7 @@ import { Program } from "./program";
 // * build up context on the first pass. 
 //   * dont pop from the context, just move up and down.
 // * the initial pass to add functions to the file is now entirely unnecessary
+// * Figure out some way to write Sexprs better.
 // * statements can return null, but expressions cant. lots of stuff can be cleaned up!
 // * rename terrible variable names like fd vdl etc etc etc 
 // * add imports so that my code isnt such a mess

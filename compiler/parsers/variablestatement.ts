@@ -1,4 +1,4 @@
-import { VariableStatement, SyntaxKind } from "typescript";
+import { VariableStatement, SyntaxKind, Modifier } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { parseExpression } from "./expression";
@@ -6,61 +6,48 @@ import { BSVariableDeclarationList } from "./variabledeclarationlist";
 import { BSNode } from "./bsnode";
 
 export class BSVariableStatement extends BSNode {
-  children: BSNode[];
+  children       : BSNode[];
   declarationList: BSVariableDeclarationList;
-  nodeREMOVE: VariableStatement;
 
   constructor(ctx: Context, node: VariableStatement) {
     super(ctx, node);
 
     this.declarationList = new BSVariableDeclarationList(ctx, node.declarationList);
-    this.children = [this.declarationList];
-    this.nodeREMOVE = node;
+    this.children        = [this.declarationList];
   }
 
   compile(ctx: Context): Sexpr | null {
-    return parseVariableStatement(ctx, this.nodeREMOVE);
-  }
-}
-
-export function parseVariableStatement(
-  ctx: Context,
-  vs: VariableStatement
-): Sexpr | null {
-  for (const mod of vs.modifiers || []) {
-    switch (mod.kind) {
-      case SyntaxKind.DeclareKeyword:
-        // completely skip declare statements as they have no impact on output
-        return null;
-      case SyntaxKind.AbstractKeyword:
-      case SyntaxKind.AsyncKeyword:
-      case SyntaxKind.ConstKeyword:
-      case SyntaxKind.DefaultKeyword:
-      case SyntaxKind.ExportKeyword:
-      case SyntaxKind.PublicKeyword:
-      case SyntaxKind.PrivateKeyword:
-      case SyntaxKind.ProtectedKeyword:
-      case SyntaxKind.ReadonlyKeyword:
-      case SyntaxKind.StaticKeyword:
+    for (const mod of this.modifiers || []) {
+      switch (mod.kind) {
+        case SyntaxKind.DeclareKeyword:
+          // completely skip declare statements as they have no impact on output
+          return null;
+        case SyntaxKind.AbstractKeyword:
+        case SyntaxKind.AsyncKeyword:
+        case SyntaxKind.ConstKeyword:
+        case SyntaxKind.DefaultKeyword:
+        case SyntaxKind.ExportKeyword:
+        case SyntaxKind.PublicKeyword:
+        case SyntaxKind.PrivateKeyword:
+        case SyntaxKind.ProtectedKeyword:
+        case SyntaxKind.ReadonlyKeyword:
+        case SyntaxKind.StaticKeyword:
+      }
     }
-  }
 
-  if (vs.declarationList.declarations.length > 1) {
-    throw new Error("Cant handle more than 1 declaration!!!");
-  }
+    if (this.declarationList.declarations.length > 1) {
+      throw new Error("Cant handle more than 1 declaration!!!");
+    }
 
-  const decl = vs.declarationList.declarations[0];
+    const decl = this.declarationList.declarations[0];
 
-  if (decl.name.kind === SyntaxKind.Identifier) {
-    const name = decl.name.getText();
+    const name = decl.name;
 
     return S.SetLocal(
       name,
-      decl.initializer!
-        ? parseExpression(ctx, decl.initializer!)!
+      decl.initializer
+        ? decl.initializer.compile(ctx)
         : S.Const("i32", 0)
     );
-  } else {
-    throw new Error("I dont handle destructuring in variable names");
   }
 }

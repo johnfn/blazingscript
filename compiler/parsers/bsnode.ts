@@ -1,16 +1,19 @@
 import { Sexpr } from "../sexpr";
 import { Context } from "../context";
-import { Node, Type } from "typescript";
+import { Node, Type, Modifier } from "typescript";
 
 /**
  * Abstract base class of all BlazingScript nodes.
  */
 export abstract class BSNode {
   abstract children: BSNode[];
-  tsType: Type;
-  fullText: string;
+  tsType           : Type;
+  fullText         : string;
+  modifiers        : Modifier[];
 
   constructor(ctx: Context, node: Node) {
+    this.modifiers = [...(node.modifiers || [])];
+
     if (node.parent) {
       this.tsType = ctx.typeChecker.getTypeAtLocation(node);
     } else {

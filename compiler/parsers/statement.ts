@@ -14,7 +14,6 @@ import {
   ClassDeclaration,
   TypeAliasDeclaration,
   InterfaceDeclaration,
-  Expression
 } from "typescript";
 import { Sexpr } from "../sexpr";
 import { BSExpressionStatement } from "./expressionstatement";
@@ -22,7 +21,6 @@ import { BSReturnStatement } from "./return";
 import { BSBlock } from "./block";
 import { parseIfStatement, BSIfStatement } from "./if";
 import {
-  parseVariableStatement,
   BSVariableStatement
 } from "./variablestatement";
 import { BSForStatement } from "./for";
@@ -38,7 +36,7 @@ export class BSStatement extends BSNode {
   children: BSNode[];
   readonly type = "Statement";
 
-  statement: BSNode;
+  statement : BSNode;
   nodeREMOVE: Statement;
 
   constructor(ctx: Context, statement: Statement) {
@@ -104,21 +102,15 @@ export function parseStatement(
 ): Sexpr | null {
   switch (statement.kind) {
     case SyntaxKind.ExpressionStatement:
-      return new BSExpressionStatement(
-        ctx,
-        statement as ExpressionStatement
-      ).compile(ctx);
+      return new BSExpressionStatement(ctx, statement as ExpressionStatement).compile(ctx);
     case SyntaxKind.ReturnStatement:
-      return new BSReturnStatement(ctx, statement as ReturnStatement).compile(
-        ctx
-      );
-    //   return parseFunction(ctx, statement as FunctionDeclaration);
+      return new BSReturnStatement(ctx, statement as ReturnStatement).compile(ctx);
     case SyntaxKind.Block:
       return new BSBlock(ctx, statement as Block).compile(ctx);
     case SyntaxKind.IfStatement:
       return parseIfStatement(ctx, statement as IfStatement);
     case SyntaxKind.VariableStatement:
-      return parseVariableStatement(ctx, statement as VariableStatement);
+      return new BSVariableStatement(ctx, statement as VariableStatement).compile(ctx);
     case SyntaxKind.ForStatement:
       return new BSForStatement(ctx, statement as ForStatement).compile(ctx);
     case SyntaxKind.BreakStatement:
@@ -128,16 +120,14 @@ export function parseStatement(
 
     // these generate no code.
 
-    case SyntaxKind.TypeAliasDeclaration:
-    case SyntaxKind.InterfaceDeclaration:
-      return null;
+    case SyntaxKind.TypeAliasDeclaration: return null;
+    case SyntaxKind.InterfaceDeclaration: return null;
 
     // these are preprocessed in parseSourceFile.
 
-    case SyntaxKind.FunctionDeclaration:
-      return null;
-    case SyntaxKind.ClassDeclaration:
-      return null;
+    case SyntaxKind.FunctionDeclaration: return null;
+    case SyntaxKind.ClassDeclaration: return null;
+
     default:
       throw new Error(`unhandled statement! ${SyntaxKind[statement.kind]}`);
   }

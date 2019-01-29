@@ -1,15 +1,11 @@
 import {
   SourceFile,
   SyntaxKind,
-  FunctionDeclaration,
-  MethodDeclaration,
   ClassDeclaration,
   CallExpression,
-  NodeArray,
-  Modifier
 } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { parseStatementList, parseStatementListBS } from "./statementlist";
+import { parseStatementListBS } from "./statementlist";
 import { Context } from "../context";
 import { BSFunctionDeclaration } from "./function";
 import { BSMethodDeclaration } from "./method";
@@ -29,13 +25,12 @@ type FunctionDecl = {
 };
 
 export class BSSourceFile extends BSNode {
-  children: BSNode[];
-  statements: BSStatement[];
+  children         : BSNode[];
+  statements       : BSStatement[];
 
-  fileName: string;
-  nodeREMOVE: SourceFile;
+  fileName         : string;
   declaredFunctions: FunctionDecl[];
-  jsTypes: { [jsType: string]: string };
+  jsTypes          : { [jsType: string]: string };
 
   constructor(ctx: Context, file: SourceFile) {
     super(ctx, file);
@@ -45,7 +40,6 @@ export class BSSourceFile extends BSNode {
       statement => new BSStatement(ctx, statement)
     );
     this.children = this.statements;
-    this.nodeREMOVE = file;
 
     this.declaredFunctions = this.findAllFunctions();
     this.jsTypes = this.findAllJsTypes();
@@ -53,7 +47,7 @@ export class BSSourceFile extends BSNode {
 
   private findAllFunctions(): FunctionDecl[] {
     const decls: FunctionDecl[] = [];
-    let parent: BSClassDeclaration | null = null;
+    let parent : BSClassDeclaration | null = null;
 
     const helper = (node: BSNode) => {
       if (node instanceof BSFunctionDeclaration) {
