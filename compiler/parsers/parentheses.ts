@@ -5,7 +5,7 @@ import { Sexpr } from "../sexpr";
 import { getExpressionNode, BSExpressionNode } from "./expression";
 
 export class BSParenthesizedExpression extends BSNode {
-  children: BSNode[];
+  children  : BSNode[];
   expression: BSExpressionNode;
 
   constructor(ctx: Context, node: ParenthesizedExpression) {

@@ -24,7 +24,6 @@ import { BSConditionalExpression } from "./conditionalexpression";
 import { Sexpr, S } from "../sexpr";
 import { BSPostfixUnaryExpression } from "./postfixunaryexpression";
 import {
-  parsePrefixUnaryExpression,
   BSPrefixUnaryExpression
 } from "./prefixunaryexpression";
 import { BSStringLiteral } from "./stringliteral";
@@ -168,20 +167,11 @@ export function parseExpression(
         ctx
       );
     case SyntaxKind.ConditionalExpression:
-      return new BSConditionalExpression(
-        ctx,
-        expression as ConditionalExpression
-      ).compile(ctx);
+      return new BSConditionalExpression(ctx, expression as ConditionalExpression).compile(ctx);
     case SyntaxKind.PostfixUnaryExpression:
-      return new BSPostfixUnaryExpression(
-        ctx,
-        expression as PostfixUnaryExpression
-      ).compile(ctx);
+      return new BSPostfixUnaryExpression(ctx, expression as PostfixUnaryExpression).compile(ctx);
     case SyntaxKind.PrefixUnaryExpression:
-      return parsePrefixUnaryExpression(
-        ctx,
-        expression as PrefixUnaryExpression
-      );
+      return new BSPrefixUnaryExpression(ctx, expression as PrefixUnaryExpression).compile(ctx);
     case SyntaxKind.TrueKeyword:
       return S.Const("i32", 1); // cant find correct type!
     case SyntaxKind.FalseKeyword:

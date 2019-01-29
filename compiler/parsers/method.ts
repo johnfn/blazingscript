@@ -1,7 +1,4 @@
-import {
-  ClassDeclaration,
-  MethodDeclaration,
-} from "typescript";
+import { ClassDeclaration, MethodDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { THIS_NAME } from "../program";
@@ -19,7 +16,7 @@ export enum Operator {
   "===" = "===",
   "!==" = "!==",
   "+" = "+"
-}
+};
 
 export type OperatorOverload = {
   operator: Operator;
@@ -38,6 +35,10 @@ export class BSMethodDeclaration extends BSNode {
 
   decorators: BSDecorator[];
 
+  /**
+   * TODO: I cant really get rid of this until i can pass it in, which i cant do until class nodes generate all their functions
+   * properly.
+   */
   parentNodeREMOVE: ClassDeclaration;
 
   constructor(
@@ -53,7 +54,11 @@ export class BSMethodDeclaration extends BSNode {
     this.parameters = [...node.parameters].map(
       param => new BSParameter(ctx, param)
     );
-    this.children = [...this.parameters, ...(this.body ? [this.body] : [])];
+    this.children = [
+      ...this.decorators,
+      ...this.parameters, 
+      ...(this.body ? [this.body] : [])
+    ];
 
     this.name = node.name ? node.name.getText() : null;
     this.fullText = node.getFullText();

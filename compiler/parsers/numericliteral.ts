@@ -5,7 +5,7 @@ import { BSNode } from "./bsnode";
 
 export class BSNumericLiteral extends BSNode {
   children: BSNode[] = [];
-  value: number;
+  value   : number;
 
   constructor(ctx: Context, node: NumericLiteral) {
     super(ctx, node);

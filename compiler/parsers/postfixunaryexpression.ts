@@ -5,9 +5,8 @@ import { BSNode } from "./bsnode";
 import { getExpressionNode } from "./expression";
 
 export class BSPostfixUnaryExpression extends BSNode {
-  children: BSNode[];
-  expression: BSNode;
-
+  children   : BSNode[];
+  expression : BSNode;
   operandName: string;
 
   constructor(ctx: Context, node: PostfixUnaryExpression) {
