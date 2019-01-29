@@ -17,10 +17,14 @@ export class BSVariableDeclaration extends BSNode {
     this.initializer = node.initializer
       ? getExpressionNode(ctx, node.initializer)
       : null;
-    this.children = this.initializer ? [this.initializer] : [];
     
     this.nameNode = parseBindingNameNode(ctx, node.name);
-    this.name = this.nameNode.text;
+    this.name     = this.nameNode.text;
+
+    this.children = [
+      ...(this.initializer ? [this.initializer] : []),
+      this.nameNode,
+    ];
   }
 
   compile(ctx: Context): Sexpr {
