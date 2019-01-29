@@ -5,6 +5,10 @@ import { BSStatement, parseStatement } from "./statement";
 import { BSNode } from "./bsnode";
 import { getExpressionNode, BSExpressionNode } from "./expression";
 
+/**
+ * e.g. if (foo) { bar() } else { baz() }
+ *      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ */
 export class BSIfStatement extends BSNode {
   children  : BSNode[];
 

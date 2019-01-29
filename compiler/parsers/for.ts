@@ -10,6 +10,10 @@ import { BSVariableDeclarationList } from "./variabledeclarationlist";
 import { BSNode } from "./bsnode";
 import { getExpressionNode, BSExpressionNode } from "./expression";
 
+/**
+ * e.g. for (let x = 1; x < 5; x += 1) { console.log("hello"); }
+ *      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ */
 export class BSForStatement extends BSNode {
   children: BSNode[];
 

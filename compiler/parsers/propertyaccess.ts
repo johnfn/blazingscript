@@ -5,6 +5,10 @@ import { BSNode } from "./bsnode";
 import { getExpressionNode, BSExpressionNode } from "./expression";
 import { BSIdentifier } from "./identifier";
 
+/**
+ * e.g. const x = foo.bar
+ *                ^^^^^^^
+ */
 export class BSPropertyAccessExpression extends BSNode {
   children  : BSNode[];
   expression: BSExpressionNode;

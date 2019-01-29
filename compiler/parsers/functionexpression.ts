@@ -8,6 +8,10 @@ import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
 import { BSNode } from "./bsnode";
 
+/**
+ * e.g. const x = function () { } 
+ *                ^^^^^^^^^^^^^^^
+ */
 export class BSFunctionExpression extends BSNode {
   children = [];
 

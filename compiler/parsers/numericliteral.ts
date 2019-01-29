@@ -3,6 +3,10 @@ import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
 
+/**
+ * e.g. const x = 20;
+ *                ^^
+ */
 export class BSNumericLiteral extends BSNode {
   children: BSNode[] = [];
   value   : number;

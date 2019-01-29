@@ -22,6 +22,10 @@ export type OperatorOverload = {
   operator: Operator;
 };
 
+/**
+ * e.g. class Foo { method() { } }
+ *                  ^^^^^^^^^^^^
+ */
 export class BSMethodDeclaration extends BSNode {
   children  : BSNode[];
   parameters: BSParameter[];

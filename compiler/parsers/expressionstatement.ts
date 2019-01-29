@@ -2,7 +2,7 @@ import { Context } from "../context";
 import { ExpressionStatement, isExpressionStatement } from "typescript";
 import { Sexpr } from "../sexpr";
 import { BSNode } from "./bsnode";
-import { parseExpression, getExpressionNode } from "./expression";
+import { getExpressionNode } from "./expression";
 
 /**
  * e.g. for (let x = 1; x < 5; x += 1) { }

@@ -4,6 +4,10 @@ import { Context } from "../context";
 import { BSNode } from "./bsnode";
 import { getExpressionNode } from "./expression";
 
+/**
+ * e.g. console.log(x++)
+ *                  ^^^
+ */
 export class BSPostfixUnaryExpression extends BSNode {
   children   : BSNode[];
   expression : BSNode;

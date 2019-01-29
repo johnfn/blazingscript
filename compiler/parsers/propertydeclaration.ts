@@ -5,6 +5,10 @@ import {
 } from "./function";
 import { BSNode } from "./bsnode";
 
+/**
+ * e.g. class Foo { x: number = 5 }
+ *                  ^^^^^^^^^^^^^
+ */
 export class BSPropertyDeclaration extends BSNode {
   children: BSNode[];
 

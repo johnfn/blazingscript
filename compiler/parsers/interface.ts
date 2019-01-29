@@ -2,6 +2,10 @@ import { InterfaceDeclaration } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
 
+/**
+ * e.g. interface Foo { x: number }
+ *      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ */
 export class BSInterfaceDeclaration extends BSNode {
   children: BSNode[] = [];
 

@@ -4,6 +4,10 @@ import { Context } from "../context";
 import { Sexpr } from "../sexpr";
 import { getExpressionNode, BSExpressionNode } from "./expression";
 
+/**
+ * e.g. const x = (1 + 2) * 3;
+ *                ^^^^^^^
+ */
 export class BSParenthesizedExpression extends BSNode {
   children  : BSNode[];
   expression: BSExpressionNode;

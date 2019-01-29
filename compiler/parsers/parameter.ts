@@ -4,6 +4,10 @@ import { Context } from "../context";
 import { getExpressionNode } from "./expression";
 import { parseBindingNameNode, BSBindingName } from "./bindingname";
 
+/**
+ * e.g. function foo(x: number) { return x; }
+ *                   ^^^^^^^^^
+ */
 export class BSParameter extends BSNode {
   children   : BSNode[];
   initializer: BSNode | null;

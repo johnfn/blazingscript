@@ -6,6 +6,10 @@ import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
 import { BSNode } from "./bsnode";
 
+/**
+ * e.g. function myFn() { } 
+ *      ^^^^^^^^^^^^^^^^^^^
+ */
 export class BSFunctionDeclaration extends BSNode {
   children  : BSNode[];
   parameters: BSParameter[];
