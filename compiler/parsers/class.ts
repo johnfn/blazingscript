@@ -19,13 +19,11 @@ export class BSClassDeclaration extends BSNode {
   constructor(ctx: Context, node: ClassDeclaration) {
     super(ctx, node);
 
+    this.nodeREMOVE = node;
+
     this.members = [...node.members].map(mem => {
       if (mem.kind === SyntaxKind.MethodDeclaration) {
-        return new BSMethodDeclaration(
-          ctx,
-          mem as MethodDeclaration,
-          this.nodeREMOVE
-        );
+        return new BSMethodDeclaration(ctx, mem as MethodDeclaration, this.nodeREMOVE);
       } else if (mem.kind === SyntaxKind.PropertyDeclaration) {
         return new BSPropertyDeclaration(ctx, mem as PropertyDeclaration);
       } else {
@@ -41,8 +39,6 @@ export class BSClassDeclaration extends BSNode {
     } else {
       throw new Error("Dont currently handle anonymous functions.");
     }
-
-    this.nodeREMOVE = node;
   }
 
   compile(ctx: Context): null {

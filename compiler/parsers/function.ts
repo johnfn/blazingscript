@@ -7,12 +7,12 @@ import { BSBlock } from "./block";
 import { BSNode } from "./bsnode";
 
 export class BSFunctionDeclaration extends BSNode {
-  children: BSNode[];
+  children  : BSNode[];
   parameters: BSParameter[];
-  body: BSBlock | null;
+  body      : BSBlock | null;
 
-  name: string | null;
-  fullText: string;
+  name      : string | null;
+  fullText  : string;
 
   constructor(ctx: Context, node: FunctionDeclaration) {
     super(ctx, node);

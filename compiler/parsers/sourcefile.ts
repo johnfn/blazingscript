@@ -18,7 +18,7 @@ import { BSNode } from "./bsnode";
 import { BSClassDeclaration } from "./class";
 
 type FunctionDecl = {
-  node: BSFunctionDeclaration | MethodDeclaration;
+  node: BSFunctionDeclaration | BSMethodDeclaration;
 
   /**
    * The containing class (if there is one).
@@ -81,7 +81,7 @@ export class BSSourceFile extends BSNode {
         }
 
         decls.push({
-          node: node.nodeREMOVE,
+          node: node,
           name: node.name,
           exported: false,
           parent: parent ? parent.nodeREMOVE : null
@@ -162,8 +162,8 @@ export class BSSourceFile extends BSNode {
       ...functions.map(fn => {
         if (fn.node instanceof BSFunctionDeclaration) {
           return fn.node.compile(ctx);
-        } else if (fn.node.kind === SyntaxKind.MethodDeclaration) {
-          return new BSMethodDeclaration(ctx, fn.node, fn.parent!).compile(ctx);
+        } else if (fn.node instanceof BSMethodDeclaration) {
+          return fn.node.compile(ctx);
         } 
 
         throw new Error("i got some weird type of function i cant handle.");

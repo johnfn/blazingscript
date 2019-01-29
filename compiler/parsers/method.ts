@@ -9,7 +9,7 @@ import {
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { THIS_NAME } from "../program";
-import { parseStatementList } from "./statementlist";
+import { parseStatementList, parseStatementListBS } from "./statementlist";
 import { assertNever } from "../util";
 import { BSNode } from "./bsnode";
 import { BSParameter } from "./parameter";
@@ -36,15 +36,14 @@ export class BSMethodDeclaration extends BSNode {
   name      : string | null;
   fullText  : string;
 
-  nodeREMOVE: MethodDeclaration;
   parentNodeREMOVE: ClassDeclaration;
 
   // TODO should be a node!
   decoratorsCLEANUP: Decorator[];
 
   constructor(
-    ctx: Context,
-    node: MethodDeclaration,
+    ctx       : Context,
+    node      : MethodDeclaration,
     parentNode: ClassDeclaration
   ) {
     super(ctx, node);
@@ -60,9 +59,8 @@ export class BSMethodDeclaration extends BSNode {
     this.name = node.name ? node.name.getText() : null;
     this.fullText = node.getFullText();
 
-    this.nodeREMOVE = node;
     this.parentNodeREMOVE = parentNode;
-  }
+ }
 
   compile(ctx: Context): Sexpr {
     ctx.pushScope();
@@ -97,16 +95,13 @@ export class BSMethodDeclaration extends BSNode {
       }
     }
 
-    ctx.addMethod({
-      node: this,
-      parent: this.parentNodeREMOVE,
-      overload
-    });
+    ctx.addMethod({ node: this, parent: this.parentNodeREMOVE, overload });
 
     ctx.addDeclarationsToContext(this);
 
     const params = ctx.addParameterListToContext(this.parameters);
-    const sb = parseStatementList(ctx, this.nodeREMOVE.body!.statements);
+    const sb     = parseStatementListBS(ctx, this.body!.children);
+
     let last: Sexpr | null = null;
 
     if (sb.length > 0) {
