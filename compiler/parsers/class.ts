@@ -9,6 +9,10 @@ import { BSNode } from "./bsnode";
 import { BSMethodDeclaration } from "./method";
 import { BSPropertyDeclaration } from "./propertydeclaration";
 
+/**
+ * e.g. class MyClass { ... }
+ *      ^^^^^^^^^^^^^^^^^^^^
+ */
 export class BSClassDeclaration extends BSNode {
   children: BSNode[];
   members: BSNode[];

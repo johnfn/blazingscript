@@ -4,6 +4,10 @@ import { Sexpr, S } from "../sexpr";
 import { BSNode } from "./bsnode";
 import { getExpressionNode } from "./expression";
 
+/**
+ * e.g. const x = foo ? 1 : 2;
+ *                ^^^^^^^^^^^
+ */
 export class BSConditionalExpression extends BSNode {
   children: BSNode[];
 
@@ -16,7 +20,7 @@ export class BSConditionalExpression extends BSNode {
 
     this.condition = getExpressionNode(ctx, node.condition);
     this.whenFalse = getExpressionNode(ctx, node.whenFalse);
-    this.whenTrue = getExpressionNode(ctx, node.whenTrue);
+    this.whenTrue  = getExpressionNode(ctx, node.whenTrue);
 
     this.children = [this.condition, this.whenFalse, this.whenTrue];
   }

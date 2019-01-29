@@ -3,10 +3,9 @@ import {
   ForStatement,
   SyntaxKind,
   VariableDeclarationList,
-  validateLocaleAndSetLanguage
 } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { parseStatement, BSStatement } from "./statement";
+import { BSStatement } from "./statement";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
 import { BSNode } from "./bsnode";
 import { getExpressionNode, parseExpression, BSExpressionNode } from "./expression";

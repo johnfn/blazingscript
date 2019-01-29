@@ -5,6 +5,10 @@ import { BSNode } from "./bsnode";
 
 // TODO: Handle label.
 
+/**
+ * e.g. while (true) { continue; }
+ *                     ^^^^^^^^^
+ */
 export class BSContinueStatement extends BSNode {
   children: BSNode[] = [];
 

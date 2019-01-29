@@ -8,9 +8,13 @@ import { Context } from "../context";
 import { BSNode } from "./bsnode";
 import { getExpressionNode, BSExpressionNode } from "./expression";
 
+/**
+ * e.g. const x = myArray[5];
+ *                ^^^^^^^^^^^
+ */
 export class BSElementAccessExpression extends BSNode {
   children: BSNode[];
-  element: BSExpressionNode;
+  element : BSExpressionNode;
   argument: BSExpressionNode;
 
   fullText: string;
@@ -18,7 +22,7 @@ export class BSElementAccessExpression extends BSNode {
   constructor(ctx: Context, node: ElementAccessExpression) {
     super(ctx, node);
 
-    this.element = getExpressionNode(ctx, node.expression);
+    this.element  = getExpressionNode(ctx, node.expression);
     this.argument = getExpressionNode(ctx, node.argumentExpression);
 
     this.children = [this.element, this.argument];

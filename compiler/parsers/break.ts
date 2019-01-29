@@ -5,6 +5,10 @@ import { BSNode } from "./bsnode";
 
 // TODO: Handle label.
 
+/**
+ * e.g. while (true) { break; }
+ *                     ^^^^^
+ */
 export class BSBreakStatement extends BSNode {
   children: BSNode[] = [];
 

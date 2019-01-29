@@ -3,6 +3,10 @@ import { Context } from "../context";
 import { Sexpr, S } from "../sexpr";
 import { Node } from "typescript";
 
+/**
+ * e.g. const x = false
+ *                ^^^^^
+ */
 export class BSFalseKeyword extends BSNode {
   children: BSNode[];
 

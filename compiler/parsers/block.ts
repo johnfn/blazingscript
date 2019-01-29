@@ -5,6 +5,10 @@ import { Context } from "../context";
 import { BSStatement } from "./statement";
 import { BSNode } from "./bsnode";
 
+/**
+ * e.g. if (x) { console.log("Hello") }
+ *             ^^^^^^^^^^^^^^^^^^^^^^^^
+ */
 export class BSBlock extends BSNode {
   children: BSNode[];
 

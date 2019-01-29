@@ -12,6 +12,10 @@ import { BSIdentifier } from "./identifier";
 import { BSPropertyAccessExpression } from "./propertyaccess";
 import { BSStringLiteral } from "./stringliteral";
 
+/**
+ * e.g. const x = myFunction(1, 5);
+ *                ^^^^^^^^^^^^^^^^
+ */
 export class BSCallExpression extends BSNode {
   children  : BSNode[];
   expression: BSExpressionNode;

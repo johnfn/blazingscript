@@ -16,6 +16,10 @@ import { BSNode } from "./bsnode";
 import { BSIdentifier } from "./identifier";
 import { getExpressionNode } from "./expression";
 
+/**
+ * e.g. const x = 1 + 3
+ *                ^^^^^
+ */
 export class BSBinaryExpression extends BSNode {
   children: BSNode[];
   left: BSNode;

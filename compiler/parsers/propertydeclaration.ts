@@ -1,11 +1,4 @@
-import {
-  ClassDeclaration,
-  MethodDeclaration,
-  SyntaxKind,
-  CallExpression,
-  FunctionDeclaration,
-  PropertyDeclaration
-} from "typescript";
+import { PropertyDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import {

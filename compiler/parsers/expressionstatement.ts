@@ -4,6 +4,10 @@ import { Sexpr } from "../sexpr";
 import { BSNode } from "./bsnode";
 import { parseExpression, getExpressionNode } from "./expression";
 
+/**
+ * e.g. for (let x = 1; x < 5; x += 1) { }
+ *                             ^^^^^^
+ */
 export class BSExpressionStatement extends BSNode {
   children: BSNode[];
   expression: BSNode;
