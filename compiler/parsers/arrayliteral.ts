@@ -12,8 +12,8 @@ const enum ArrayType {
 /**
  * Memory layout:
  * 
- * 0: length of array
- * 1: type of element (either value or reference currently)
+ * 0: length allocated of array
+ * 1: length of array
  * 2: first element
  * 3: second element, etc
  */
@@ -36,22 +36,24 @@ export class BSArrayLiteral extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
+    const allocatedLength = 16;
+
     return S("i32", 
       "block",
       S("[]", "result", "i32"),
 
       S.SetLocal(
         "myalocal",
-        S("i32", "call", "$malloc", S.Const("i32", this.elements.length * 4 + 4 + 4 + 4))
+        S("i32", "call", "$malloc", S.Const("i32", this.elements.length * 4 + 4))
       ),
 
-      // store length
-      S.Store(ctx.getVariable("myalocal"), S.Const("i32", this.elements.length)),
+      // store allocated length
+      S.Store(ctx.getVariable("myalocal"), S.Const("i32", allocatedLength)),
 
-      // store element type
+      // store length
       S.Store(
-        S("i32", "i32.add", ctx.getVariable("myalocal"), S.Const("i32", 4 * 1)), 
-        S.Const("i32", ArrayType.ValueArray)
+        S.Add(ctx.getVariable("myalocal"), 4), 
+        S.Const("i32", this.elements.length)
       ),
 
       ...(
@@ -60,7 +62,7 @@ export class BSArrayLiteral extends BSNode {
             S.Add(ctx.getVariable("myalocal"), S.Const("i32", i * 4 + 4 * 2)),
             elem.compile(ctx)
           )
-       )
+        )
       ),
 
       ctx.getVariable("myalocal")

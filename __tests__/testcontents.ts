@@ -131,7 +131,7 @@ class ArrayInternal<T> {
   readonly length: number = 0;
 
   arrLen(): number {
-    return memread((this as any) as number);
+    return memread((this as any) as number + 4);
   }
 
   indexAt(i: number): number {

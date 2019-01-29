@@ -28,7 +28,24 @@ S.Block = (body: Sexpr[]): Sexpr =>
 
 S.Const = (type: "i32", value: number): Sexpr => S(type, "i32.const", String(value));
 
-S.Add = (left: Sexpr, right: Sexpr): Sexpr => S("i32", "i32.add", left, right);
+S.Add = (left: Sexpr | number, right: Sexpr | number): Sexpr => {
+  let leftSexpr: Sexpr;
+  let rightSexpr: Sexpr;
+
+  if (typeof left === "number") {
+    leftSexpr = S.Const("i32", left);
+  } else {
+    leftSexpr = left;
+  }
+
+  if (typeof right === "number") {
+    rightSexpr = S.Const("i32", right);
+  } else {
+    rightSexpr = right;
+  }
+
+  return S("i32", "i32.add", leftSexpr, rightSexpr);
+}
 
 S.Drop = (expr: Sexpr): Sexpr => S("[]", "drop", expr);
 

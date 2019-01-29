@@ -2,7 +2,8 @@ import fs from "fs";
 import { Program } from "./program";
 
 // TODO:
-// * put getExpressionNode on BaseNode
+// * figure out a way to inline constructors
+// * @offset() for members which are memory offsets.
 // * myslocal is a huge hack, remove it!
 // * build up context on the first pass. 
 //   * dont pop from the context, just move up and down.
@@ -10,6 +11,8 @@ import { Program } from "./program";
 // * Figure out some way to write Sexprs better.
 // * statements can return null, but expressions cant. lots of stuff can be cleaned up!
 // * rename terrible variable names like fd vdl etc etc etc 
+// * put getExpressionNode on BaseNode
+//    cant be done, circular dependencies.
 // * add imports so that my code isnt such a mess
 //   * http://fredkschott.com/post/2014/06/require-and-the-module-system/
 // * remove all !
