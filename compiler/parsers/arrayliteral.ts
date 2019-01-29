@@ -44,22 +44,19 @@ export class BSArrayLiteral extends BSNode {
 
       S.SetLocal(
         "myalocal",
-        S("i32", "call", "$malloc", S.Const("i32", this.elements.length * 4 + 4))
+        S("i32", "call", "$malloc", S.Const(this.elements.length * 4 + 4))
       ),
 
       // store allocated length
-      S.Store(ctx.getVariable("myalocal"), S.Const("i32", allocatedLength)),
+      S.Store(ctx.getVariable("myalocal"), allocatedLength),
 
       // store length
-      S.Store(
-        S.Add(ctx.getVariable("myalocal"), 4), 
-        S.Const("i32", this.elements.length)
-      ),
+      S.Store(S.Add(ctx.getVariable("myalocal"), 4), this.elements.length),
 
       ...(
         this.elements.map((elem, i) => 
           S.Store(
-            S.Add(ctx.getVariable("myalocal"), S.Const("i32", i * 4 + 4 * 2)),
+            S.Add(ctx.getVariable("myalocal"), i * 4 + 4 * 2),
             elem.compile(ctx)
           )
         )

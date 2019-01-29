@@ -34,9 +34,6 @@ export class BSPostfixUnaryExpression extends BSNode {
       throw new Error("lhs didnt compile???");
     }
 
-    return S.SetLocal(
-      this.operandName,
-      S("i32", "i32.add", exprCompiled, S.Const("i32", 1))
-    );
+    return S.SetLocal(this.operandName, S.Add(exprCompiled, 1));
   }
 }

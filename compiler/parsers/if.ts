@@ -36,7 +36,7 @@ export class BSIfStatement extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    let thn = this.ifTrue.compile(ctx) || S.Const("i32", 0);
+    let thn = this.ifTrue.compile(ctx) || S.Const(0);
     let els = this.ifFalse ? this.ifFalse.compile(ctx) : undefined;
 
     if (thn.type !== "[]") {

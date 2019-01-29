@@ -34,7 +34,7 @@ export class BSVariableDeclaration extends BSNode {
       name,
       this.initializer
         ? this.initializer.compile(ctx)
-        : S.Const("i32", 0)
+        : S.Const(0)
     );
   }
 }

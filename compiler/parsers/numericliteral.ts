@@ -20,6 +20,6 @@ export class BSNumericLiteral extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    return S.Const("i32", this.value);
+    return S.Const(this.value);
   }
 }

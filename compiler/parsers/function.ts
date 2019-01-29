@@ -50,7 +50,7 @@ export class BSFunctionDeclaration extends BSNode {
       last = sb[sb.length - 1];
     }
 
-    const ret = last && last.type === "i32" ? undefined : S.Const("i32", 0);
+    const ret = last && last.type === "i32" ? undefined : S.Const(0);
 
     const result = S.Func({
       name: ctx.getFunctionByNode(this).bsname,

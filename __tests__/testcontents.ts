@@ -128,7 +128,7 @@ interface String extends StringInternal {
 
 @jsType("Array")
 class ArrayInternal<T> {
-  readonly length: number = 0;
+  length: number = 0;
 
   arrLen(): number {
     return memread((this as any) as number + 4);

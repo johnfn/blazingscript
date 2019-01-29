@@ -29,7 +29,7 @@ export class BSPrefixUnaryExpression extends BSNode {
         return S(
           "i32",
           "i32.sub",
-          S.Const("i32", 0),
+          S.Const(0),
           this.expression.compile(ctx)
         );
       case SyntaxKind.PlusPlusToken:

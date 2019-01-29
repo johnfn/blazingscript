@@ -11,6 +11,7 @@ import { Program } from "./program";
 // * Figure out some way to write Sexprs better.
 // * statements can return null, but expressions cant. lots of stuff can be cleaned up!
 // * rename terrible variable names like fd vdl etc etc etc 
+// * THOUGHT: should Sexpr be Sexpr<T> where T is the type? I feel like it could be?
 // * put getExpressionNode on BaseNode
 //    cant be done, circular dependencies.
 // * add imports so that my code isnt such a mess

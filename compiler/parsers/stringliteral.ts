@@ -19,10 +19,10 @@ export class BSStringLiteral extends BSNode {
       S("[]", "result", "i32"),
       S.SetLocal(
         "myslocal",
-        S("i32", "call", "$malloc", S.Const("i32", this.text.length + 4))
+        S("i32", "call", "$malloc", S.Const(this.text.length + 4))
       ),
       // store length first
-      S.Store(ctx.getVariable("myslocal"), S.Const("i32", this.text.length)),
+      S.Store(ctx.getVariable("myslocal"), this.text.length),
       // then contents
       ...Sx.SetStringLiteralAtSexpr(ctx.getVariable("myslocal"), this.text),
       ctx.getVariable("myslocal")

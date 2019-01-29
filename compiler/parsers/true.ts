@@ -13,6 +13,6 @@ export class BSTrueKeyword extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    return S.Const("i32", 1);
+    return S.Const(1);
   }
 }

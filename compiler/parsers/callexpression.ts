@@ -112,8 +112,8 @@ export class BSCallExpression extends BSNode {
             const str = arg.text.slice(1, -1);
 
             logArgs.push({
-              size: S.Const("i32", str.length),
-              start: S.Const("i32", offset),
+              size: S.Const(str.length),
+              start: S.Const(offset),
               type: 0,
               putValueInMemory: Sx.SetStringLiteralAt(offset, str)
             });
@@ -126,16 +126,16 @@ export class BSCallExpression extends BSNode {
                 start: ctx.getVariable(arg.text),
                 type: 2,
                 putValueInMemory: [
-                  S.Store(S.Const("i32", offset), ctx.getVariable(arg.text))
+                  S.Store(S.Const(offset), ctx.getVariable(arg.text))
                 ]
               });
             } else if (arg.tsType.flags & TypeFlags.NumberLike) {
               logArgs.push({
-                size: S.Const("i32", 4),
-                start: S.Const("i32", offset),
+                size: S.Const(4),
+                start: S.Const(offset),
                 type: 1,
                 putValueInMemory: [
-                  S.Store(S.Const("i32", offset), ctx.getVariable(arg.text))
+                  S.Store(S.Const(offset), ctx.getVariable(arg.text))
                 ]
               });
             } else {
@@ -155,10 +155,10 @@ export class BSCallExpression extends BSNode {
             }
 
             logArgs.push({
-              size: S.Const("i32", 4),
-              start: S.Const("i32", offset),
+              size: S.Const(4),
+              start: S.Const(offset),
               type: 1,
-              putValueInMemory: [S.Store(S.Const("i32", offset), result)]
+              putValueInMemory: [S.Store(S.Const(offset), result)]
             });
 
             offset += 4;
@@ -167,8 +167,8 @@ export class BSCallExpression extends BSNode {
 
         while (logArgs.length < 3) {
           logArgs.push({
-            size: S.Const("i32", 0),
-            start: S.Const("i32", 0),
+            size: S.Const(0),
+            start: S.Const(0),
             type: 9999,
             putValueInMemory: [S("[]", "nop")]
           });
@@ -185,9 +185,9 @@ export class BSCallExpression extends BSNode {
             "$log",
             ...flatten(
               logArgs.map(obj => [
-                S.Const("i32", obj.type),
+                S.Const(obj.type),
                 obj.start,
-                S("i32", "i32.add", obj.start, obj.size)
+                S.Add(obj.start, obj.size),
               ])
             )
           )

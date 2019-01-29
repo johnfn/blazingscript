@@ -1,8 +1,9 @@
+export type WasmType = "i32" | "f32" | "i64" | "f64" | "[]";
 
 // TODO: turn into class
 export type Sexpr = {
   name: string;
-  type: "i32" | "f32" | "[]";
+  type: WasmType;
   body: (string | Sexpr)[];
 };
 
@@ -12,7 +13,7 @@ export interface Param {
 }
 
 export function S(
-  type: "i32" | "f32" | "[]",
+  type: WasmType,
   name: string,
   ...body: (string | Sexpr)[]
 ): Sexpr {
@@ -26,30 +27,69 @@ export function S(
 S.Block = (body: Sexpr[]): Sexpr =>
   body.length === 1 ? body[0] : S("[]", "block", ...body);
 
-S.Const = (type: "i32", value: number): Sexpr => S(type, "i32.const", String(value));
+S.Const = (value: number, type: WasmType = "i32"): Sexpr => S(type, "i32.const", String(value));
 
 S.Add = (left: Sexpr | number, right: Sexpr | number): Sexpr => {
-  let leftSexpr: Sexpr;
+  return generateAddOrSubSexpr(left, right, "add");
+}
+
+S.Sub = (left: Sexpr | number, right: Sexpr | number): Sexpr => {
+  return generateAddOrSubSexpr(left, right, "sub");
+}
+
+function generateAddOrSubSexpr(left: number | Sexpr, right: number | Sexpr, fn: "add" | "sub"): Sexpr {
+  let leftSexpr : Sexpr;
   let rightSexpr: Sexpr;
+  let type      : WasmType;
+
+  if (typeof left === "number" && typeof right === "number") {
+    type = "i32";
+  } else if (typeof left === "number" && typeof right !== "number") {
+    type = right.type;
+  } else if (typeof left !== "number" && typeof right === "number") {
+    type = left.type;
+  } else if (typeof left !== "number" && typeof right !== "number") {
+    if (left.type !== right.type) {
+      throw new Error("Trying to wasm add 2 sexprs of different types.");
+    } else {
+      type = left.type;
+    }
+  } else {
+    throw new Error("This is logically impossible to ever see, but it makes the TS compiler happy.")
+  }
+
+  if (type === "[]") {
+    throw new Error("cant add 2 things and somehow get [].")
+  }
 
   if (typeof left === "number") {
-    leftSexpr = S.Const("i32", left);
+    leftSexpr = S.Const(left, type);
   } else {
     leftSexpr = left;
   }
 
   if (typeof right === "number") {
-    rightSexpr = S.Const("i32", right);
+    rightSexpr = S.Const(right, type);
   } else {
     rightSexpr = right;
   }
 
-  return S("i32", "i32.add", leftSexpr, rightSexpr);
+  return S(type, `${ type }.${ fn }`, leftSexpr, rightSexpr);
 }
 
 S.Drop = (expr: Sexpr): Sexpr => S("[]", "drop", expr);
 
-S.Store = (pos: Sexpr, value: Sexpr): Sexpr => S("[]", "i32.store", pos, value);
+S.Store = (pos: Sexpr, value: Sexpr | number): Sexpr => {
+  let valueSexpr: Sexpr;
+
+  if (typeof value === "number") {
+    valueSexpr = S.Const(value);
+  } else {
+    valueSexpr = value;
+  }
+
+  return S("[]", "i32.store", pos, valueSexpr);
+}
 
 S.Load = (type: "i32", pos: Sexpr): Sexpr => S(type, "i32.load", pos);
 
@@ -99,24 +139,24 @@ export class Sx {
 
   public static SetStringLiteralAt(pos: number, string: string): Sexpr[] {
     return [
-      S.Store(S.Const("i32", pos), S.Const("i32", string.length)),
+      S.Store(S.Const(pos), string.length),
       ...string
         .split("")
         .map((ch, i) =>
-          S.Store(S.Const("i32", pos + i), S.Const("i32", ch.charCodeAt(0)))
+          S.Store(S.Const(pos + i), ch.charCodeAt(0))
         )
     ];
   }
 
   public static SetStringLiteralAtSexpr(pos: Sexpr, string: string): Sexpr[] {
     return [
-      S.Store(pos, S.Const("i32", string.length)),
+      S.Store(pos, string.length),
       ...string
         .split("")
         .map((ch, i) =>
           S.Store(
-            S("i32", "i32.add", pos, S.Const("i32", i + 4)),
-            S.Const("i32", ch.charCodeAt(0))
+            S.Add(pos, i + 4),
+            S.Const(ch.charCodeAt(0))
           )
         )
     ];
