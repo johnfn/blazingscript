@@ -17,6 +17,8 @@ export class BSVariableStatement extends BSNode {
   }
 
   compile(ctx: Context): Sexpr | null {
+    // TODO this code is EXTRA dumb. it needs to compile the inner vdl.
+
     for (const mod of this.modifiers || []) {
       switch (mod.kind) {
         case SyntaxKind.DeclareKeyword:

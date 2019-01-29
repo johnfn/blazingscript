@@ -3,15 +3,15 @@ import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { BSStatement, parseStatement } from "./statement";
 import { BSNode } from "./bsnode";
-import { getExpressionNode, parseExpression } from "./expression";
+import { getExpressionNode, BSExpressionNode } from "./expression";
 
 export class BSIfStatement extends BSNode {
-  children: BSNode[];
+  children  : BSNode[];
 
   nodeREMOVE: IfStatement;
-  condition: BSNode;
-  ifTrue: BSStatement;
-  ifFalse: BSStatement | null;
+  condition : BSExpressionNode;
+  ifTrue    : BSStatement;
+  ifFalse   : BSStatement | null;
 
   constructor(ctx: Context, node: IfStatement) {
     super(ctx, node);
@@ -32,31 +32,25 @@ export class BSIfStatement extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    return parseIfStatement(ctx, this.nodeREMOVE);
+    let thn = this.ifTrue.compile(ctx) || S.Const("i32", 0);
+    let els = this.ifFalse ? this.ifFalse.compile(ctx) : undefined;
+
+    if (thn.type !== "[]") {
+      thn = S.Drop(thn);
+    }
+
+    if (els && els.type !== "[]") {
+      els = S.Drop(els);
+    }
+
+    const result = S(
+      "[]",
+      "if",
+      this.condition.compile(ctx),
+      S("[]", "then", thn),
+      S("[]", "else", els ? els : S("[]", "nop"))
+    );
+
+    return result;
   }
-}
-
-export function parseIfStatement(ctx: Context, node: IfStatement): Sexpr {
-  let thn = parseStatement(ctx, node.thenStatement) || S.Const("i32", 0);
-  let els = node.elseStatement
-    ? parseStatement(ctx, node.elseStatement)
-    : undefined;
-
-  if (thn.type !== "[]") {
-    thn = S.Drop(thn);
-  }
-
-  if (els && els.type !== "[]") {
-    els = S.Drop(els);
-  }
-
-  const result = S(
-    "[]",
-    "if",
-    parseExpression(ctx, node.expression)!,
-    S("[]", "then", thn),
-    S("[]", "else", els ? els : S("[]", "nop"))
-  );
-
-  return result;
 }

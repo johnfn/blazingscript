@@ -1,3 +1,7 @@
+// TODO
+// * test that you can put all sorts of weird stuff in an if condition
+//   * test that assignments return values
+
 // types specially handled by the BlazingScript compiler
 
 declare type LogType = string | number;

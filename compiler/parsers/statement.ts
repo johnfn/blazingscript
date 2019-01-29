@@ -19,7 +19,7 @@ import { Sexpr } from "../sexpr";
 import { BSExpressionStatement } from "./expressionstatement";
 import { BSReturnStatement } from "./return";
 import { BSBlock } from "./block";
-import { parseIfStatement, BSIfStatement } from "./if";
+import { BSIfStatement } from "./if";
 import {
   BSVariableStatement
 } from "./variablestatement";
@@ -108,7 +108,7 @@ export function parseStatement(
     case SyntaxKind.Block:
       return new BSBlock(ctx, statement as Block).compile(ctx);
     case SyntaxKind.IfStatement:
-      return parseIfStatement(ctx, statement as IfStatement);
+      return new BSIfStatement(ctx, statement as IfStatement).compile(ctx);
     case SyntaxKind.VariableStatement:
       return new BSVariableStatement(ctx, statement as VariableStatement).compile(ctx);
     case SyntaxKind.ForStatement:
