@@ -3,6 +3,7 @@ import { VariableDeclaration, BindingName, SyntaxKind } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
 import { parseBindingNameNode, BSBindingName } from "./bindingname";
+import { S, Sexpr } from "../sexpr";
 
 export class BSVariableDeclaration extends BSNode {
   children   : BSNode[];
@@ -22,7 +23,14 @@ export class BSVariableDeclaration extends BSNode {
     this.name = this.nameNode.text;
   }
 
-  compile(ctx: Context): null {
-    throw new Error("cant compile variable declarations!");
+  compile(ctx: Context): Sexpr {
+    const name = this.name;
+
+    return S.SetLocal(
+      name,
+      this.initializer
+        ? this.initializer.compile(ctx)
+        : S.Const("i32", 0)
+    );
   }
 }

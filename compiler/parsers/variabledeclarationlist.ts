@@ -2,6 +2,7 @@ import { VariableDeclarationList } from "typescript";
 import { BSVariableDeclaration } from "./variabledeclaration";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
+import { S, Sexpr } from "../sexpr";
 
 export class BSVariableDeclarationList extends BSNode {
   children    : BSNode[];
@@ -17,7 +18,7 @@ export class BSVariableDeclarationList extends BSNode {
     this.children = this.declarations;
   }
 
-  compile(ctx: Context): null {
-    throw new Error("cant compile variable declaration lists!");
+  compile(ctx: Context): Sexpr {
+    return S.Block(this.declarations.map(decl => decl.compile(ctx)));
   }
 }

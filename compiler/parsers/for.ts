@@ -8,7 +8,7 @@ import { Sexpr, S } from "../sexpr";
 import { BSStatement } from "./statement";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
 import { BSNode } from "./bsnode";
-import { getExpressionNode, parseExpression, BSExpressionNode } from "./expression";
+import { getExpressionNode, BSExpressionNode } from "./expression";
 
 export class BSForStatement extends BSNode {
   children: BSNode[];

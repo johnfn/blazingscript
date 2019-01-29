@@ -21,15 +21,10 @@ import { BSCallExpression } from "./callexpression";
 import { BSIdentifier } from "./identifier";
 import { BSNumericLiteral } from "./numericliteral";
 import { BSConditionalExpression } from "./conditionalexpression";
-import { Sexpr, S } from "../sexpr";
 import { BSPostfixUnaryExpression } from "./postfixunaryexpression";
-import {
-  BSPrefixUnaryExpression
-} from "./prefixunaryexpression";
+import { BSPrefixUnaryExpression } from "./prefixunaryexpression";
 import { BSStringLiteral } from "./stringliteral";
-import {
-  BSPropertyAccessExpression
-} from "./propertyaccess";
+import { BSPropertyAccessExpression } from "./propertyaccess";
 import { BSElementAccessExpression } from "./elementaccess";
 import { BSThisKeyword } from "./this";
 import { BSTrueKeyword } from "./true";
@@ -71,20 +66,11 @@ export function getExpressionNode(
     case SyntaxKind.NumericLiteral:
       return new BSNumericLiteral(ctx, expression as NumericLiteral);
     case SyntaxKind.ConditionalExpression:
-      return new BSConditionalExpression(
-        ctx,
-        expression as ConditionalExpression
-      );
+      return new BSConditionalExpression(ctx, expression as ConditionalExpression);
     case SyntaxKind.PostfixUnaryExpression:
-      return new BSPostfixUnaryExpression(
-        ctx,
-        expression as PostfixUnaryExpression
-      );
+      return new BSPostfixUnaryExpression(ctx, expression as PostfixUnaryExpression);
     case SyntaxKind.PrefixUnaryExpression:
-      return new BSPrefixUnaryExpression(
-        ctx,
-        expression as PrefixUnaryExpression
-      );
+      return new BSPrefixUnaryExpression(ctx, expression as PrefixUnaryExpression);
     case SyntaxKind.TrueKeyword:
       return new BSTrueKeyword(ctx, expression);
     case SyntaxKind.FalseKeyword:
@@ -94,27 +80,14 @@ export function getExpressionNode(
     case SyntaxKind.AsExpression:
       return new BSAsExpression(ctx, expression as AsExpression);
     case SyntaxKind.ParenthesizedExpression:
-      return new BSParenthesizedExpression(
-        ctx,
-        expression as ParenthesizedExpression
-      );
+      return new BSParenthesizedExpression(ctx, expression as ParenthesizedExpression);
     case SyntaxKind.PropertyAccessExpression:
-      return new BSPropertyAccessExpression(
-        ctx,
-        expression as PropertyAccessExpression
-      );
+      return new BSPropertyAccessExpression(ctx, expression as PropertyAccessExpression);
     case SyntaxKind.ElementAccessExpression:
-      return new BSElementAccessExpression(
-        ctx,
-        expression as ElementAccessExpression
-      );
+      return new BSElementAccessExpression(ctx, expression as ElementAccessExpression);
     case SyntaxKind.ThisKeyword:
       return new BSThisKeyword(ctx, expression as ThisExpression);
     default:
-      throw new Error(
-        `Unhandled expression! ${
-          SyntaxKind[expression.kind]
-        } in ${expression.getText()}`
-      );
+      throw new Error(`Unhandled expression! ${ SyntaxKind[expression.kind] } in ${expression.getText()}`);
   }
 }

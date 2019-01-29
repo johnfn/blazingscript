@@ -1,7 +1,6 @@
 import { VariableStatement, SyntaxKind, Modifier } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
-import { parseExpression } from "./expression";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
 import { BSNode } from "./bsnode";
 
@@ -37,19 +36,6 @@ export class BSVariableStatement extends BSNode {
       }
     }
 
-    if (this.declarationList.declarations.length > 1) {
-      throw new Error("Cant handle more than 1 declaration!!!");
-    }
-
-    const decl = this.declarationList.declarations[0];
-
-    const name = decl.name;
-
-    return S.SetLocal(
-      name,
-      decl.initializer
-        ? decl.initializer.compile(ctx)
-        : S.Const("i32", 0)
-    );
+    return this.declarationList.compile(ctx);
   }
 }
