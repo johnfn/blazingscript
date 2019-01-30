@@ -5,16 +5,10 @@ import { OperatorOverload, Operator, BSMethodDeclaration } from "./parsers/metho
 import { parseStatementListBS } from "./parsers/statementlist";
 import { BSNode } from "./parsers/bsnode";
 import { BSFunctionDeclaration } from "./parsers/function";
-import { BSForStatement } from "./parsers/for";
-import { BSVariableDeclarationList } from "./parsers/variabledeclarationlist";
-import { BSVariableDeclaration } from "./parsers/variabledeclaration";
-import { BSVariableStatement } from "./parsers/variablestatement";
-import { BSFunctionExpression } from "./parsers/functionexpression";
 import { BSParameter } from "./parsers/parameter";
-import { isArrayType } from "./parsers/arrayliteral";
 import { BSClassDeclaration } from "./parsers/class";
 
-type Variable = {
+export type Variable = {
   tsType     : ts.Type | undefined;
   wasmType   : "i32";
   name       : string;

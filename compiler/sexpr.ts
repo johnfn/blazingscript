@@ -1,3 +1,5 @@
+import { Variable } from "./context";
+
 export type WasmType = "i32" | "f32" | "i64" | "f64" | "[]";
 
 // TODO: turn into class
@@ -124,8 +126,8 @@ S.GetLocal = (type: "i32", name: string): Sexpr =>
 S.SetLocal = (name: string, value: Sexpr): Sexpr =>
   S("[]", "set_local", "$" + name, value);
 
-S.DeclareLocal = (name: string, type: "i32"): Sexpr =>
-  S("[]", "local", "$" + name, type);
+S.DeclareLocal = (decl: Variable): Sexpr =>
+  S("[]", "local", "$" + decl.name, decl.wasmType);
 
 S.Param = (param: Param): Sexpr =>
   S("[]", "param", "$" + param.name, param.type);
