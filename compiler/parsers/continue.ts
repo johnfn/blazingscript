@@ -17,6 +17,6 @@ export class BSContinueStatement extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    return ctx.getLoopContinue();
+    return ctx.scope.getLoopContinue();
   }
 }

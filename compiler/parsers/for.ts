@@ -82,7 +82,7 @@ export class BSForStatement extends BSNode {
     // TODO - we generate an increment with every continue statement. im sure
     // there's a better way!
 
-    ctx.addToLoopStack(inc);
+    ctx.scope.addLoop(inc);
 
     const bodyComp = this.body ? this.body.compile(ctx) : null;
     const cond = this.condition ? this.condition.compile(ctx) : null;
@@ -90,22 +90,22 @@ export class BSForStatement extends BSNode {
     const result = S(
       "i32",
       "block",
-      ctx.getLoopBreakLabel(),
+      ctx.scope.getLoopBreakLabel(),
       ...initializerSexprs,
       S(
         "[]",
         "loop",
-        ctx.getLoopContinueLabel(),
+        ctx.scope.getLoopContinueLabel(),
         ...(cond
-          ? [S("[]", "br_if", ctx.getLoopBreakLabel(), S("i32", "i32.eqz", cond))]
+          ? [S("[]", "br_if", ctx.scope.getLoopBreakLabel(), S("i32", "i32.eqz", cond))]
           : []),
         ...(bodyComp ? [bodyComp] : []),
         ...(inc ? [inc] : []),
-        S("[]", "br", ctx.getLoopContinueLabel())
+        S("[]", "br", ctx.scope.getLoopContinueLabel())
       )
     );
 
-    ctx.popFromLoopStack();
+    ctx.scope.popLoop();
 
     return result;
   }

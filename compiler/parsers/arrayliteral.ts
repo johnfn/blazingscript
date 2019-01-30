@@ -38,9 +38,7 @@ export class BSArrayLiteral extends BSNode {
   compile(ctx: Context): Sexpr {
     const allocatedLength = 16;
 
-    return S("i32", 
-      "block",
-      S("[]", "result", "i32"),
+    return S("i32", "block", S("[]", "result", "i32"),
 
       S.SetLocal(
         "myalocal",

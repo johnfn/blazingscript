@@ -10,11 +10,12 @@ declare const memwrite: (pos: number, val: number) => void;
 declare const memread: (pos: number) => number;
 declare const divfloor: (a: number, b: number) => number;
 declare const operator: (type: "+" | "===" | "!==" | "[]") => ((target: any, propertyKey: string, descriptor: PropertyDescriptor) => void);
-declare const jsType: (x: string) => (<T extends { new (...args: any[]): {} }>(constructor: T) => T);
+declare const offset: (offset: number) => any;
 
 @jsType("String")
 class StringInternal {
-  readonly length: number = 0;
+  @offset(0)
+  readonly length = 0;
 
   strLen(): number {
     return memread((this as any) as number);
@@ -128,7 +129,11 @@ interface String extends StringInternal {
 
 @jsType("Array")
 class ArrayInternal<T> {
-  length: number = 0;
+  @offset(0)
+  allocatedLength = 0;
+
+  @offset(4)
+  length = 0;
 
   arrLen(): number {
     return memread((this as any) as number + 4);
@@ -489,3 +494,7 @@ function test_ifCall() {
   return memread(0) === 1;
 }
 */
+
+// I'm putting this at the bottom because it screws with my syntax highlighting!
+
+declare const jsType: (x: string) => (<T extends { new (...args: any[]): {} }>(constructor: T) => T);

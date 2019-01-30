@@ -21,18 +21,22 @@ export class BSFunctionDeclaration extends BSNode {
   constructor(ctx: Context, node: FunctionDeclaration) {
     super(ctx, node);
 
+    ctx.addScopeFor(this);
+    ctx.pushScopeFor(this);
+
     this.body = node.body ? new BSBlock(ctx, node.body) : null;
     this.parameters = [...node.parameters].map(
       param => new BSParameter(ctx, param)
     );
     this.children = [...this.parameters, ...(this.body ? [this.body] : [])];
-
     this.name = node.name ? node.name.text : null;
     this.fullText = node.getFullText();
+
+    ctx.popScope();
   }
 
   compile(ctx: Context): Sexpr {
-    ctx.pushScope();
+    ctx.pushScopeFor(this);
 
     ctx.addFunction(this);
 
@@ -64,8 +68,16 @@ export class BSFunctionDeclaration extends BSNode {
       ]
     });
 
-    ctx.popScope();
+    ctx.popScope()
 
     return result;
+  }
+
+  readableName(): string { 
+    if (this.name) {
+      return `function ${ this.name }`;
+    } else {
+      return "anonymous function";
+    }
   }
 }

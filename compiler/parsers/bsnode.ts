@@ -2,6 +2,9 @@ import { Sexpr } from "../sexpr";
 import { Context } from "../context";
 import { Node, Type, Modifier } from "typescript";
 
+let uid = 0;
+export function getUid() { return ++uid; }
+
 /**
  * Abstract base class of all BlazingScript nodes.
  */
@@ -10,8 +13,10 @@ export abstract class BSNode {
   tsType           : Type;
   fullText         : string;
   modifiers        : Modifier[];
+  uid              : number;
 
   constructor(ctx: Context, node: Node) {
+    this.uid = getUid();
     this.modifiers = [...(node.modifiers || [])];
 
     if (node.parent) {
@@ -29,6 +34,8 @@ export abstract class BSNode {
       callback(child);
     }
   }
+
+  readableName(): string { return "unimplemented"; }
 
   abstract compile(ctx: Context): Sexpr | null;
 }

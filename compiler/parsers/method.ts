@@ -11,6 +11,7 @@ import { BSDecorator } from "./decorator";
 import { BSCallExpression } from "./callexpression";
 import { BSIdentifier } from "./identifier";
 import { BSStringLiteral } from "./stringliteral";
+import { buildNode, buildNodeArray } from "./nodeutil";
 
 export enum Operator {
   "===" = "===",
@@ -36,7 +37,6 @@ export class BSMethodDeclaration extends BSNode {
    * Name of the method.
    */
   name      : string | null;
-  fullText  : string;
 
   decorators: BSDecorator[];
 
@@ -53,66 +53,73 @@ export class BSMethodDeclaration extends BSNode {
   ) {
     super(ctx, node);
 
-    this.decorators = [...(node.decorators || [])].map(deco => new BSDecorator(ctx, deco));
-
-    this.body = node.body ? new BSBlock(ctx, node.body) : null;
-    this.parameters = [...node.parameters].map(
-      param => new BSParameter(ctx, param)
-    );
-    this.children = [
-      ...this.decorators,
-      ...this.parameters, 
-      ...(this.body ? [this.body] : [])
-    ];
-
-    this.name = node.name ? node.name.getText() : null;
-    this.fullText = node.getFullText();
-
     this.parentNodeREMOVE = parentNode;
+
+    ctx.addScopeFor(this);
+    ctx.pushScopeFor(this); {
+      this.decorators = buildNodeArray(ctx, node.decorators);
+      this.parameters = buildNodeArray(ctx, node.parameters);
+      this.body       = buildNode(ctx, node.body);
+      this.children = [
+        ...this.decorators,
+        ...this.parameters, 
+        ...(this.body ? [this.body] : [])
+      ];
+
+      this.name = node.name ? node.name.getText() : null;
+
+      ctx.addDeclarationsToContext(this);
+
+    } ctx.popScope();
+
+    ctx.addMethod({ 
+      node    : this, 
+      parent  : this.parentNodeREMOVE, 
+      overload: this.getOverloadType(this.decorators),
+    });
+ }
+
+ getOverloadType(decorators: BSDecorator[]): OperatorOverload | null {
+  let overload: OperatorOverload | null = null;
+
+  for (const deco of decorators) {
+    if (!(deco.expression instanceof BSCallExpression)) {
+      continue;
+    }
+
+    if (!(deco.expression.expression instanceof BSIdentifier)) {
+      continue;
+    }
+
+    const calledFunction = deco.expression.expression.text;
+
+    if (calledFunction === "operator") {
+      const firstArgument = deco.expression.arguments[0];
+
+      if (!(firstArgument instanceof BSStringLiteral)) {
+        continue;
+      }
+
+      const opName = firstArgument.text as Operator;
+
+      if (opName === Operator["!=="]) {
+        overload = { operator: Operator["!=="] };
+      } else if (opName === Operator["+"]) {
+        overload = { operator: Operator["+"] };
+      } else if (opName === Operator["==="]) {
+        overload = { operator: Operator["==="] };
+      } else if (opName === Operator["[]"]) {
+        overload = { operator: Operator["[]"] };
+      } else {
+        assertNever(opName);
+      }
+    }
+  }
+  return overload;
  }
 
   compile(ctx: Context): Sexpr {
-    ctx.pushScope();
-
-    let overload: OperatorOverload | null = null;
-
-    for (const deco of this.decorators) {
-      if (!(deco.expression instanceof BSCallExpression)) {
-        continue;
-      }
-
-      if (!(deco.expression.expression instanceof BSIdentifier)) {
-        continue;
-      }
-
-      const calledFunction = deco.expression.expression.text;
-
-      if (calledFunction === "operator") {
-        const firstArgument = deco.expression.arguments[0];
-
-        if (!(firstArgument instanceof BSStringLiteral)) {
-          continue;
-        }
-
-        const opName = firstArgument.text as Operator;
-
-        if (opName === Operator["!=="]) {
-          overload = { operator: Operator["!=="] };
-        } else if (opName === Operator["+"]) {
-          overload = { operator: Operator["+"] };
-        } else if (opName === Operator["==="]) {
-          overload = { operator: Operator["==="] };
-        } else if (opName === Operator["[]"]) {
-          overload = { operator: Operator["[]"] };
-        } else {
-          assertNever(opName);
-        }
-      }
-    }
-
-    ctx.addMethod({ node: this, parent: this.parentNodeREMOVE, overload });
-
-    ctx.addDeclarationsToContext(this);
+    ctx.pushScopeFor(this);
 
     const params = ctx.addParameterListToContext(this.parameters);
     const sb     = parseStatementListBS(ctx, this.body!.children);
@@ -146,5 +153,13 @@ export class BSMethodDeclaration extends BSNode {
     ctx.popScope();
 
     return result;
+  }
+
+  readableName(): string { 
+    if (this.name) {
+      return `method ${ this.parentNodeREMOVE.name!.text }#${ this.name }`;
+    } else {
+      return "anonymous function";
+    }
   }
 }

@@ -1,28 +1,5 @@
-import ts, {
-  Node,
-  FunctionDeclaration,
-  ScriptTarget,
-  TransformerFactory,
-  CompilerOptions,
-  DiagnosticWithLocation,
-  MethodDeclaration,
-  ClassDeclaration,
-  isFunctionDeclaration,
-  NodeFlags,
-  SyntaxKind,
-  Expression,
-  NodeArray,
-  TypeFlags,
-  ParameterDeclaration,
-  Identifier,
-  forEachChild,
-  VariableDeclaration,
-  ForStatement,
-  VariableDeclarationList,
-  VariableStatement
-} from "typescript";
-import { sexprToString, Sexpr, S, Param } from "./sexpr";
-import { add } from "./util";
+import ts, { ClassDeclaration, TypeFlags } from "typescript";
+import { Sexpr, S, Param } from "./sexpr";
 import { BSExpression } from "./parsers/expression";
 import { OperatorOverload, Operator, BSMethodDeclaration } from "./parsers/method";
 import { parseStatementListBS } from "./parsers/statementlist";
@@ -33,7 +10,6 @@ import { BSVariableDeclarationList } from "./parsers/variabledeclarationlist";
 import { BSVariableDeclaration } from "./parsers/variabledeclaration";
 import { BSVariableStatement } from "./parsers/variablestatement";
 import { BSFunctionExpression } from "./parsers/functionexpression";
-import { BSIdentifier } from "./parsers/identifier";
 import { BSParameter } from "./parsers/parameter";
 import { isArrayType } from "./parsers/arrayliteral";
 
@@ -62,41 +38,118 @@ type Class = {
   name: string;
 };
 
-type Scope = {
-  variableNameMapping: { [key: string]: Variable };
-  functionNameMapping: Function[];
-  loopStack: Loop[];
-  classStack: Class[];
-};
+class Scope {
+  parent           : Scope | null;
+  children         : { 
+    scope: Scope;
+    node : BSNode;
+  }[];
+  variables        : { [key: string]: Variable };
+  functions        : Function[];
+  loopStack        : Loop[];
+  classStack       : Class[];
+  node             : BSNode | null;
 
-function printScope(scope: Scope): void {
-  const vars = scope.variableNameMapping;
-  const fns = scope.functionNameMapping;
+  static NumberOfLoopsSeen = 0;
 
-  if (Object.keys(vars).length === 0 && fns.length === 0) {
-    console.log("Empty Scope");
+  constructor(node: BSNode | null, parent: Scope | null) {
+    this.node   = node;
+    this.parent = parent;
 
-    return;
+    this.variables = {};
+    this.functions = [];
+    this.loopStack           = [];
+    this.classStack          = [];
+    this.children            = [];
   }
 
-  console.log(
-    "Variables: ",
-    Object.keys(vars)
-      .map(key => vars[key].bsname)
-      .join(", ")
-  );
-  console.log("Functions: ", fns.map(fn => fn.bsname).join(", "));
+  addLoop(inc: Sexpr | null): void {
+    Scope.NumberOfLoopsSeen++;
+
+    this.loopStack.push({
+      continueLabel: `$loopcontinue${ Scope.NumberOfLoopsSeen }`,
+      breakLabel: `$loopbreak${ Scope.NumberOfLoopsSeen }`,
+      inc
+    });
+  }
+
+  popLoop() {
+    this.loopStack.pop();
+  }
+
+  getCurrentLoop(): Loop {
+    if (this.loopStack.length > 0) {
+      return this.loopStack[this.loopStack.length - 1];
+    } else {
+      throw new Error("Requested getCurrentLoop when there was no loops on the stack.");
+    }
+  }
+
+  getLoopContinue(): Sexpr {
+    const loopInfo = this.loopStack[
+      this.loopStack.length - 1
+    ];
+
+    const res = S.Block([
+      ...(loopInfo.inc ? [loopInfo.inc] : []),
+      S("[]", "br", loopInfo.continueLabel)
+    ]);
+
+    return res;
+  }
+
+  getLoopBreakLabel(): string {
+    const loopStack = this.loopStack;
+
+    return loopStack[loopStack.length - 1].breakLabel;
+  }
+
+  getLoopContinueLabel(): string {
+    const loopStack = this.loopStack;
+
+    return loopStack[loopStack.length - 1].continueLabel;
+  }
+
+  toString(indent = ""): string {
+    const vars = this.variables;
+    const fns  = this.functions;
+
+    let string = `Scope for ${ this.node ? this.node.readableName() : "[top level]" }\n`;
+
+    if (Object.keys(vars).length === 0 && fns.length === 0) {
+      string = "Empty Scope\n";
+    } else {
+      string += indent + "Variables: " + Object.keys(vars).map(key => vars[key].bsname).join(", ") + "\n";
+      string += indent + "Functions: " + fns.map(fn => fn.bsname).join(", ") + "\n";
+    }
+
+    for (const { scope } of Object.keys(this.children).map(k => this.children[Number(k)])) {
+      string += scope.toString(indent + "  ");
+    }
+
+    return string;
+  }
+
+  topmostScope(): Scope {
+    let result: Scope = this;
+
+    while (result.parent !== null) {
+      result = result.parent;
+    }
+
+    return result;
+  }
 }
 
 export class Context {
   typeChecker: ts.TypeChecker;
-  scopes: Scope[];
-  jsTypes: { [jsType: string]: string } = {};
+  scope      : Scope;
+  jsTypes    : { [jsType: string]: string } = {};
 
   constructor(tc: ts.TypeChecker) {
     this.typeChecker = tc;
 
-    this.scopes = [this.makeScope()];
+    this.scope = new Scope(null, null);
   }
 
   // TODO: Somehow i want to ensure that this is actually targetting js
@@ -109,75 +162,36 @@ export class Context {
     return this.jsTypes[jsTypeName];
   }
 
-  private makeScope(): Scope {
-    return {
-      variableNameMapping: {},
-      functionNameMapping: [],
-      loopStack: [],
-      classStack: []
-    };
+  pushScopeFor(node: BSNode): void{
+    const childScopeInfo = this.scope.children.filter(scope => scope.node.uid === node.uid)[0];
+
+    if (childScopeInfo) {
+      this.scope = childScopeInfo.scope;
+    } else {
+      throw new Error(`Cant find scope for ${ node.readableName }`);
+    }
   }
 
-  localScope(): Scope {
-    return this.scopes[this.scopes.length - 1];
-  }
-
-  globalScope(): Scope {
-    return this.scopes[0];
-  }
-
-  pushScope(): void {
-    this.scopes.push(this.makeScope());
+  addScopeFor(node: BSNode): void {
+    this.scope.children.push({
+      scope: new Scope(node, this.scope),
+      node ,
+    });
   }
 
   popScope(): void {
-    this.scopes.pop();
+    const parent = this.scope.parent;
+
+    if (parent === null) {
+      throw new Error("Got a null parent when I shouldn't have!");
+    }
+
+    this.scope = parent;
   }
 
   /**
    * Loops
    */
-
-  addToLoopStack(inc: Sexpr | null) {
-    const totalLoopCount = add(
-      this.scopes.map(scope => scope.loopStack.length)
-    );
-
-    this.localScope().loopStack.push({
-      continueLabel: `$loopcontinue${totalLoopCount}`,
-      breakLabel: `$loopbreak${totalLoopCount}`,
-      inc
-    });
-  }
-
-  popFromLoopStack() {
-    this.localScope().loopStack.pop();
-  }
-
-  getLoopContinue(): Sexpr {
-    const loopInfo = this.localScope().loopStack[
-      this.localScope().loopStack.length - 1
-    ];
-
-    const res = S.Block([
-      ...(loopInfo.inc ? [loopInfo.inc] : []),
-      S("[]", "br", loopInfo.continueLabel)
-    ]);
-
-    return res;
-  }
-
-  getLoopBreakLabel(): string {
-    const loopStack = this.localScope().loopStack;
-
-    return loopStack[loopStack.length - 1].breakLabel;
-  }
-
-  getLoopContinueLabel(): string {
-    const loopStack = this.localScope().loopStack;
-
-    return loopStack[loopStack.length - 1].continueLabel;
-  }
 
   addMethod(props: {
     node: BSMethodDeclaration;
@@ -198,12 +212,39 @@ export class Context {
     fnName    = node.name;
     className = parent.name.text;
 
-    this.globalScope().functionNameMapping.push({
-      bsname: fqName,
-      node,
-      fnName,
+    this.scope.functions.push({
+      bsname   : fqName,
+      node     ,
+      fnName   ,
       className,
       overload
+    });
+  }
+
+  addFunction(node: BSFunctionDeclaration): void {
+    let fqName: string;
+    let fnName: string;
+    let className: string | null = null;
+
+    if (!node.name) {
+      throw new Error("anonymous functions not supported yet!");
+    }
+
+    fqName = "$" + node.name;
+    fnName = node.name;
+
+    for (const fn of this.scope.functions) {
+      if (fn.bsname === fqName) {
+        throw new Error(`Redeclaring function named ${fqName}.`);
+      }
+    }
+
+    this.scope.functions.push({
+      bsname   : fqName,
+      node     : node,
+      fnName   ,
+      className,
+      overload : null
     });
   }
 
@@ -255,52 +296,33 @@ export class Context {
     );
   }
 
-  addFunction(node: BSFunctionDeclaration): void {
-    let fqName: string;
-    let fnName: string;
-    let className: string | null = null;
-
-    if (!node.name) {
-      throw new Error("anonymous functions not supported yet!");
-    }
-
-    fqName = "$" + node.name;
-    fnName = node.name;
-
-    for (const fn of this.localScope().functionNameMapping) {
-      if (fn.bsname === fqName) {
-        throw new Error(`Redeclaring function named ${fqName}.`);
-      }
-    }
-
-    this.localScope().functionNameMapping.push({
-      bsname: fqName,
-      node: node,
-      fnName,
-      className,
-      overload: null
-    });
-  }
-
   getFunctionByNode(node: BSFunctionDeclaration | BSMethodDeclaration): Function {
-    for (const scope of this.scopes) {
-      for (const fn of scope.functionNameMapping) {
+    let currScope: Scope | null = this.scope;
+
+    while (currScope !== null) {
+      for (const fn of currScope.functions) {
         if (fn.node === node) {
           return fn;
         }
       }
+
+      currScope = currScope.parent;
     }
 
     throw new Error("Failed to find function by node");
   }
 
   getMethodByNames(className: string, methodName: string): Function {
-    for (const scope of this.scopes) {
-      for (const fn of scope.functionNameMapping) {
+    let currScope: Scope | null = this.scope;
+
+    while (currScope !== null) {
+      for (const fn of currScope.functions) {
         if (fn.className === className && fn.fnName === methodName) {
           return fn;
         }
       }
+
+      currScope = currScope.parent;
     }
 
     throw new Error(
@@ -309,8 +331,10 @@ export class Context {
   }
 
   getMethodByOperator(className: string, operator: Operator): Function {
-    for (const scope of this.scopes) {
-      for (const fn of scope.functionNameMapping) {
+    let currScope: Scope | null = this.scope;
+
+    while (currScope !== null) {
+      for (const fn of currScope.functions) {
         if (
           fn.className === className &&
           fn.overload &&
@@ -319,6 +343,8 @@ export class Context {
           return fn;
         }
       }
+
+      currScope = currScope.parent;
     }
 
     throw new Error(
@@ -332,7 +358,7 @@ export class Context {
     wasmType: "i32",
     parameter = false
   ): void {
-    const mapping = this.localScope().variableNameMapping;
+    const mapping = this.scope.variables;
 
     if (name in mapping) {
       throw new Error(`Already added ${name} to scope!`);
@@ -347,22 +373,23 @@ export class Context {
   }
 
   getVariable(name: string): Sexpr {
-    const varNamesList = this.scopes
-      .slice()
-      .reverse()
-      .map(x => x.variableNameMapping);
+    let currScope: Scope | null = this.scope;
 
-    for (const varNames of varNamesList) {
-      if (name in varNames) {
-        return S.GetLocal("i32", varNames[name].bsname);
+    while (currScope !== null) {
+      const varNamesList = currScope.variables;
+
+      if (name in varNamesList) {
+        return S.GetLocal("i32", varNamesList[name].bsname);
       }
+
+      currScope = currScope.parent;
     }
 
     throw new Error(`variable name ${name} not found in context!`);
   }
 
   getVariablesInCurrentScope(wantParameters: boolean): Variable[] {
-    const map = this.scopes[this.scopes.length - 1].variableNameMapping;
+    const map = this.scope.variables;
 
     return Object.keys(map)
       .map(x => map[x])
