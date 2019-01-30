@@ -1,8 +1,10 @@
-import { ParameterDeclaration } from "typescript";
+import { ParameterDeclaration, TypeFlags } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
 import { parseBindingNameNode, BSBindingName } from "./bindingname";
 import { buildNode } from "./nodeutil";
+import { isArrayType } from "./arrayliteral";
+import { flatArray } from "../util";
 
 /**
  * e.g. function foo(x: number) { return x; }
@@ -22,10 +24,20 @@ export class BSParameter extends BSNode {
 
     this.initializer = buildNode(ctx, node.initializer);
     this.bindingName = parseBindingNameNode(ctx, node.name);
-    this.children = [
-      ...(this.initializer ? [this.initializer] : []),
+    this.children = flatArray(
+      this.initializer,
       this.bindingName,
-    ];
+    );
+
+    if (
+      this.tsType.flags & TypeFlags.NumberLike ||
+      this.tsType.flags & TypeFlags.StringLike ||
+      isArrayType(ctx, this.tsType)
+    ) {
+      ctx.addVariableToScope({ name: this.bindingName.text, tsType: this.tsType, wasmType: "i32", isParameter: true });
+    } else {
+      throw new Error(`Do not know how to handle that type: ${ TypeFlags[this.tsType.flags] } for ${ this.fullText }`);
+    }
   }
 
   compile(ctx: Context): null {

@@ -1,5 +1,5 @@
 import { BSDecorator } from "./decorator";
-import { Decorator, Node, SyntaxKind, NodeArray, Block, ParameterDeclaration, Expression, Statement, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, ParenthesizedExpression, PropertyAccessExpression, ElementAccessExpression, ThisExpression, ArrayLiteralExpression, ReturnStatement, ExpressionStatement, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, TypeAliasDeclaration, InterfaceDeclaration, FunctionDeclaration, ClassDeclaration, BindingName } from "typescript";
+import { Decorator, Node, SyntaxKind, NodeArray, Block, ParameterDeclaration, Expression, Statement, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, ParenthesizedExpression, PropertyAccessExpression, ElementAccessExpression, ThisExpression, ArrayLiteralExpression, ReturnStatement, ExpressionStatement, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, TypeAliasDeclaration, InterfaceDeclaration, FunctionDeclaration, ClassDeclaration, BindingName, VariableDeclaration } from "typescript";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
 import { BSBlock } from "./block";
@@ -34,6 +34,7 @@ import { BSInterfaceDeclaration } from "./interface";
 import { BSFunctionDeclaration } from "./function";
 import { BSClassDeclaration } from "./class";
 import { BSBindingName } from "./bindingname";
+import { BSVariableDeclaration } from "./variabledeclaration";
 
 /**
  * This is where the (typesafe) sausage is made. Avert your eyes!
@@ -92,12 +93,14 @@ export function buildNode(ctx: Context, obj: Node | undefined): BSNode | null {
     case SyntaxKind.InterfaceDeclaration    : return new BSInterfaceDeclaration(ctx, obj as InterfaceDeclaration);
     case SyntaxKind.FunctionDeclaration     : return new BSFunctionDeclaration(ctx, obj as FunctionDeclaration);
     case SyntaxKind.ClassDeclaration        : return new BSClassDeclaration(ctx, obj as ClassDeclaration);
+    case SyntaxKind.VariableDeclaration     : return new BSVariableDeclaration(ctx, obj as VariableDeclaration);
   }
 
   throw new Error(`Unhandled node in buildNode! ${ SyntaxKind[obj.kind] }`)
 }
 
 export function buildNodeArray(ctx: Context, obj: NodeArray<Decorator>            | undefined): BSDecorator[];
+export function buildNodeArray(ctx: Context, obj: NodeArray<VariableDeclaration>  | undefined): BSVariableDeclaration[];
 export function buildNodeArray(ctx: Context, obj: NodeArray<Statement>            | undefined): BSStatement[];
 export function buildNodeArray(ctx: Context, obj: NodeArray<Expression>           | undefined): BSExpression[];
 export function buildNodeArray(ctx: Context, obj: NodeArray<ParameterDeclaration> | undefined): BSParameter[];
@@ -105,5 +108,12 @@ export function buildNodeArray(ctx: Context, obj: NodeArray<Node>               
   if (obj === undefined) { return []; }
   if (obj.length === 0) { return []; }
 
-  return obj.map(x => buildNode(ctx, x as any) as any);
+  const result: any[] = [];
+
+  for (const x of obj) {
+    result.push(buildNode(ctx, x as any));
+  }
+
+  return result as any;
+  //return obj.map(x => buildNode(ctx, x as any) as any);
 }

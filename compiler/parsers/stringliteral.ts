@@ -11,10 +11,11 @@ export class BSStringLiteral extends BSNode {
     super(ctx, node);
 
     this.text = node.text;
+    ctx.addVariableToScopeOnce("myslocal", this.tsType, "i32");
   }
 
   compile(ctx: Context): Sexpr {
-    return S("i32", 
+    return S("i32",
       "block",
       S("[]", "result", "i32"),
       S.SetLocal(

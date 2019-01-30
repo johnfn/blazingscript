@@ -12,6 +12,8 @@ import { BSMethodDeclaration } from "./method";
 import { BSStatement } from "./statement";
 import { BSNode } from "./bsnode";
 import { BSClassDeclaration } from "./class";
+import { BSCallExpression } from "./callexpression";
+import { BSIdentifier } from "./identifier";
 
 type FunctionDecl = {
   node: BSFunctionDeclaration | BSMethodDeclaration;
@@ -19,8 +21,8 @@ type FunctionDecl = {
   /**
    * The containing class (if there is one).
    */
-  parent: ClassDeclaration | null;
-  name: string;
+  parent  : BSClassDeclaration | null;
+  name    : string;
   exported: boolean;
 };
 
@@ -63,7 +65,7 @@ export class BSSourceFile extends BSNode {
           node: node,
           name: node.name,
           exported: true, //  fd.modifiers && fd.modifiers.find(tok => tok.kind === SyntaxKind.Export) .indexOf(ModifierFlags.Export) > -1
-          parent: parent ? parent.nodeREMOVE : null
+          parent: parent ? parent : null
         });
       }
 
@@ -78,7 +80,7 @@ export class BSSourceFile extends BSNode {
           node: node,
           name: node.name,
           exported: false,
-          parent: parent ? parent.nodeREMOVE : null
+          parent: parent ? parent : null
         });
       }
 
@@ -109,14 +111,14 @@ export class BSSourceFile extends BSNode {
           );
         }
 
-        for (const deco of node.nodeREMOVE.decorators || []) {
-          if (deco.expression.kind === SyntaxKind.CallExpression) {
-            const ce = deco.expression as CallExpression;
+        for (const deco of node.decorators) {
+          if (deco.expression instanceof BSCallExpression) {
+            if (deco.expression.expression instanceof BSIdentifier) {
+              if (deco.expression.expression.text === "jsType") {
+                const jsTypeName: string = deco.expression.arguments[0].fullText.slice(1, -1);
 
-            if (ce.expression.getText() === "jsType") {
-              const jsTypeName: string = ce.arguments[0].getText().slice(1, -1);
-
-              jsTypes[jsTypeName] = node.name;
+                jsTypes[jsTypeName] = node.name;
+              }
             }
           }
         }
@@ -138,31 +140,21 @@ export class BSSourceFile extends BSNode {
     ctx.addJsTypes(jsTypes);
 
     return S(
-      "[]",
-      "module",
+      "[]", "module",
       S("[]", "import", '"js"', '"mem"', S("[]", "memory", "1")),
-      S(
-        "[]",
-        "import",
-        '"c"',
-        '"log"',
-        S(
-          "[]",
-          "func",
-          "$log",
-          ...[...Array(9).keys()].map(_ => S("[]", "param", "i32"))
-        )
+      S("[]", "import", '"c"', '"log"',
+        S("[]", "func", "$log", ...[...Array(9).keys()].map(_ => S("[]", "param", "i32")))
       ),
       ...functions.map(fn => {
         if (fn.node instanceof BSFunctionDeclaration) {
           return fn.node.compile(ctx);
         } else if (fn.node instanceof BSMethodDeclaration) {
           return fn.node.compile(ctx);
-        } 
+        }
 
         throw new Error("i got some weird type of function i cant handle.");
       }),
-      ...parseStatementListBS(ctx, this.statements),
+      // ...parseStatementListBS(ctx, this.statements),
       ...exportedFunctions.map(fn => S.Export(fn.name, "func"))
     );
   }

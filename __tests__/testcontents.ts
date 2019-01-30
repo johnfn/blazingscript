@@ -489,7 +489,7 @@ log("malloced:", x);
 function test_ifCall() {
   if (true) {
     memwrite(0, 1);
-  } 
+  }
 
   return memread(0) === 1;
 }

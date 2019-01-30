@@ -12,6 +12,7 @@ import { BSCallExpression } from "./callexpression";
 import { BSIdentifier } from "./identifier";
 import { BSStringLiteral } from "./stringliteral";
 import { buildNode, buildNodeArray } from "./nodeutil";
+import { BSClassDeclaration } from "./class";
 
 export enum Operator {
   "===" = "===",
@@ -44,16 +45,16 @@ export class BSMethodDeclaration extends BSNode {
    * TODO: I cant really get rid of this until i can pass it in, which i cant do until class nodes generate all their functions
    * properly.
    */
-  parentNodeREMOVE: ClassDeclaration;
+  parent     : BSClassDeclaration;
 
   constructor(
     ctx       : Context,
     node      : MethodDeclaration,
-    parentNode: ClassDeclaration
+    parentNode: BSClassDeclaration
   ) {
     super(ctx, node);
 
-    this.parentNodeREMOVE = parentNode;
+    this.parent = parentNode;
 
     ctx.addScopeFor(this);
     ctx.pushScopeFor(this); {
@@ -64,61 +65,57 @@ export class BSMethodDeclaration extends BSNode {
       );
 
       this.name = node.name ? node.name.getText() : null;
-
-      ctx.addDeclarationsToContext(this);
-
     } ctx.popScope();
 
     ctx.addMethod({
       node    : this,
-      parent  : this.parentNodeREMOVE,
+      parent  : this.parent,
       overload: this.getOverloadType(this.decorators),
     });
  }
 
- getOverloadType(decorators: BSDecorator[]): OperatorOverload | null {
-  let overload: OperatorOverload | null = null;
-
-  for (const deco of decorators) {
-    if (!(deco.expression instanceof BSCallExpression)) {
-      continue;
-    }
-
-    if (!(deco.expression.expression instanceof BSIdentifier)) {
-      continue;
-    }
-
-    const calledFunction = deco.expression.expression.text;
-
-    if (calledFunction === "operator") {
-      const firstArgument = deco.expression.arguments[0];
-
-      if (!(firstArgument instanceof BSStringLiteral)) {
+  getOverloadType(decorators: BSDecorator[]): OperatorOverload | null {
+    for (const deco of decorators) {
+      if (!(deco.expression instanceof BSCallExpression)) {
         continue;
       }
 
-      const opName = firstArgument.text as Operator;
+      if (!(deco.expression.expression instanceof BSIdentifier)) {
+        continue;
+      }
 
-      if (opName === Operator["!=="]) {
-        overload = { operator: Operator["!=="] };
-      } else if (opName === Operator["+"]) {
-        overload = { operator: Operator["+"] };
-      } else if (opName === Operator["==="]) {
-        overload = { operator: Operator["==="] };
-      } else if (opName === Operator["[]"]) {
-        overload = { operator: Operator["[]"] };
-      } else {
-        assertNever(opName);
+      const calledFunction = deco.expression.expression.text;
+
+      if (calledFunction === "operator") {
+        const firstArgument = deco.expression.arguments[0];
+
+        if (!(firstArgument instanceof BSStringLiteral)) {
+          continue;
+        }
+
+        const opName = firstArgument.text as Operator;
+
+        if (opName === Operator["!=="]) {
+          return { operator: Operator["!=="] };
+        } else if (opName === Operator["+"]) {
+          return { operator: Operator["+"] };
+        } else if (opName === Operator["==="]) {
+          return { operator: Operator["==="] };
+        } else if (opName === Operator["[]"]) {
+          return { operator: Operator["[]"] };
+        } else {
+          assertNever(opName);
+        }
       }
     }
+
+    return null;
   }
-  return overload;
- }
 
   compile(ctx: Context): Sexpr {
     ctx.pushScopeFor(this);
 
-    const params = ctx.addParameterListToContext(this.parameters);
+    const params = ctx.getParameters(this.parameters);
     const sb     = parseStatementListBS(ctx, this.body!.children);
 
     let last: Sexpr | null = null;
@@ -141,7 +138,7 @@ export class BSMethodDeclaration extends BSNode {
       body: [
         ...ctx
           .getVariablesInCurrentScope(false)
-          .map(decl => S.DeclareLocal(decl.bsname, decl.wasmType)),
+          .map(decl => S.DeclareLocal(decl.name, decl.wasmType)),
         ...sb,
         ...(ret ? [ret] : [])
       ]
@@ -154,7 +151,7 @@ export class BSMethodDeclaration extends BSNode {
 
   readableName(): string {
     if (this.name) {
-      return `method ${ this.parentNodeREMOVE.name!.text }#${ this.name }`;
+      return `method ${ this.parent.name }#${ this.name }`;
     } else {
       return "anonymous function";
     }

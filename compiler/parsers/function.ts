@@ -30,8 +30,6 @@ export class BSFunctionDeclaration extends BSNode {
       this.children   = flatArray(this.parameters, this.body);
       this.name       = node.name ? node.name.text : null;
       this.fullText   = node.getFullText();
-
-      ctx.addDeclarationsToContext(this);
     } ctx.popScope();
 
     ctx.addFunction(this);
@@ -40,8 +38,9 @@ export class BSFunctionDeclaration extends BSNode {
   compile(ctx: Context): Sexpr {
     ctx.pushScopeFor(this);
 
-    const params = ctx.addParameterListToContext(this.parameters);
+    const params = ctx.getParameters(this.parameters);
     const sb = parseStatementListBS(ctx, this.body!.children);
+
     let last: Sexpr | null = null;
 
     if (sb.length > 0) {
@@ -56,7 +55,7 @@ export class BSFunctionDeclaration extends BSNode {
       body: [
         ...ctx
           .getVariablesInCurrentScope(false)
-          .map(decl => S.DeclareLocal(decl.bsname, decl.wasmType)),
+          .map(decl => S.DeclareLocal(decl.name, decl.wasmType)),
         ...sb,
         ...(ret ? [ret] : [])
       ]

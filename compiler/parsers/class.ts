@@ -8,26 +8,34 @@ import { Context } from "../context";
 import { BSNode } from "./bsnode";
 import { BSMethodDeclaration } from "./method";
 import { BSPropertyDeclaration } from "./propertydeclaration";
+import { BSDecorator } from "./decorator";
+import { buildNodeArray } from "./nodeutil";
 
 /**
  * e.g. class MyClass { ... }
  *      ^^^^^^^^^^^^^^^^^^^^
  */
 export class BSClassDeclaration extends BSNode {
-  children: BSNode[];
-  members: BSNode[];
+  children  : BSNode[];
+  members   : BSNode[];
+  decorators: BSDecorator[];
 
   name: string;
-  nodeREMOVE: ClassDeclaration;
 
   constructor(ctx: Context, node: ClassDeclaration) {
     super(ctx, node);
 
-    this.nodeREMOVE = node;
+    if (node.name) {
+      this.name = node.name.text;
+    } else {
+      throw new Error("Dont currently handle anonymous functions.");
+    }
+
+    this.decorators = buildNodeArray(ctx, node.decorators);
 
     this.members = [...node.members].map(mem => {
       if (mem.kind === SyntaxKind.MethodDeclaration) {
-        return new BSMethodDeclaration(ctx, mem as MethodDeclaration, this.nodeREMOVE);
+        return new BSMethodDeclaration(ctx, mem as MethodDeclaration, this);
       } else if (mem.kind === SyntaxKind.PropertyDeclaration) {
         return new BSPropertyDeclaration(ctx, mem as PropertyDeclaration);
       } else if (mem.kind === SyntaxKind.IndexSignature) {
@@ -39,12 +47,6 @@ export class BSClassDeclaration extends BSNode {
       }
     }).filter(x => x) as BSNode[];
     this.children = [...this.members];
-
-    if (node.name) {
-      this.name = node.name.text;
-    } else {
-      throw new Error("Dont currently handle anonymous functions.");
-    }
   }
 
   compile(ctx: Context): null {

@@ -34,6 +34,8 @@ export class BSArrayLiteral extends BSNode {
     this.children = flatArray(
       this.elements = buildNodeArray(ctx, node.elements)
     );
+
+    ctx.addVariableToScopeOnce("myalocal", this.tsType, "i32");
   }
 
   compile(ctx: Context): Sexpr {

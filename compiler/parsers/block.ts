@@ -1,6 +1,6 @@
 import { Block, isSwitchStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { parseStatementList, parseStatementListBS } from "./statementlist";
+import { parseStatementListBS } from "./statementlist";
 import { Context } from "../context";
 import { BSStatement } from "./statement";
 import { BSNode } from "./bsnode";

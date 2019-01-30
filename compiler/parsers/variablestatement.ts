@@ -6,23 +6,17 @@ import { BSNode } from "./bsnode";
 
 export class BSVariableStatement extends BSNode {
   children       : BSNode[];
-  declarationList: BSVariableDeclarationList;
+  declarationList: BSVariableDeclarationList | null;
+  isDeclare      = false;
 
   constructor(ctx: Context, node: VariableStatement) {
     super(ctx, node);
 
-    this.declarationList = new BSVariableDeclarationList(ctx, node.declarationList);
-    this.children        = [this.declarationList];
-  }
-
-  compile(ctx: Context): Sexpr | null {
-    // TODO this code is EXTRA dumb. it needs to compile the inner vdl.
-
     for (const mod of this.modifiers || []) {
       switch (mod.kind) {
         case SyntaxKind.DeclareKeyword:
-          // completely skip declare statements as they have no impact on output
-          return null;
+          this.isDeclare = true;
+          break;
         case SyntaxKind.AbstractKeyword:
         case SyntaxKind.AsyncKeyword:
         case SyntaxKind.ConstKeyword:
@@ -36,6 +30,20 @@ export class BSVariableStatement extends BSNode {
       }
     }
 
-    return this.declarationList.compile(ctx);
+    if (!this.isDeclare) {
+      this.declarationList = new BSVariableDeclarationList(ctx, node.declarationList);
+      this.children        = [this.declarationList];
+    } else {
+      this.declarationList = null;
+      this.children        = [];
+    }
+  }
+
+  compile(ctx: Context): Sexpr | null {
+    if (this.isDeclare) {
+      return null
+    } else {
+      return this.declarationList!.compile(ctx);
+    }
   }
 }

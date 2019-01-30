@@ -12,11 +12,12 @@ import { BSVariableStatement } from "./parsers/variablestatement";
 import { BSFunctionExpression } from "./parsers/functionexpression";
 import { BSParameter } from "./parsers/parameter";
 import { isArrayType } from "./parsers/arrayliteral";
+import { BSClassDeclaration } from "./parsers/class";
 
 type Variable = {
   tsType     : ts.Type | undefined;
   wasmType   : "i32";
-  bsname     : string;
+  name       : string;
   isParameter: boolean;
 };
 
@@ -40,7 +41,7 @@ type Class = {
 
 class Scope {
   parent           : Scope | null;
-  children         : { 
+  children         : {
     scope: Scope;
     node : BSNode;
   }[];
@@ -119,7 +120,7 @@ class Scope {
     if (Object.keys(vars).length === 0 && fns.length === 0) {
       string = "Empty Scope\n";
     } else {
-      string += indent + "Variables: " + Object.keys(vars).map(key => vars[key].bsname).join(", ") + "\n";
+      string += indent + "Variables: " + Object.keys(vars).map(key => vars[key].name).join(", ") + "\n";
       string += indent + "Functions: " + fns.map(fn => fn.bsname).join(", ") + "\n";
     }
 
@@ -194,8 +195,8 @@ export class Context {
    */
 
   addMethod(props: {
-    node: BSMethodDeclaration;
-    parent: ClassDeclaration;
+    node    : BSMethodDeclaration;
+    parent  : BSClassDeclaration;
     overload: OperatorOverload | null;
   }): void {
     const { node, parent, overload } = props;
@@ -208,9 +209,9 @@ export class Context {
     if (!parent) { throw new Error("no parent provided to addFunction for method."); }
     if (!parent.name) { throw new Error("dont support classes without names yet"); }
 
-    fqName    = "$" + parent.name.text + "__" + node.name;
+    fqName    = "$" + parent.name + "__" + node.name;
     fnName    = node.name;
-    className = parent.name.text;
+    className = parent.name;
 
     this.scope.functions.push({
       bsname   : fqName,
@@ -352,24 +353,33 @@ export class Context {
     );
   }
 
-  addVariableToScope(
-    name: string,
-    tsType: ts.Type | undefined,
-    wasmType: "i32",
-    parameter = false
-  ): void {
-    const mapping = this.scope.variables;
-
-    if (name in mapping) {
-      throw new Error(`Already added ${name} to scope!`);
+  addVariableToScope(variable: {
+    name        : string,
+    tsType      : ts.Type | undefined,
+    wasmType    : "i32",
+    isParameter : boolean,
+  }): void {
+    if (variable.name in this.scope.variables) {
+      throw new Error(`Already added ${variable.name} to scope!`);
     }
 
-    mapping[name] = {
-      tsType,
-      wasmType,
-      bsname: name,
-      isParameter: parameter
-    };
+    this.scope.variables[variable.name] = variable;
+  }
+
+  /**
+   * Adds variable to scope, but won't error if it's already there.
+   */
+  addVariableToScopeOnce(
+    name        : string,
+    tsType      : ts.Type | undefined,
+    wasmType    : "i32",
+    isParameter = false
+  ): void {
+    if (this.scope.variables[name]) {
+      return;
+    }
+
+    this.addVariableToScope({ name, tsType, wasmType, isParameter });
   }
 
   getVariable(name: string): Sexpr {
@@ -379,7 +389,7 @@ export class Context {
       const varNamesList = currScope.variables;
 
       if (name in varNamesList) {
-        return S.GetLocal("i32", varNamesList[name].bsname);
+        return S.GetLocal("i32", varNamesList[name].name);
       }
 
       currScope = currScope.parent;
@@ -402,92 +412,20 @@ export class Context {
       });
   }
 
-  addDeclarationsToContext(
-    node: BSFunctionDeclaration | BSMethodDeclaration
-  ): BSVariableDeclaration[] {
-    const decls: BSVariableDeclaration[] = [];
-
-    // Step 1: gather all declarations
-
-    const helper = (node: BSNode) => {
-      if (node instanceof BSForStatement) {
-        if (node.initializer && node.initializer instanceof BSVariableDeclarationList) {
-          for (const decl of node.initializer.declarations) {
-            decls.push(decl);
-          }
-        }
-      }
-
-      if (node instanceof BSVariableStatement) {
-        for (const decl of node.declarationList.declarations) {
-          decls.push(decl);
-        }
-      }
-
-      // skip recursing into functions!
-
-      if (node instanceof BSFunctionDeclaration || node instanceof BSFunctionExpression) {
-        return;
-      }
-
-      
-      node.forEachChild(helper)
-    };
-
-    node.forEachChild(helper);
-
-    // Step 2: Add each declaration to our context
-
-    for (const decl of decls) {
-      if (
-        decl.tsType.flags & TypeFlags.NumberLike ||
-        decl.tsType.flags & TypeFlags.StringLike ||
-        isArrayType(this, decl.tsType)
-      ) {
-        this.addVariableToScope(decl.name, decl.tsType, "i32");
-      } else {
-        console.log(decl.fullText);
-
-        console.log(this.typeChecker.typeToString(decl.tsType));
-
-        if (decl.tsType.isLiteral()) {
-          console.log('aha', decl.tsType.regularType);
-        }
-
-        throw new Error(`Do not know how to handle that type: ${ TypeFlags[decl.tsType.flags] } for ${decl.fullText}`);
-      }
-    }
-
-    // TODO: check ahead of time rather than blindly adding them all now.
-    this.addVariableToScope("myslocal", undefined, "i32");
-    this.addVariableToScope("myalocal", undefined, "i32");
-
-    return decls;
-  }
-
-  addParameterListToContext(
+  getParameters(
     nodes: BSParameter[]
   ): Param[] {
-    const result: Param[] = [];
+    return nodes.map(node => {
+      let wasmType: "i32" = "i32";
 
-    for (const n of nodes) {
-      const type = n.tsType;
-      let wasmType: "i32";
-
-      if (type.flags & TypeFlags.Number || type.flags & TypeFlags.String) {
-        wasmType = "i32";
-      } else {
-        throw new Error("Unsupported type!");
+      if (!(node.tsType.flags & TypeFlags.Number) && !(node.tsType.flags & TypeFlags.String)) {
+        throw new Error("Unsupported parameter type!");
       }
 
-      result.push({
-        name: n.bindingName.text,
-        type: wasmType
-      });
-
-      this.addVariableToScope(n.bindingName.text, type, wasmType, true);
-    }
-
-    return result;
+      return {
+        name: node.bindingName.text,
+        type: wasmType,
+      };
+    });
   }
 }

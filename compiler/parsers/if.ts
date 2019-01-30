@@ -1,7 +1,7 @@
 import { IfStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
-import { BSStatement, parseStatement } from "./statement";
+import { BSStatement } from "./statement";
 import { BSNode } from "./bsnode";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
