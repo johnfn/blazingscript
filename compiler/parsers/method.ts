@@ -3,7 +3,7 @@ import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { THIS_NAME } from "../program";
 import { parseStatementListBS } from "./statementlist";
-import { assertNever } from "../util";
+import { assertNever, flatArray } from "../util";
 import { BSNode } from "./bsnode";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
@@ -57,14 +57,11 @@ export class BSMethodDeclaration extends BSNode {
 
     ctx.addScopeFor(this);
     ctx.pushScopeFor(this); {
-      this.decorators = buildNodeArray(ctx, node.decorators);
-      this.parameters = buildNodeArray(ctx, node.parameters);
-      this.body       = buildNode(ctx, node.body);
-      this.children = [
-        ...this.decorators,
-        ...this.parameters, 
-        ...(this.body ? [this.body] : [])
-      ];
+      this.children = flatArray(
+        this.decorators = buildNodeArray(ctx, node.decorators),
+        this.parameters = buildNodeArray(ctx, node.parameters),
+        this.body       = buildNode(ctx, node.body),
+      );
 
       this.name = node.name ? node.name.getText() : null;
 
@@ -72,9 +69,9 @@ export class BSMethodDeclaration extends BSNode {
 
     } ctx.popScope();
 
-    ctx.addMethod({ 
-      node    : this, 
-      parent  : this.parentNodeREMOVE, 
+    ctx.addMethod({
+      node    : this,
+      parent  : this.parentNodeREMOVE,
       overload: this.getOverloadType(this.decorators),
     });
  }
@@ -155,7 +152,7 @@ export class BSMethodDeclaration extends BSNode {
     return result;
   }
 
-  readableName(): string { 
+  readableName(): string {
     if (this.name) {
       return `method ${ this.parentNodeREMOVE.name!.text }#${ this.name }`;
     } else {

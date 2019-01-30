@@ -5,6 +5,7 @@ import { Context } from "../context";
 import { parseBindingNameNode, BSBindingName } from "./bindingname";
 import { S, Sexpr } from "../sexpr";
 import { buildNode } from "./nodeutil";
+import { flatArray } from "../util";
 
 export class BSVariableDeclaration extends BSNode {
   children   : BSNode[];
@@ -15,15 +16,12 @@ export class BSVariableDeclaration extends BSNode {
   constructor(ctx: Context, node: VariableDeclaration) {
     super(ctx, node);
 
-    this.initializer = buildNode(ctx, node.initializer);
+    this.children = flatArray(
+      this.initializer = buildNode(ctx, node.initializer),
+      this.nameNode    = parseBindingNameNode(ctx, node.name),
+    );
 
-    this.nameNode = parseBindingNameNode(ctx, node.name);
-    this.name     = this.nameNode.text;
-
-    this.children = [
-      ...(this.initializer ? [this.initializer] : []),
-      this.nameNode,
-    ];
+    this.name = this.nameNode.text;
   }
 
   compile(ctx: Context): Sexpr {
