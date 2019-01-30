@@ -66,22 +66,10 @@ export class BSStatement extends BSNode {
         return new BSBreakStatement(ctx, statement as BreakStatement);
       case SyntaxKind.ContinueStatement:
         return new BSContinueStatement(ctx, statement as ContinueStatement);
-
-      // these generate no code.
-
       case SyntaxKind.TypeAliasDeclaration:
-        return new BSTypeAliasDeclaration(
-          ctx,
-          statement as TypeAliasDeclaration
-        );
+        return new BSTypeAliasDeclaration(ctx, statement as TypeAliasDeclaration);
       case SyntaxKind.InterfaceDeclaration:
-        return new BSInterfaceDeclaration(
-          ctx,
-          statement as InterfaceDeclaration
-        );
-
-      // these are preprocessed in parseSourceFile.
-
+        return new BSInterfaceDeclaration(ctx, statement as InterfaceDeclaration);
       case SyntaxKind.FunctionDeclaration:
         return new BSFunctionDeclaration(ctx, statement as FunctionDeclaration);
       case SyntaxKind.ClassDeclaration:
@@ -96,6 +84,7 @@ export class BSStatement extends BSNode {
   }
 }
 
+// TODO: Kill.
 export function parseStatement(
   ctx: Context,
   statement: Statement

@@ -2,9 +2,6 @@ import {
   BinaryExpression,
   SyntaxKind,
   TypeFlags,
-  AssignmentExpression,
-  EqualsToken,
-  Identifier,
   Type,
   BinaryOperator,
   Token
@@ -14,7 +11,8 @@ import { Operator } from "./method";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
 import { BSIdentifier } from "./identifier";
-import { getExpressionNode } from "./expression";
+import { flatArray } from "../util";
+import { buildNode } from "./nodeutil";
 
 /**
  * e.g. const x = 1 + 3
@@ -33,15 +31,16 @@ export class BSBinaryExpression extends BSNode {
   constructor(ctx: Context, node: BinaryExpression) {
     super(ctx, node);
 
-    this.left = getExpressionNode(ctx, node.left);
-    this.right = getExpressionNode(ctx, node.right);
-
     this.leftType = ctx.typeChecker.getTypeAtLocation(node.left);
     this.rightType = ctx.typeChecker.getTypeAtLocation(node.right);
 
     this.operatorToken = node.operatorToken;
 
-    this.children = [this.left, this.right];
+    this.children = flatArray(
+      this.left  = buildNode(ctx, node.left),
+      this.right = buildNode(ctx, node.right),
+    );
+
     this.fullText = node.getFullText();
   }
 

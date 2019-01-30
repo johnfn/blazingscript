@@ -1,22 +1,25 @@
-import { Block } from "typescript";
+import { Block, isSwitchStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseStatementList, parseStatementListBS } from "./statementlist";
 import { Context } from "../context";
 import { BSStatement } from "./statement";
 import { BSNode } from "./bsnode";
+import { flatArray } from "../util";
+import { buildNode, buildNodeArray } from "./nodeutil";
 
 /**
  * e.g. if (x) { console.log("Hello") }
  *             ^^^^^^^^^^^^^^^^^^^^^^^^
  */
 export class BSBlock extends BSNode {
-  children: BSNode[];
+  children : BSNode[];
+  statement: BSStatement[] | null;
 
   constructor(ctx: Context, node: Block) {
     super(ctx, node);
 
-    this.children = node.statements.map(
-      statement => new BSStatement(ctx, statement)
+    this.children = flatArray(
+      this.statement = buildNodeArray(ctx, node.statements),
     );
   }
 

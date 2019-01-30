@@ -1,13 +1,15 @@
 import { FunctionDeclaration } from "typescript";
-import { Sexpr, Param, S } from "../sexpr";
+import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
-import { parseStatementList, parseStatementListBS } from "./statementlist";
+import { parseStatementListBS } from "./statementlist";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
 import { BSNode } from "./bsnode";
+import { buildNode, buildNodeArray } from "./nodeutil";
+import { flatArray } from "../util";
 
 /**
- * e.g. function myFn() { } 
+ * e.g. function myFn() { }
  *      ^^^^^^^^^^^^^^^^^^^
  */
 export class BSFunctionDeclaration extends BSNode {
@@ -22,29 +24,21 @@ export class BSFunctionDeclaration extends BSNode {
     super(ctx, node);
 
     ctx.addScopeFor(this);
-    ctx.pushScopeFor(this);
+    ctx.pushScopeFor(this); {
+      this.body       = buildNode(ctx, node.body);
+      this.parameters = buildNodeArray(ctx, node.parameters);
+      this.children   = flatArray(this.parameters, this.body);
+      this.name       = node.name ? node.name.text : null;
+      this.fullText   = node.getFullText();
 
-    this.body = node.body ? new BSBlock(ctx, node.body) : null;
-    this.parameters = [...node.parameters].map(
-      param => new BSParameter(ctx, param)
-    );
-    this.children = [...this.parameters, ...(this.body ? [this.body] : [])];
-    this.name = node.name ? node.name.text : null;
-    this.fullText = node.getFullText();
+      ctx.addDeclarationsToContext(this);
+    } ctx.popScope();
 
-    ctx.popScope();
+    ctx.addFunction(this);
   }
 
   compile(ctx: Context): Sexpr {
     ctx.pushScopeFor(this);
-
-    ctx.addFunction(this);
-
-    // Add local variables to scope.
-
-    ctx.addDeclarationsToContext(this);
-
-    // Build the function.
 
     const params = ctx.addParameterListToContext(this.parameters);
     const sb = parseStatementListBS(ctx, this.body!.children);
@@ -73,7 +67,7 @@ export class BSFunctionDeclaration extends BSNode {
     return result;
   }
 
-  readableName(): string { 
+  readableName(): string {
     if (this.name) {
       return `function ${ this.name }`;
     } else {

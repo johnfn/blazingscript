@@ -2,7 +2,9 @@ import { Context } from "../context";
 import { ArrayLiteralExpression, Type } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
 import { BSNode } from "./bsnode";
-import { BSExpression, getExpressionNode } from "./expression";
+import { BSExpression } from "./expression";
+import { flatArray } from "../util";
+import { buildNodeArray } from "./nodeutil";
 
 const enum ArrayType {
   ValueArray     = 0,
@@ -11,7 +13,7 @@ const enum ArrayType {
 
 /**
  * Memory layout:
- * 
+ *
  * 0: length allocated of array
  * 1: length of array
  * 2: first element
@@ -29,10 +31,9 @@ export class BSArrayLiteral extends BSNode {
   constructor(ctx: Context, node: ArrayLiteralExpression) {
     super(ctx, node);
 
-    this.elements = [...node.elements].map(el => getExpressionNode(ctx, el));
-    this.children = [
-      ...this.elements,
-    ];
+    this.children = flatArray(
+      this.elements = buildNodeArray(ctx, node.elements)
+    );
   }
 
   compile(ctx: Context): Sexpr {
@@ -52,7 +53,7 @@ export class BSArrayLiteral extends BSNode {
       S.Store(S.Add(ctx.getVariable("myalocal"), 4), this.elements.length),
 
       ...(
-        this.elements.map((elem, i) => 
+        this.elements.map((elem, i) =>
           S.Store(
             S.Add(ctx.getVariable("myalocal"), i * 4 + 4 * 2),
             elem.compile(ctx)

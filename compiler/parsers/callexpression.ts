@@ -11,6 +11,8 @@ import { parseStatementListBS } from "./statementlist";
 import { BSIdentifier } from "./identifier";
 import { BSPropertyAccessExpression } from "./propertyaccess";
 import { BSStringLiteral } from "./stringliteral";
+import { buildNode, buildNodeArray } from "./nodeutil";
+import { flatArray } from "../util";
 
 /**
  * e.g. const x = myFunction(1, 5);
@@ -24,12 +26,10 @@ export class BSCallExpression extends BSNode {
   constructor(ctx: Context, node: CallExpression) {
     super(ctx, node);
 
-    this.expression = getExpressionNode(ctx, node.expression);
-    this.arguments = [...node.arguments].map(arg =>
-      getExpressionNode(ctx, arg)
+    this.children = flatArray(
+      this.expression = buildNode(ctx, node.expression),
+      this.arguments = buildNodeArray(ctx, node.arguments),
     );
-
-    this.children = [this.expression, ...this.arguments];
   }
 
   compile(ctx: Context): Sexpr {

@@ -3,6 +3,8 @@ import { AsExpression } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
 import { Sexpr } from "../sexpr";
+import { flatArray } from "../util";
+import { buildNodeArray, buildNode } from "./nodeutil";
 
 /**
  * e.g. const x = "hi" as Foo
@@ -15,8 +17,9 @@ export class BSAsExpression extends BSNode {
   constructor(ctx: Context, node: AsExpression) {
     super(ctx, node);
 
-    this.expression = getExpressionNode(ctx, node.expression);
-    this.children = [this.expression];
+    this.children = flatArray(
+      this.expression = buildNode(ctx, node.expression),
+    );
   }
 
   compile(ctx: Context): Sexpr {

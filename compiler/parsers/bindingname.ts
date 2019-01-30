@@ -8,7 +8,7 @@ export type BSBindingName = BSIdentifier;
 
 /**
  * e.g. const foo = 1 + 3
- *            ^^^  
+ *            ^^^
  */
 export function parseBindingNameNode(ctx: Context, node: BindingName): BSIdentifier {
   if (node.kind === SyntaxKind.Identifier) {
