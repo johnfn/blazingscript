@@ -2,7 +2,7 @@ import { ConditionalExpression } from "typescript";
 import { Context } from "../context";
 import { Sexpr, S } from "../sexpr";
 import { BSNode } from "./bsnode";
-import { getExpressionNode, BSExpression } from "./expression";
+import { BSExpression } from "./expression";
 import { flatArray } from "../util";
 import { buildNode } from "./nodeutil";
 

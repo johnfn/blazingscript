@@ -2,7 +2,7 @@ import { ParenthesizedExpression } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
 import { Sexpr } from "../sexpr";
-import { getExpressionNode, BSExpression } from "./expression";
+import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
 

@@ -2,7 +2,7 @@ import { PropertyAccessExpression, TypeFlags } from "typescript";
 import { Sexpr } from "../sexpr";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
-import { getExpressionNode, BSExpression } from "./expression";
+import { BSExpression } from "./expression";
 import { BSIdentifier } from "./identifier";
 import { isArrayType } from "./arrayliteral";
 import { buildNode } from "./nodeutil";
@@ -19,6 +19,7 @@ export class BSPropertyAccessExpression extends BSNode {
   constructor(ctx: Context, node: PropertyAccessExpression) {
     super(ctx, node);
 
+    const x  = buildNode(ctx, node.name);
     this.expression = buildNode(ctx, node.expression);
     this.name       = buildNode(ctx, node.name);
     this.children   = [

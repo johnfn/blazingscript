@@ -2,7 +2,6 @@ import { Context } from "../context";
 import { ExpressionStatement, isExpressionStatement } from "typescript";
 import { Sexpr } from "../sexpr";
 import { BSNode } from "./bsnode";
-import { getExpressionNode } from "./expression";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
 

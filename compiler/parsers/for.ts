@@ -8,7 +8,7 @@ import { Sexpr, S } from "../sexpr";
 import { BSStatement } from "./statement";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
 import { BSNode } from "./bsnode";
-import { getExpressionNode, BSExpression } from "./expression";
+import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
 
 /**

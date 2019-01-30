@@ -1,4 +1,4 @@
-import { getExpressionNode, BSExpression } from "./expression";
+import { BSExpression } from "./expression";
 import { VariableDeclaration, BindingName, SyntaxKind } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";

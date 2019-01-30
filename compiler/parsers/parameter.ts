@@ -1,7 +1,6 @@
 import { ParameterDeclaration } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
-import { getExpressionNode } from "./expression";
 import { parseBindingNameNode, BSBindingName } from "./bindingname";
 import { buildNode } from "./nodeutil";
 

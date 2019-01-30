@@ -3,10 +3,7 @@ import { CallExpression, TypeFlags } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
 import { flatten } from "../rewriter";
 import { BSNode } from "./bsnode";
-import {
-  getExpressionNode,
-  BSExpression
-} from "./expression";
+import { BSExpression } from "./expression";
 import { parseStatementListBS } from "./statementlist";
 import { BSIdentifier } from "./identifier";
 import { BSPropertyAccessExpression } from "./propertyaccess";

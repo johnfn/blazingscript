@@ -2,7 +2,7 @@ import { BSNode } from "./bsnode";
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { Decorator } from "typescript";
-import { BSExpression, getExpressionNode } from "./expression";
+import { BSExpression } from "./expression";
 import { flatArray } from "../util";
 import { buildNode } from "./nodeutil";
 

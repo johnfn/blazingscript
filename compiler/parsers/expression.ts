@@ -1,22 +1,3 @@
-import { Context } from "../context";
-import {
-  SyntaxKind,
-  Expression,
-  BinaryExpression,
-  CallExpression,
-  Identifier,
-  NumericLiteral,
-  ConditionalExpression,
-  PostfixUnaryExpression,
-  PrefixUnaryExpression,
-  StringLiteral,
-  AsExpression,
-  PropertyAccessExpression,
-  ParenthesizedExpression,
-  ElementAccessExpression,
-  ThisExpression,
-  ArrayLiteralExpression
-} from "typescript";
 import { BSBinaryExpression } from "./binaryexpression";
 import { BSCallExpression } from "./callexpression";
 import { BSIdentifier } from "./identifier";
@@ -32,8 +13,6 @@ import { BSTrueKeyword } from "./true";
 import { BSFalseKeyword } from "./false";
 import { BSAsExpression } from "./as";
 import { BSParenthesizedExpression } from "./parentheses";
-import { BSArrayLiteral } from "./arrayliteral";
-import { S } from "../sexpr";
 
 /**
  * BSExpressionNode is a BSNode whos compile() always returns a Sexpr, not null.
