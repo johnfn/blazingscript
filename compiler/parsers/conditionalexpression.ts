@@ -2,27 +2,29 @@ import { ConditionalExpression } from "typescript";
 import { Context } from "../context";
 import { Sexpr, S } from "../sexpr";
 import { BSNode } from "./bsnode";
-import { getExpressionNode } from "./expression";
+import { getExpressionNode, BSExpression } from "./expression";
+import { flatArray } from "../util";
+import { buildNode } from "./nodeutil";
 
 /**
  * e.g. const x = foo ? 1 : 2;
  *                ^^^^^^^^^^^
  */
 export class BSConditionalExpression extends BSNode {
-  children: BSNode[];
+  children : BSNode[];
 
-  condition: BSNode;
-  whenFalse: BSNode;
-  whenTrue: BSNode;
+  condition: BSExpression;
+  whenFalse: BSExpression;
+  whenTrue : BSExpression;
 
   constructor(ctx: Context, node: ConditionalExpression) {
     super(ctx, node);
 
-    this.condition = getExpressionNode(ctx, node.condition);
-    this.whenFalse = getExpressionNode(ctx, node.whenFalse);
-    this.whenTrue  = getExpressionNode(ctx, node.whenTrue);
-
-    this.children = [this.condition, this.whenFalse, this.whenTrue];
+    this.children = flatArray(
+      this.condition = buildNode(ctx, node.condition),
+      this.whenFalse = buildNode(ctx, node.whenFalse),
+      this.whenTrue  = buildNode(ctx, node.whenTrue),
+    );
   }
 
   compile(ctx: Context): Sexpr {

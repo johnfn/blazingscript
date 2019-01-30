@@ -5,6 +5,7 @@ import { BSNode } from "./bsnode";
 import { getExpressionNode, BSExpression } from "./expression";
 import { BSIdentifier } from "./identifier";
 import { isArrayType } from "./arrayliteral";
+import { buildNode } from "./nodeutil";
 
 /**
  * e.g. const x = foo.bar
@@ -18,10 +19,10 @@ export class BSPropertyAccessExpression extends BSNode {
   constructor(ctx: Context, node: PropertyAccessExpression) {
     super(ctx, node);
 
-    this.expression = getExpressionNode(ctx, node.expression);
-    this.name       = new BSIdentifier(ctx, node.name);
+    this.expression = buildNode(ctx, node.expression);
+    this.name       = buildNode(ctx, node.name);
     this.children   = [
-      this.expression, 
+      this.expression,
       this.name,
     ];
   }

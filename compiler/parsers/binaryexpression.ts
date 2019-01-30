@@ -19,20 +19,14 @@ import { buildNode } from "./nodeutil";
  *                ^^^^^
  */
 export class BSBinaryExpression extends BSNode {
-  children: BSNode[];
-  left: BSNode;
-  right: BSNode;
-  leftType: Type;
-  rightType: Type;
+  children     : BSNode[];
+  left         : BSNode;
+  right        : BSNode;
   operatorToken: Token<BinaryOperator>;
-
-  fullText: string;
+  fullText     : string;
 
   constructor(ctx: Context, node: BinaryExpression) {
     super(ctx, node);
-
-    this.leftType = ctx.typeChecker.getTypeAtLocation(node.left);
-    this.rightType = ctx.typeChecker.getTypeAtLocation(node.right);
 
     this.operatorToken = node.operatorToken;
 
@@ -45,7 +39,7 @@ export class BSBinaryExpression extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    const leftParsed = this.left.compile(ctx);
+    const leftParsed  = this.left.compile(ctx);
     const rightParsed = this.right.compile(ctx);
 
     if (!rightParsed) {
@@ -82,8 +76,8 @@ export class BSBinaryExpression extends BSNode {
     // }
 
     if (
-      this.leftType.flags  & TypeFlags.NumberLike &&
-      this.rightType.flags & TypeFlags.NumberLike
+      this.left.tsType.flags  & TypeFlags.NumberLike &&
+      this.right.tsType.flags & TypeFlags.NumberLike
     ) {
       switch (this.operatorToken.kind) {
         case SyntaxKind.CommaToken:
@@ -142,8 +136,8 @@ export class BSBinaryExpression extends BSNode {
     }
 
     if (
-      this.leftType.flags  & TypeFlags.BooleanLike &&
-      this.rightType.flags & TypeFlags.BooleanLike
+      this.left.tsType.flags  & TypeFlags.BooleanLike &&
+      this.right.tsType.flags & TypeFlags.BooleanLike
     ) {
       switch (this.operatorToken.kind) {
         case SyntaxKind.EqualsEqualsEqualsToken:
@@ -162,8 +156,8 @@ export class BSBinaryExpression extends BSNode {
     }
 
     if (
-      this.leftType.flags & TypeFlags.StringLike &&
-      this.rightType.flags & TypeFlags.StringLike
+      this.left.tsType.flags & TypeFlags.StringLike &&
+      this.right.tsType.flags & TypeFlags.StringLike
     ) {
       switch (this.operatorToken.kind) {
         case SyntaxKind.EqualsEqualsEqualsToken:
@@ -192,7 +186,7 @@ export class BSBinaryExpression extends BSNode {
       }
     }
 
-    throw new Error(`unhandled types for binary expression ${this.fullText} ${ TypeFlags[this.leftType.flags] }.`);
+    throw new Error(`unhandled types for binary expression ${this.fullText} ${ TypeFlags[this.left.tsType.flags] }.`);
   }
 }
 

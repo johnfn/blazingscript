@@ -44,6 +44,10 @@ import { BSBindingName } from "./bindingname";
  * them or getting the types right. It should all just work.
  */
 
+ /**
+  * Given a TypeScript AST node, returns the BS AST node equivalent.
+  */
+export function buildNode(ctx: Context, obj: Identifier            ): BSIdentifier;
 export function buildNode(ctx: Context, obj: Decorator  | undefined): BSDecorator  | null;
 export function buildNode(ctx: Context, obj: BindingName| undefined): BSBindingName| null;
 export function buildNode(ctx: Context, obj: BindingName           ): BSBindingName;

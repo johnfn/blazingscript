@@ -4,6 +4,7 @@ import { BSNode } from "./bsnode";
 import { Context } from "../context";
 import { parseBindingNameNode, BSBindingName } from "./bindingname";
 import { S, Sexpr } from "../sexpr";
+import { buildNode } from "./nodeutil";
 
 export class BSVariableDeclaration extends BSNode {
   children   : BSNode[];
@@ -14,10 +15,8 @@ export class BSVariableDeclaration extends BSNode {
   constructor(ctx: Context, node: VariableDeclaration) {
     super(ctx, node);
 
-    this.initializer = node.initializer
-      ? getExpressionNode(ctx, node.initializer)
-      : null;
-    
+    this.initializer = buildNode(ctx, node.initializer);
+
     this.nameNode = parseBindingNameNode(ctx, node.name);
     this.name     = this.nameNode.text;
 

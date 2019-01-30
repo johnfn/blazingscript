@@ -3,6 +3,8 @@ import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
 import { getExpressionNode, BSExpression } from "./expression";
+import { buildNode } from "./nodeutil";
+import { flatArray } from "../util";
 
 /**
  * e.g. console.log(++x);
@@ -16,8 +18,10 @@ export class BSPrefixUnaryExpression extends BSNode {
   constructor(ctx: Context, node: PrefixUnaryExpression) {
     super(ctx, node);
 
-    this.expression = getExpressionNode(ctx, node.operand);
-    this.children = [this.expression];
+    this.children = flatArray(
+      this.expression = buildNode(ctx, node.operand),
+    );
+
     this.operator = node.operator;
   }
 

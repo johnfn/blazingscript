@@ -4,6 +4,8 @@ import { Context } from "../context";
 import { BSStatement, parseStatement } from "./statement";
 import { BSNode } from "./bsnode";
 import { getExpressionNode, BSExpression } from "./expression";
+import { buildNode } from "./nodeutil";
+import { flatArray } from "../util";
 
 /**
  * e.g. if (foo) { bar() } else { baz() }
@@ -14,30 +16,25 @@ export class BSIfStatement extends BSNode {
 
   nodeREMOVE: IfStatement;
   condition : BSExpression;
-  ifTrue    : BSStatement;
+  ifTrue    : BSStatement | null;
   ifFalse   : BSStatement | null;
 
   constructor(ctx: Context, node: IfStatement) {
     super(ctx, node);
 
-    this.condition = getExpressionNode(ctx, node.expression);
-    this.ifTrue = new BSStatement(ctx, node.thenStatement);
-    this.ifFalse = node.elseStatement
-      ? new BSStatement(ctx, node.elseStatement)
-      : null;
 
-    this.children = [
-      this.condition,
-      this.ifTrue,
-      ...(this.ifFalse ? [this.ifFalse] : [])
-    ];
+    this.children = flatArray(
+      this.condition = buildNode(ctx, node.expression),
+      this.ifTrue    = buildNode(ctx, node.thenStatement),
+      this.ifFalse   = buildNode(ctx, node.elseStatement),
+    );
 
     this.nodeREMOVE = node;
   }
 
   compile(ctx: Context): Sexpr {
-    let thn = this.ifTrue.compile(ctx) || S.Const(0);
-    let els = this.ifFalse ? this.ifFalse.compile(ctx) : undefined;
+    let thn = (this.ifTrue && this.ifTrue.compile(ctx)) || S.Const(0);
+    let els = (this.ifFalse && this.ifFalse.compile(ctx)) || S.Const(0);
 
     if (thn.type !== "[]") {
       thn = S.Drop(thn);

@@ -9,6 +9,7 @@ import { BSStatement } from "./statement";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
 import { BSNode } from "./bsnode";
 import { getExpressionNode, BSExpression } from "./expression";
+import { buildNode } from "./nodeutil";
 
 /**
  * e.g. for (let x = 1; x < 5; x += 1) { console.log("hello"); }
@@ -33,19 +34,19 @@ export class BSForStatement extends BSNode {
         node.initializer as VariableDeclarationList
       );
     } else {
-      this.initializer = getExpressionNode(ctx, node.initializer);
+      this.initializer = buildNode(ctx, node.initializer);
     }
 
     if (node.incrementor === undefined) {
       this.incrementor = null;
     } else {
-      this.incrementor = getExpressionNode(ctx, node.incrementor);
+      this.incrementor = buildNode(ctx, node.incrementor);
     }
 
     if (node.condition === undefined) {
       this.condition = null;
     } else {
-      this.condition = getExpressionNode(ctx, node.condition);
+      this.condition = buildNode(ctx, node.condition);
     }
 
     this.body = new BSStatement(ctx, node.statement);

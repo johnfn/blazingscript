@@ -6,9 +6,11 @@ import {
 import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
-import { getExpressionNode, BSExpression } from "./expression";
+import { BSExpression } from "./expression";
 import { Operator } from "./method";
 import { isArrayType } from "./arrayliteral";
+import { flatArray } from "../util";
+import { buildNode } from "./nodeutil";
 
 /**
  * e.g. const x = myArray[5];
@@ -24,10 +26,10 @@ export class BSElementAccessExpression extends BSNode {
   constructor(ctx: Context, node: ElementAccessExpression) {
     super(ctx, node);
 
-    this.element  = getExpressionNode(ctx, node.expression);
-    this.argument = getExpressionNode(ctx, node.argumentExpression);
-
-    this.children = [this.element, this.argument];
+    this.children = flatArray(
+      this.element  = buildNode(ctx, node.expression),
+      this.argument = buildNode(ctx, node.argumentExpression),
+    );
 
     this.fullText = node.getFullText();
   }

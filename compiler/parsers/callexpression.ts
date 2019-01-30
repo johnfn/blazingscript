@@ -28,7 +28,7 @@ export class BSCallExpression extends BSNode {
 
     this.children = flatArray(
       this.expression = buildNode(ctx, node.expression),
-      this.arguments = buildNodeArray(ctx, node.arguments),
+      this.arguments  = buildNodeArray(ctx, node.arguments),
     );
   }
 

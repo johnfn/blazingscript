@@ -3,6 +3,7 @@ import { BSNode } from "./bsnode";
 import { Context } from "../context";
 import { getExpressionNode } from "./expression";
 import { parseBindingNameNode, BSBindingName } from "./bindingname";
+import { buildNode } from "./nodeutil";
 
 /**
  * e.g. function foo(x: number) { return x; }
@@ -20,10 +21,7 @@ export class BSParameter extends BSNode {
       throw new Error("asdf");
     }
 
-    this.initializer = node.initializer
-      ? getExpressionNode(ctx, node.initializer)
-      : null;
-
+    this.initializer = buildNode(ctx, node.initializer);
     this.bindingName = parseBindingNameNode(ctx, node.name);
     this.children = [
       ...(this.initializer ? [this.initializer] : []),

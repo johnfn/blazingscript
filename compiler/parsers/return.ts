@@ -3,6 +3,8 @@ import { Sexpr, S } from "../sexpr";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
 import { getExpressionNode } from "./expression";
+import { buildNode } from "./nodeutil";
+import { flatArray } from "../util";
 
 export class BSReturnStatement extends BSNode {
   children  : BSNode[];
@@ -11,10 +13,9 @@ export class BSReturnStatement extends BSNode {
   constructor(ctx: Context, node: ReturnStatement) {
     super(ctx, node);
 
-    this.expression = node.expression
-      ? getExpressionNode(ctx, node.expression)
-      : null;
-    this.children = this.expression ? [this.expression] : [];
+    this.children = flatArray(
+      this.expression = buildNode(ctx, node.expression),
+    );
   }
 
   compile(ctx: Context): Sexpr {
