@@ -1,8 +1,7 @@
-import { BSExpression } from "./expression";
+import { BSExpression, BSBindingName } from "./expression";
 import { VariableDeclaration, TypeFlags } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
-import { parseBindingNameNode, BSBindingName } from "./bindingname";
 import { S, Sexpr } from "../sexpr";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
@@ -19,7 +18,7 @@ export class BSVariableDeclaration extends BSNode {
 
     this.children = flatArray(
       this.initializer = buildNode(ctx, node.initializer),
-      this.nameNode    = parseBindingNameNode(ctx, node.name),
+      this.nameNode    = buildNode(ctx, node.name),
     );
 
     if (
@@ -40,9 +39,7 @@ export class BSVariableDeclaration extends BSNode {
 
     return S.SetLocal(
       name,
-      this.initializer
-        ? this.initializer.compile(ctx)
-        : S.Const(0)
+      this.initializer ? this.initializer.compile(ctx) : S.Const(0)
     );
   }
 }

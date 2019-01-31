@@ -1,10 +1,10 @@
 import { ParameterDeclaration, TypeFlags } from "typescript";
 import { BSNode } from "./bsnode";
 import { Context } from "../context";
-import { parseBindingNameNode, BSBindingName } from "./bindingname";
 import { buildNode } from "./nodeutil";
 import { isArrayType } from "./arrayliteral";
 import { flatArray } from "../util";
+import { BSBindingName } from "./expression";
 
 /**
  * e.g. function foo(x: number) { return x; }
@@ -23,7 +23,7 @@ export class BSParameter extends BSNode {
     }
 
     this.initializer = buildNode(ctx, node.initializer);
-    this.bindingName = parseBindingNameNode(ctx, node.name);
+    this.bindingName = buildNode(ctx, node.name);
     this.children = flatArray(
       this.initializer,
       this.bindingName,

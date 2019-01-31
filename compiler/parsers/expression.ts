@@ -39,3 +39,5 @@ export type BSPropertyName =
   | BSStringLiteral
   | BSNumericLiteral
   // | BSComputedPropertyName;
+
+export type BSBindingName = BSIdentifier // | BindingPattern;

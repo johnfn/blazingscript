@@ -4,7 +4,7 @@ import { Context } from "../context";
 import { BSNode } from "./bsnode";
 import { BSBlock } from "./block";
 import { BSParameter } from "./parameter";
-import { BSExpression, BSPropertyName } from "./expression";
+import { BSExpression, BSPropertyName, BSBindingName } from "./expression";
 import { BSStatement } from "./statement";
 import { BSBinaryExpression } from "./binaryexpression";
 import { BSCallExpression } from "./callexpression";
@@ -33,7 +33,6 @@ import { BSTypeAliasDeclaration } from "./typealias";
 import { BSInterfaceDeclaration } from "./interface";
 import { BSFunctionDeclaration } from "./function";
 import { BSClassDeclaration } from "./class";
-import { BSBindingName } from "./bindingname";
 import { BSVariableDeclaration } from "./variabledeclaration";
 
 /**
@@ -51,8 +50,8 @@ import { BSVariableDeclaration } from "./variabledeclaration";
 export function buildNode(ctx: Context, obj: Identifier            ): BSIdentifier;
 export function buildNode(ctx: Context, obj: PropertyName          ): BSPropertyName;
 export function buildNode(ctx: Context, obj: Decorator  | undefined): BSDecorator  | null;
-export function buildNode(ctx: Context, obj: BindingName| undefined): BSBindingName| null;
 export function buildNode(ctx: Context, obj: BindingName           ): BSBindingName;
+export function buildNode(ctx: Context, obj: BindingName| undefined): BSBindingName| null;
 export function buildNode(ctx: Context, obj: Block      | undefined): BSBlock      | null;
 export function buildNode(ctx: Context, obj: Statement  | undefined): BSStatement  | null;
 export function buildNode(ctx: Context, obj: Expression | undefined): BSExpression;
