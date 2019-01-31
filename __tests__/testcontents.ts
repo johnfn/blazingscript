@@ -17,10 +17,6 @@ class StringInternal {
   @offset(0)
   readonly length = 0;
 
-  strLen(): number {
-    return memread((this as any) as number);
-  }
-
   charCodeAt(i: number): number {
     return memread(((this as any) as number) + 4 + i) & 0x000000ff;
   }
@@ -135,18 +131,14 @@ class ArrayInternal<T> {
   @offset(4)
   length = 0;
 
-  arrLen(): number {
-    return memread((this as any) as number + 4);
-  }
-
-  indexAt(i: number): number {
-    return memread(((this as any) as number) + 4 + i);
-  }
-
   [key: number]: T;
   @operator("[]")
   index(i: number): T {
     return memread(((this as any) as number) + 4 * 2 + i * 4) as any as T;
+  }
+
+  getAllocatedLength() {
+    return this.allocatedLength;
   }
 }
 

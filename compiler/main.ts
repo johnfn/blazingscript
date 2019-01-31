@@ -7,7 +7,6 @@ import { Program } from "./program";
 // * better error handling
 // * the initial pass to add functions to the file is now entirely unnecessary
 // * Figure out some way to write Sexprs better.
-// * statements can return null, but expressions cant. lots of stuff can be cleaned up!
 // * rename terrible variable names like fd vdl etc etc etc
 // * figure out a way to inline constructors
 //     this is still hard...
