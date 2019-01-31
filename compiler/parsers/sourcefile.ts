@@ -80,7 +80,7 @@ export class BSSourceFile extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    const functions         = ctx.getAllFunctions();
+    const functions         = ctx.scope.functions.getAll();
     const exportedFunctions = functions.filter(f => f.node instanceof BSFunctionDeclaration);
     const jsTypes           = this.jsTypes;
 

@@ -62,7 +62,7 @@ export class BSMethodDeclaration extends BSNode {
       this.name = node.name ? node.name.getText() : null;
     } ctx.popScope();
 
-    ctx.addMethod({
+    ctx.scope.functions.addMethod({
       node    : this,
       parent  : this.parent,
       overload: this.getOverloadType(this.decorators),
@@ -122,7 +122,7 @@ export class BSMethodDeclaration extends BSNode {
     const ret = last && last.type === "i32" ? undefined : S.Const(0);
 
     const result = S.Func({
-      name: ctx.getFunctionByNode(this).bsname,
+      name: ctx.scope.functions.getFunctionByNode(this).bsname,
       params: [
         {
           name: THIS_NAME,

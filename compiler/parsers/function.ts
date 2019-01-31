@@ -32,7 +32,7 @@ export class BSFunctionDeclaration extends BSNode {
       this.fullText   = node.getFullText();
     } ctx.popScope();
 
-    ctx.addFunction(this);
+    ctx.scope.functions.addFunction(this);
   }
 
   compile(ctx: Context): Sexpr {
@@ -50,7 +50,7 @@ export class BSFunctionDeclaration extends BSNode {
     const ret = last && last.type === "i32" ? undefined : S.Const(0);
 
     const result = S.Func({
-      name: ctx.getFunctionByNode(this).bsname,
+      name: ctx.scope.functions.getFunctionByNode(this).bsname,
       params: params,
       body: [
         ...ctx.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),

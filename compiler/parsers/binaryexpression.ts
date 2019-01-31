@@ -151,23 +151,23 @@ export class BSBinaryExpression extends BSNode {
     ) {
       switch (this.operatorToken.kind) {
         case SyntaxKind.EqualsEqualsEqualsToken:
-          return ctx.callMethodByOperator({
-            type: this.left.tsType,
-            opName: Operator["==="],
+          return ctx.scope.functions.callMethodByOperator({
+            type    : this.left.tsType,
+            opName  : Operator["==="],
             thisExpr: this.left,
             argExprs: [this.right]
           });
         case SyntaxKind.ExclamationEqualsEqualsToken:
-          return ctx.callMethodByOperator({
-            type: this.left.tsType,
-            opName: Operator["!=="],
+          return ctx.scope.functions.callMethodByOperator({
+            type    : this.left.tsType,
+            opName  : Operator["!=="],
             thisExpr: this.left,
             argExprs: [this.right]
           });
         case SyntaxKind.PlusToken:
-          return ctx.callMethodByOperator({
-            type: this.left.tsType,
-            opName: Operator["+"],
+          return ctx.scope.functions.callMethodByOperator({
+            type    : this.left.tsType,
+            opName  : Operator["+"],
             thisExpr: this.left,
             argExprs: [this.right]
           });

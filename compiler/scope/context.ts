@@ -1,7 +1,8 @@
 import ts, { TypeFlags, Type } from "typescript";
 import { Sexpr, S, Param, WasmType } from "../sexpr";
 import { BSExpression } from "../parsers/expression";
-import { OperatorOverload, Operator, BSMethodDeclaration } from "../parsers/method";
+import { Function } from "./functions";
+import { Operator, BSMethodDeclaration } from "../parsers/method";
 import { parseStatementListBS } from "../parsers/statementlist";
 import { BSNode } from "../parsers/bsnode";
 import { BSFunctionDeclaration } from "../parsers/function";
@@ -12,6 +13,7 @@ import { assertNever } from "../util";
 import { isArrayType } from "../parsers/arrayliteral";
 import { Variables } from "./variables";
 import { Properties } from "./properties";
+import { Functions } from "./functions";
 
 enum ScopeType {
   Function = "function",
@@ -26,14 +28,6 @@ export type Property = {
   wasmType : WasmType;
   name     : string;
   offset   : number;
-};
-
-type Function = {
-  node     : BSFunctionDeclaration | BSMethodDeclaration;
-  className: string | null;
-  fnName   : string;
-  bsname   : string;
-  overload : OperatorOverload | null;
 };
 
 type Loop = {
@@ -54,11 +48,7 @@ export class Scope {
   children  : Scope[];
   variables : Variables;
   properties: Properties;
-
-  // TODO: Since functions are scopes, i can probably remove this and just
-  // filter over children.
-
-  functions : Function[];
+  functions : Functions;
   loopStack : Loop[];
   node      : BSNode | null;
   type      : ScopeType;
@@ -73,7 +63,7 @@ export class Scope {
 
     this.variables  = new Variables(this);
     this.properties = new Properties(this);
-    this.functions  = [];
+    this.functions  = new Functions(this);
     this.loopStack  = [];
     this.children   = [];
 
@@ -144,19 +134,15 @@ export class Scope {
   }
 
   toString(indent = ""): string {
-    const fns  = this.functions;
-
     let string = `${ indent }Scope for ${ this.node ? this.node.readableName() : "[top level]" }: `;
 
-    if (this.variables.count() === 0 && fns.length === 0) {
+    if (this.variables.count() === 0 && this.functions.count() === 0) {
       string += "(Empty)\n";
     } else {
-      const functions = fns.map(fn => fn.bsname).join(", ");
-
       string += "\n";
 
       if (this.variables.count() > 0) { string += `${ indent }  Variables: ${ this.variables.toString() }\n` ; }
-      if (functions.length > 0) { string += `${ indent }  Functions: ${ functions }\n` ; }
+      if (this.functions.count() > 0) { string += `${ indent }  Functions: ${ this.functions.toString() }\n` ; }
     }
 
     for (const scope of Object.keys(this.children).map(k => this.children[Number(k)])) {
@@ -223,65 +209,6 @@ export class Context {
   }
 
   /**
-   * Loops
-   */
-
-  addMethod(props: {
-    node    : BSMethodDeclaration;
-    parent  : BSClassDeclaration;
-    overload: OperatorOverload | null;
-  }): void {
-    const { node, parent, overload } = props;
-
-    let fqName: string;
-    let fnName: string;
-    let className: string;
-
-    if (!node.name) { throw new Error("anonymous methods not supported yet!"); }
-    if (!parent) { throw new Error("no parent provided to addFunction for method."); }
-    if (!parent.name) { throw new Error("dont support classes without names yet"); }
-
-    fqName    = "$" + parent.name + "__" + node.name;
-    fnName    = node.name;
-    className = parent.name;
-
-    this.scope.functions.push({
-      bsname   : fqName,
-      node     ,
-      fnName   ,
-      className,
-      overload
-    });
-  }
-
-  addFunction(node: BSFunctionDeclaration): void {
-    let fqName: string;
-    let fnName: string;
-    let className: string | null = null;
-
-    if (!node.name) {
-      throw new Error("anonymous functions not supported yet!");
-    }
-
-    fqName = "$" + node.name;
-    fnName = node.name;
-
-    for (const fn of this.scope.functions) {
-      if (fn.bsname === fqName) {
-        throw new Error(`Redeclaring function named ${fqName}.`);
-      }
-    }
-
-    this.scope.functions.push({
-      bsname   : fqName,
-      node     : node,
-      fnName   ,
-      className,
-      overload : null
-    });
-  }
-
-  /**
    * By default (with no scope argument) this finds all declared scopes across
    * everything.
    */
@@ -298,19 +225,6 @@ export class Context {
   }
 
   /**
-   * By default (with no scope argument) this finds all declared functions across
-   * everything.
-   */
-  getAllFunctions(scope: Scope | null = null): Function[] {
-    if (scope === null) { scope = this.scope.topmostScope(); }
-
-    const scopes = this.getAllScopes(scope);
-    const functions = ([] as Function[]).concat(...scopes.map(x => x.functions));
-
-    return functions;
-  }
-
-  /**
    * By default (with no scope argument) this finds all declared classes across
    * everything.
    */
@@ -320,110 +234,6 @@ export class Context {
     return this.getAllScopes(scope).filter(s => s.type === ScopeType.Class);
   }
 
-  callMethod(props: {
-    type      : Type;
-    methodName: string;
-    thisExpr  : BSExpression;
-    argExprs  : BSExpression[];
-  }): Sexpr {
-    const { type, methodName, thisExpr: thisNode, argExprs } = props;
-
-    const fn = this.getMethodByNames(type, methodName);
-    const thisExpr = thisNode.compile(this);
-
-    if (!thisExpr) {
-      throw new Error("no thisexpr in Context#callMethod");
-    }
-
-    return S(
-      "i32",
-      "call",
-      fn.bsname,
-      thisExpr,
-      ...parseStatementListBS(this, argExprs)
-    );
-  }
-
-  callMethodByOperator(props: {
-    type     : Type;
-    opName   : Operator;
-    thisExpr : BSNode;
-    argExprs : BSNode[];
-  }): Sexpr {
-    const { type, thisExpr: thisNode, opName, argExprs } = props;
-
-    const fn = this.getMethodByOperator(type, opName);
-    const thisExpr = thisNode.compile(this);
-
-    if (!thisExpr) {
-      throw new Error("wanted nonnull");
-    }
-
-    return S(
-      "i32",
-      "call",
-      fn.bsname,
-      thisExpr,
-      ...parseStatementListBS(this, argExprs)
-    );
-  }
-
-  getFunctionByNode(node: BSFunctionDeclaration | BSMethodDeclaration): Function {
-    let currScope: Scope | null = this.scope;
-
-    while (currScope !== null) {
-      for (const fn of currScope.functions) {
-        if (fn.node === node) {
-          return fn;
-        }
-      }
-
-      currScope = currScope.parent;
-    }
-
-    throw new Error("Failed to find function by node");
-  }
-
-  getMethodByNames(type: Type, methodName: string): Function {
-    const cls = this.getScopeForClass(type);
-
-    if (cls === null) {
-      throw new Error(`Cant find appropriate method`);
-    }
-
-    for (const fn of cls.functions) {
-      if (fn.fnName === methodName) {
-        return fn;
-      }
-    }
-
-    throw new Error(
-      `Failed to find function ref by class name ${this.typeChecker.typeToString(type)} and method name ${methodName}`
-    );
-  }
-
-  getMethodByOperator(type: Type, operator: Operator): Function {
-    const cls = this.getScopeForClass(type);
-
-    if (cls === null) {
-      throw new Error(`Cant find appropriate method by operator`);
-    }
-
-    const functions = cls.functions;
-
-    for (const fn of functions) {
-      if (
-        fn.overload &&
-        fn.overload.operator === operator
-      ) {
-        return fn;
-      }
-    }
-
-    throw new Error(
-      `Failed to find function ref by class name ${this.typeChecker.typeToString(type)} and operator name ${operator}`
-    );
-  }
 
   getParameters(
     nodes: BSParameter[]

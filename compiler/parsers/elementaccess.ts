@@ -39,7 +39,7 @@ export class BSElementAccessExpression extends BSNode {
     const array = this.element;
     const arrayType = this.element.tsType;
 
-    return ctx.callMethodByOperator({
+    return ctx.scope.functions.callMethodByOperator({
       type    : arrayType,
       opName  : Operator["[]"],
       thisExpr: array,
