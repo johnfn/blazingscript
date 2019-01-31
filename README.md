@@ -24,6 +24,15 @@ We fix #2 by simply not allowing bad patterns.
 * `var` statement? That's an error.
 * `==`? Use `===`.
 * Using `["foo"]` to dynamically add properties to things you don't own? Nope. Declare them ahead of time, and keep them safe.
+* Adding things dynamically onto a prototype? Don't do that, please. It's impossible to optimize.
+
+## But wait, maybe I want some of those features for legacy support or something.
+
+So you've got code you don't want to write in BlazingScript? No problem: call it as if it was normal JavaScript and everything will magically work. BlazingScript makes the border to JS seamless. [1] 
+
+This is just another reason why coding in TypeScript is such a big advantage: you can use the entire web ecosystem with no external definitions and no data conversion across language barriers. 
+
+[1]: Alright, this doesn't work quite yet. But it could, and that's the whole point! :grin: 
 
 ## What's the difference between BlazingScript and [AssemblyScript](https://github.com/AssemblyScript/assemblyscript)? 
 
