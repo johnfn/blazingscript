@@ -57,7 +57,7 @@ type NodesWithScope =
 class Scope {
   parent    : Scope | null;
   children  : Scope[];
-  variables : { [key: string]: Variable };
+  variables : Variable[];
   properties: Property[];
 
   // TODO: Since functions are scopes, i can probably remove this and just
@@ -74,7 +74,7 @@ class Scope {
     this.node   = node;
     this.parent = parent;
 
-    this.variables  = {};
+    this.variables  = [];
     this.properties = [];
     this.functions  = [];
     this.loopStack  = [];
@@ -155,7 +155,7 @@ class Scope {
     if (Object.keys(vars).length === 0 && fns.length === 0) {
       string += "(Empty)\n";
     } else {
-      const variables = Object.keys(vars).map(key => vars[key].name).join(", ");
+      const variables = vars.map(v => v.name).join(", ");
       const functions = fns.map(fn => fn.bsname).join(", ");
 
       string += "\n";
@@ -437,11 +437,11 @@ export class Context {
     wasmType    : "i32",
     isParameter : boolean,
   }): void {
-    if (variable.name in this.scope.variables) {
+    if (this.scope.variables.filter(x => x.name === variable.name).length > 0) {
       throw new Error(`Already added ${variable.name} to scope!`);
     }
 
-    this.scope.variables[variable.name] = variable;
+    this.scope.variables.push(variable);
   }
 
   /**
@@ -453,7 +453,7 @@ export class Context {
     wasmType    : "i32",
     isParameter = false
   ): void {
-    if (this.scope.variables[name]) {
+    if (this.scope.variables.filter(x => x.name === name).length > 0) {
       return;
     }
 
@@ -464,10 +464,14 @@ export class Context {
     let currScope: Scope | null = this.scope;
 
     while (currScope !== null) {
-      const varNamesList = currScope.variables;
+      const found = currScope.variables.filter(v => v.name === name);
 
-      if (name in varNamesList) {
-        return S.GetLocal("i32", varNamesList[name].name);
+      if (found.length > 1) {
+        throw new Error("really weird thing in Context#getVariable")
+      }
+
+      if (found.length === 1) {
+        return S.GetLocal("i32", found[0].name);
       }
 
       currScope = currScope.parent;
@@ -477,17 +481,15 @@ export class Context {
   }
 
   getVariablesInCurrentScope(props: { wantParameters: boolean } ): Variable[] {
-    const map = this.scope.variables;
+    const vars = this.scope.variables;
 
-    return Object.keys(map)
-      .map(x => map[x])
-      .filter(v => {
-        if (!props.wantParameters && v.isParameter) {
-          return false;
-        }
+    return vars.filter(v => {
+      if (!props.wantParameters && v.isParameter) {
+        return false;
+      }
 
-        return true;
-      });
+      return true;
+    });
   }
 
   getParameters(
