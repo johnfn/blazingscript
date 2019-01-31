@@ -14,6 +14,7 @@ import { isArrayType } from "../parsers/arrayliteral";
 import { Variables } from "./variables";
 import { Properties } from "./properties";
 import { Functions } from "./functions";
+import { Loops } from "./loops";
 
 enum ScopeType {
   Function = "function",
@@ -30,12 +31,6 @@ export type Property = {
   offset   : number;
 };
 
-type Loop = {
-  continueLabel: string;
-  breakLabel   : string;
-  inc          : Sexpr | null;
-};
-
 type NodesWithScope =
   | BSFunctionDeclaration
   | BSForStatement
@@ -49,7 +44,7 @@ export class Scope {
   variables : Variables;
   properties: Properties;
   functions : Functions;
-  loopStack : Loop[];
+  loops     : Loops;
   node      : BSNode | null;
   type      : ScopeType;
   context   : Context;
@@ -64,7 +59,7 @@ export class Scope {
     this.variables  = new Variables(this);
     this.properties = new Properties(this);
     this.functions  = new Functions(this);
-    this.loopStack  = [];
+    this.loops      = new Loops(this);
     this.children   = [];
 
     this.type       = this.getScopeType(node);
@@ -84,53 +79,6 @@ export class Scope {
     } else {
       return assertNever(node);
     }
-  }
-
-  addLoop(inc: Sexpr | null): void {
-    Scope.NumberOfLoopsSeen++;
-
-    this.loopStack.push({
-      continueLabel: `$loopcontinue${ Scope.NumberOfLoopsSeen }`,
-      breakLabel   : `$loopbreak${ Scope.NumberOfLoopsSeen }`,
-      inc
-    });
-  }
-
-  popLoop() {
-    this.loopStack.pop();
-  }
-
-  getCurrentLoop(): Loop {
-    if (this.loopStack.length > 0) {
-      return this.loopStack[this.loopStack.length - 1];
-    } else {
-      throw new Error("Requested getCurrentLoop when there was no loops on the stack.");
-    }
-  }
-
-  getLoopContinue(): Sexpr {
-    const loopInfo = this.loopStack[
-      this.loopStack.length - 1
-    ];
-
-    const res = S.Block([
-      ...(loopInfo.inc ? [loopInfo.inc] : []),
-      S("[]", "br", loopInfo.continueLabel)
-    ]);
-
-    return res;
-  }
-
-  getLoopBreakLabel(): string {
-    const loopStack = this.loopStack;
-
-    return loopStack[loopStack.length - 1].breakLabel;
-  }
-
-  getLoopContinueLabel(): string {
-    const loopStack = this.loopStack;
-
-    return loopStack[loopStack.length - 1].continueLabel;
   }
 
   toString(indent = ""): string {
@@ -233,7 +181,6 @@ export class Context {
 
     return this.getAllScopes(scope).filter(s => s.type === ScopeType.Class);
   }
-
 
   getParameters(
     nodes: BSParameter[]

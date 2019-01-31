@@ -17,6 +17,6 @@ export class BSBreakStatement extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    return S("[]", "br", ctx.scope.getLoopBreakLabel());
+    return S("[]", "br", ctx.scope.loops.getBreakLabel());
   }
 }
