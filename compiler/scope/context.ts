@@ -10,6 +10,8 @@ import { BSClassDeclaration } from "../parsers/class";
 import { BSForStatement } from "../parsers/for";
 import { assertNever } from "../util";
 import { isArrayType } from "../parsers/arrayliteral";
+import { Variables } from "./variables";
+import { Properties } from "./properties";
 
 enum ScopeType {
   Function = "function",
@@ -17,13 +19,6 @@ enum ScopeType {
   Class    = "class",
   Global   = "global",
   For      = "for",
-};
-
-export type Variable = {
-  tsType     : ts.Type | undefined;
-  wasmType   : WasmType;
-  name       : string;
-  isParameter: boolean;
 };
 
 export type Property = {
@@ -54,7 +49,7 @@ type NodesWithScope =
   | BSClassDeclaration
   ;
 
-class Scope {
+export class Scope {
   parent    : Scope | null;
   children  : Scope[];
   variables : Variables;
@@ -477,136 +472,5 @@ export class Context {
     const cls = relevantClasses[0];
 
     return cls;
-  }
-}
-
-class Variables {
-  variables: Variable[];
-  scope    : Scope;
-
-  constructor(scope: Scope) {
-    this.variables = [];
-    this.scope     = scope;
-  }
-
-  toString(): string {
-    return this.variables.map(v => v.name).join(", ");
-  }
-
-  count(): number {
-    return this.variables.length;
-  }
-
-  add(variable: {
-    name        : string,
-    tsType      : ts.Type | undefined,
-    wasmType    : "i32",
-    isParameter : boolean,
-  }): void {
-    if (this.variables.filter(x => x.name === variable.name).length > 0) {
-      throw new Error(`Already added ${variable.name} to scope!`);
-    }
-
-    this.variables.push(variable);
-  }
-
-  /**
-   * Adds variable to scope, but won't error if it's already there.
-   */
-  addOnce(
-    name        : string,
-    tsType      : ts.Type | undefined,
-    wasmType    : "i32",
-    isParameter = false
-  ): void {
-    if (this.variables.filter(x => x.name === name).length > 0) {
-      return;
-    }
-
-    this.add({ name, tsType, wasmType, isParameter });
-  }
-
-  get(name: string): Sexpr {
-    let currScope: Scope | null = this.scope;
-
-    while (currScope !== null) {
-      const found = currScope.variables.variables.filter(v => v.name === name);
-
-      if (found.length > 1) {
-        throw new Error("really weird thing in Context#getVariable")
-      }
-
-      if (found.length === 1) {
-        return S.GetLocal("i32", found[0].name);
-      }
-
-      currScope = currScope.parent;
-    }
-
-    throw new Error(`variable name ${name} not found in context!`);
-  }
-
-  getAll(props: { wantParameters: boolean } ): Variable[] {
-    const vars = this.variables;
-
-    return vars.filter(v => {
-      if (!props.wantParameters && v.isParameter) {
-        return false;
-      }
-
-      return true;
-    });
-  }
-}
-
-class Properties {
-  properties: Property[];
-  scope     : Scope;
-
-  constructor(scope: Scope) {
-    this.scope      = scope;
-    this.properties = [];
-  }
-
-  add(prop: {
-    name    : string;
-    offset  : number;
-    tsType  : Type;
-    wasmType: WasmType;
-  }): void {
-    this.properties.push(prop);
-  }
-
-  getAll(): Property[] {
-    return this.properties;
-  }
-
-  get(
-    expr: BSExpression,
-    name: string
-  ): Sexpr {
-    // TODO: I could store the properties directly on the class node itself, so that i dont have to go hunting them down later.
-    // TODO: This is bad?
-    const cls = this.scope.context.getScopeForClass(expr.tsType);
-
-    if (cls === null) {
-      throw new Error(`Cant find appropriate scope for ${ expr.fullText }`);
-    }
-
-    const props = cls.properties;
-
-    const relevantProperties = props.getAll().filter(prop => prop.name === name);
-    const relevantProperty = relevantProperties[0];
-
-    if (!relevantProperty) {
-      throw new Error(`cant find property in class`);
-    }
-
-    const res = S.Load("i32", S.Add(
-      expr.compile(cls.context),
-      relevantProperty.offset
-    ));
-
-    return res;
   }
 }
