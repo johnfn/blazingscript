@@ -2,6 +2,7 @@ import fs from "fs";
 import { Program } from "./program";
 
 // TODO:
+// * fix scope abstraction and then make context into scope
 // * @offset() for members which are memory offsets.
 // * should work out what left hand side expression is. see: decorator.ts
 // * better error handling

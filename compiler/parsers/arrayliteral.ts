@@ -30,7 +30,7 @@ export class BSArrayLiteral extends BSNode {
       this.elements = buildNodeArray(ctx, node.elements)
     );
 
-    ctx.addVariableToScopeOnce("array_temp", this.tsType, "i32");
+    ctx.scope.variables.addOnce("array_temp", this.tsType, "i32");
   }
 
   compile(ctx: Context): Sexpr {
@@ -43,21 +43,21 @@ export class BSArrayLiteral extends BSNode {
       ),
 
       // store allocated length
-      S.Store(ctx.getVariable("array_temp"), allocatedLength),
+      S.Store(ctx.scope.variables.get("array_temp"), allocatedLength),
 
       // store length
-      S.Store(S.Add(ctx.getVariable("array_temp"), 4), this.elements.length),
+      S.Store(S.Add(ctx.scope.variables.get("array_temp"), 4), this.elements.length),
 
       ...(
         this.elements.map((elem, i) =>
           S.Store(
-            S.Add(ctx.getVariable("array_temp"), i * 4 + 4 * 2),
+            S.Add(ctx.scope.variables.get("array_temp"), i * 4 + 4 * 2),
             elem.compile(ctx)
           )
         )
       ),
 
-      ctx.getVariable("array_temp")
+      ctx.scope.variables.get("array_temp")
     );
   }
 }

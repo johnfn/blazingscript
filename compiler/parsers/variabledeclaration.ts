@@ -26,7 +26,7 @@ export class BSVariableDeclaration extends BSNode {
       this.tsType.flags & TypeFlags.StringLike ||
       isArrayType(ctx, this.tsType)
     ) {
-      ctx.addVariableToScope({ name: this.nameNode.text, tsType: this.tsType, wasmType: "i32", isParameter: false });
+      ctx.scope.variables.add({ name: this.nameNode.text, tsType: this.tsType, wasmType: "i32", isParameter: false });
     } else {
       throw new Error(`Do not know how to handle that type: ${ TypeFlags[this.tsType.flags] } for ${ this.fullText }`);
     }

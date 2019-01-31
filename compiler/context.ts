@@ -57,7 +57,7 @@ type NodesWithScope =
 class Scope {
   parent    : Scope | null;
   children  : Scope[];
-  variables : Variable[];
+  variables : Variables;
   properties: Property[];
 
   // TODO: Since functions are scopes, i can probably remove this and just
@@ -74,7 +74,7 @@ class Scope {
     this.node   = node;
     this.parent = parent;
 
-    this.variables  = [];
+    this.variables  = new Variables(this);
     this.properties = [];
     this.functions  = [];
     this.loopStack  = [];
@@ -147,20 +147,18 @@ class Scope {
   }
 
   toString(indent = ""): string {
-    const vars = this.variables;
     const fns  = this.functions;
 
     let string = `${ indent }Scope for ${ this.node ? this.node.readableName() : "[top level]" }: `;
 
-    if (Object.keys(vars).length === 0 && fns.length === 0) {
+    if (this.variables.count() === 0 && fns.length === 0) {
       string += "(Empty)\n";
     } else {
-      const variables = vars.map(v => v.name).join(", ");
       const functions = fns.map(fn => fn.bsname).join(", ");
 
       string += "\n";
 
-      if (variables.length > 0) { string += `${ indent }  Variables: ${ variables }\n` ; }
+      if (this.variables.count() > 0) { string += `${ indent }  Variables: ${ this.variables.toString() }\n` ; }
       if (functions.length > 0) { string += `${ indent }  Functions: ${ functions }\n` ; }
     }
 
@@ -402,7 +400,6 @@ export class Context {
       }
     }
 
-
     throw new Error(
       `Failed to find function ref by class name ${this.typeChecker.typeToString(type)} and method name ${methodName}`
     );
@@ -429,67 +426,6 @@ export class Context {
     throw new Error(
       `Failed to find function ref by class name ${this.typeChecker.typeToString(type)} and operator name ${operator}`
     );
-  }
-
-  addVariableToScope(variable: {
-    name        : string,
-    tsType      : ts.Type | undefined,
-    wasmType    : "i32",
-    isParameter : boolean,
-  }): void {
-    if (this.scope.variables.filter(x => x.name === variable.name).length > 0) {
-      throw new Error(`Already added ${variable.name} to scope!`);
-    }
-
-    this.scope.variables.push(variable);
-  }
-
-  /**
-   * Adds variable to scope, but won't error if it's already there.
-   */
-  addVariableToScopeOnce(
-    name        : string,
-    tsType      : ts.Type | undefined,
-    wasmType    : "i32",
-    isParameter = false
-  ): void {
-    if (this.scope.variables.filter(x => x.name === name).length > 0) {
-      return;
-    }
-
-    this.addVariableToScope({ name, tsType, wasmType, isParameter });
-  }
-
-  getVariable(name: string): Sexpr {
-    let currScope: Scope | null = this.scope;
-
-    while (currScope !== null) {
-      const found = currScope.variables.filter(v => v.name === name);
-
-      if (found.length > 1) {
-        throw new Error("really weird thing in Context#getVariable")
-      }
-
-      if (found.length === 1) {
-        return S.GetLocal("i32", found[0].name);
-      }
-
-      currScope = currScope.parent;
-    }
-
-    throw new Error(`variable name ${name} not found in context!`);
-  }
-
-  getVariablesInCurrentScope(props: { wantParameters: boolean } ): Variable[] {
-    const vars = this.scope.variables;
-
-    return vars.filter(v => {
-      if (!props.wantParameters && v.isParameter) {
-        return false;
-      }
-
-      return true;
-    });
   }
 
   getParameters(
@@ -576,4 +512,84 @@ export class Context {
 
     return res;
   }
+}
+
+class Variables {
+  variables: Variable[];
+  scope    : Scope;
+
+  constructor(scope: Scope) {
+    this.variables = [];
+    this.scope     = scope;
+  }
+
+  toString(): string {
+    return this.variables.map(v => v.name).join(", ");
+  }
+
+  count(): number {
+    return this.variables.length;
+  }
+
+  add(variable: {
+    name        : string,
+    tsType      : ts.Type | undefined,
+    wasmType    : "i32",
+    isParameter : boolean,
+  }): void {
+    if (this.variables.filter(x => x.name === variable.name).length > 0) {
+      throw new Error(`Already added ${variable.name} to scope!`);
+    }
+
+    this.variables.push(variable);
+  }
+
+  /**
+   * Adds variable to scope, but won't error if it's already there.
+   */
+  addOnce(
+    name        : string,
+    tsType      : ts.Type | undefined,
+    wasmType    : "i32",
+    isParameter = false
+  ): void {
+    if (this.variables.filter(x => x.name === name).length > 0) {
+      return;
+    }
+
+    this.add({ name, tsType, wasmType, isParameter });
+  }
+
+  get(name: string): Sexpr {
+    let currScope: Scope | null = this.scope;
+
+    while (currScope !== null) {
+      const found = currScope.variables.variables.filter(v => v.name === name);
+
+      if (found.length > 1) {
+        throw new Error("really weird thing in Context#getVariable")
+      }
+
+      if (found.length === 1) {
+        return S.GetLocal("i32", found[0].name);
+      }
+
+      currScope = currScope.parent;
+    }
+
+    throw new Error(`variable name ${name} not found in context!`);
+  }
+
+  getAll(props: { wantParameters: boolean } ): Variable[] {
+    const vars = this.variables;
+
+    return vars.filter(v => {
+      if (!props.wantParameters && v.isParameter) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
 }

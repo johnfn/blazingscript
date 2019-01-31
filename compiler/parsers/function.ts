@@ -53,9 +53,7 @@ export class BSFunctionDeclaration extends BSNode {
       name: ctx.getFunctionByNode(this).bsname,
       params: params,
       body: [
-        ...ctx
-          .getVariablesInCurrentScope({ wantParameters: false })
-          .map(decl => S.DeclareLocal(decl)),
+        ...ctx.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
         ...sb,
         ...(ret ? [ret] : [])
       ]

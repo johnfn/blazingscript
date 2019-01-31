@@ -11,7 +11,7 @@ export class BSStringLiteral extends BSNode {
     super(ctx, node);
 
     this.text = node.text;
-    ctx.addVariableToScopeOnce("string_temp", this.tsType, "i32");
+    ctx.scope.variables.addOnce("string_temp", this.tsType, "i32");
   }
 
   compile(ctx: Context): Sexpr {
@@ -23,10 +23,10 @@ export class BSStringLiteral extends BSNode {
         S("i32", "call", "$malloc", S.Const(this.text.length + 4))
       ),
       // store length first
-      S.Store(ctx.getVariable("string_temp"), this.text.length),
+      S.Store(ctx.scope.variables.get("string_temp"), this.text.length),
       // then contents
-      ...Sx.SetStringLiteralAtSexpr(ctx.getVariable("string_temp"), this.text),
-      ctx.getVariable("string_temp")
+      ...Sx.SetStringLiteralAtSexpr(ctx.scope.variables.get("string_temp"), this.text),
+      ctx.scope.variables.get("string_temp")
     );
   }
 }

@@ -18,6 +18,6 @@ export class BSIdentifier extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    return ctx.getVariable(this.text);
+    return ctx.scope.variables.get(this.text);
   }
 }

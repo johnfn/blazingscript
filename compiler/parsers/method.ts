@@ -131,7 +131,7 @@ export class BSMethodDeclaration extends BSNode {
         ...params
       ],
       body: [
-        ...ctx.getVariablesInCurrentScope({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
+        ...ctx.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
         ...sb,
         ...(ret ? [ret] : [])
       ]
