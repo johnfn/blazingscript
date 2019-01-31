@@ -58,7 +58,7 @@ class Scope {
   parent    : Scope | null;
   children  : Scope[];
   variables : Variables;
-  properties: Property[];
+  properties: Properties;
 
   // TODO: Since functions are scopes, i can probably remove this and just
   // filter over children.
@@ -67,15 +67,17 @@ class Scope {
   loopStack : Loop[];
   node      : BSNode | null;
   type      : ScopeType;
+  context   : Context;
 
   static NumberOfLoopsSeen = 0;
 
-  constructor(node: NodesWithScope | null, parent: Scope | null) {
+  constructor(node: NodesWithScope | null, parent: Scope | null, context: Context) {
     this.node   = node;
     this.parent = parent;
+    this.context = context
 
     this.variables  = new Variables(this);
-    this.properties = [];
+    this.properties = new Properties(this);
     this.functions  = [];
     this.loopStack  = [];
     this.children   = [];
@@ -188,7 +190,7 @@ export class Context {
   constructor(tc: ts.TypeChecker) {
     this.typeChecker = tc;
 
-    this.scope = new Scope(null, null);
+    this.scope = new Scope(null, null, this);
   }
 
   // TODO: Somehow i want to ensure that this is actually targetting js
@@ -212,7 +214,7 @@ export class Context {
   }
 
   addScopeFor(node: BSFunctionDeclaration | BSForStatement | BSMethodDeclaration | BSClassDeclaration): void {
-    this.scope.children.push(new Scope(node, this.scope));
+    this.scope.children.push(new Scope(node, this.scope, this));
   }
 
   popScope(): void {
@@ -445,15 +447,6 @@ export class Context {
     });
   }
 
-  addPropertyToScope(props: {
-    name    : string;
-    offset  : number;
-    tsType  : Type;
-    wasmType: WasmType;
-  }): void {
-    this.scope.properties.push(props);
-  }
-
   getScopeForClass(type: Type): Scope | null {
     let classNameToFind = "";
 
@@ -484,33 +477,6 @@ export class Context {
     const cls = relevantClasses[0];
 
     return cls;
-  }
-
-  getProperty(
-    expr: BSExpression,
-    name: string
-  ): Sexpr {
-    const cls = this.getScopeForClass(expr.tsType);
-
-    if (cls === null) {
-      throw new Error(`Cant find appropriate scope for ${ expr.fullText }`);
-    }
-
-    const props = cls.properties;
-
-    const relevantProperties = props.filter(prop => prop.name === name);
-    const relevantProperty = relevantProperties[0];
-
-    if (!relevantProperty) {
-      throw new Error(`cant find property in class`);
-    }
-
-    const res = S.Load("i32", S.Add(
-      expr.compile(this),
-      relevantProperty.offset
-    ));
-
-    return res;
   }
 }
 
@@ -591,5 +557,56 @@ class Variables {
       return true;
     });
   }
+}
 
+class Properties {
+  properties: Property[];
+  scope     : Scope;
+
+  constructor(scope: Scope) {
+    this.scope      = scope;
+    this.properties = [];
+  }
+
+  add(prop: {
+    name    : string;
+    offset  : number;
+    tsType  : Type;
+    wasmType: WasmType;
+  }): void {
+    this.properties.push(prop);
+  }
+
+  getAll(): Property[] {
+    return this.properties;
+  }
+
+  get(
+    expr: BSExpression,
+    name: string
+  ): Sexpr {
+    // TODO: I could store the properties directly on the class node itself, so that i dont have to go hunting them down later.
+    // TODO: This is bad?
+    const cls = this.scope.context.getScopeForClass(expr.tsType);
+
+    if (cls === null) {
+      throw new Error(`Cant find appropriate scope for ${ expr.fullText }`);
+    }
+
+    const props = cls.properties;
+
+    const relevantProperties = props.getAll().filter(prop => prop.name === name);
+    const relevantProperty = relevantProperties[0];
+
+    if (!relevantProperty) {
+      throw new Error(`cant find property in class`);
+    }
+
+    const res = S.Load("i32", S.Add(
+      expr.compile(cls.context),
+      relevantProperty.offset
+    ));
+
+    return res;
+  }
 }

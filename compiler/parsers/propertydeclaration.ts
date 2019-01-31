@@ -31,7 +31,7 @@ export class BSPropertyDeclaration extends BSNode {
 
     if (offset !== null) {
       if (this.name instanceof BSIdentifier) {
-        ctx.addPropertyToScope({
+        ctx.scope.properties.add({
           name    : this.name.text,
           offset  : offset,
           tsType  : this.tsType,

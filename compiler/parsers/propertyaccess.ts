@@ -27,6 +27,6 @@ export class BSPropertyAccessExpression extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    return ctx.getProperty(this.expression, this.name.text);
+    return ctx.scope.properties.get(this.expression, this.name.text);
   }
 }
