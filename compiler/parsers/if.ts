@@ -14,7 +14,6 @@ import { flatArray } from "../util";
 export class BSIfStatement extends BSNode {
   children  : BSNode[];
 
-  nodeREMOVE: IfStatement;
   condition : BSExpression;
   ifTrue    : BSStatement | null;
   ifFalse   : BSStatement | null;
@@ -22,14 +21,11 @@ export class BSIfStatement extends BSNode {
   constructor(ctx: Context, node: IfStatement) {
     super(ctx, node);
 
-
     this.children = flatArray(
       this.condition = buildNode(ctx, node.expression),
       this.ifTrue    = buildNode(ctx, node.thenStatement),
       this.ifFalse   = buildNode(ctx, node.elseStatement),
     );
-
-    this.nodeREMOVE = node;
   }
 
   compile(ctx: Context): Sexpr {

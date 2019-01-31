@@ -95,7 +95,7 @@ S.Store = (pos: Sexpr, value: Sexpr | number): Sexpr => {
 
 S.Load = (type: "i32", pos: Sexpr): Sexpr => S(type, "i32.load", pos);
 
-S.Export = (name: string, type: "func"): Sexpr =>
+S.Export = (name: string): Sexpr =>
   S("[]", "export", `"${name}"`, S("[]", "func", `\$${name}`));
 
 // TODO: Proper return types

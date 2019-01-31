@@ -3,6 +3,7 @@ import { BindingName, SyntaxKind } from "typescript";
 import { Context } from "../context";
 
 // TODO: Add pattern matching stuff in here
+// TODO: Remove all this.
 
 export type BSBindingName = BSIdentifier;
 

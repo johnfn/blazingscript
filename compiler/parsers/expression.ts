@@ -33,3 +33,9 @@ export type BSExpression =
   | BSPropertyAccessExpression
   | BSElementAccessExpression
   | BSThisKeyword;
+
+export type BSPropertyName =
+  | BSIdentifier
+  | BSStringLiteral
+  | BSNumericLiteral
+  // | BSComputedPropertyName;

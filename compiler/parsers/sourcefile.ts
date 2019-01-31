@@ -14,6 +14,8 @@ import { BSNode } from "./bsnode";
 import { BSClassDeclaration } from "./class";
 import { BSCallExpression } from "./callexpression";
 import { BSIdentifier } from "./identifier";
+import { flatArray } from "../util";
+import { buildNodeArray } from "./nodeutil";
 
 type FunctionDecl = {
   node: BSFunctionDeclaration | BSMethodDeclaration;
@@ -31,73 +33,18 @@ export class BSSourceFile extends BSNode {
   statements       : BSStatement[];
 
   fileName         : string;
-  declaredFunctions: FunctionDecl[];
   jsTypes          : { [jsType: string]: string };
 
   constructor(ctx: Context, file: SourceFile) {
     super(ctx, file);
 
     this.fileName = file.fileName;
-    this.statements = [...file.statements].map(
-      statement => new BSStatement(ctx, statement)
+
+    this.children = flatArray(
+      this.statements = buildNodeArray(ctx, file.statements)
     );
-    this.children = this.statements;
 
-    this.declaredFunctions = this.findAllFunctions();
     this.jsTypes = this.findAllJsTypes();
-  }
-
-  private findAllFunctions(): FunctionDecl[] {
-    const decls: FunctionDecl[] = [];
-    let parent : BSClassDeclaration | null = null;
-
-    const helper = (node: BSNode) => {
-      if (node instanceof BSFunctionDeclaration) {
-        if (!node.name) {
-          throw new Error(
-            `dont handle anonymous functions yet: ${node.fullText}`
-          );
-        }
-
-        // TODO: move this to constructor?
-
-        decls.push({
-          node: node,
-          name: node.name,
-          exported: true, //  fd.modifiers && fd.modifiers.find(tok => tok.kind === SyntaxKind.Export) .indexOf(ModifierFlags.Export) > -1
-          parent: parent ? parent : null
-        });
-      }
-
-      if (node instanceof BSMethodDeclaration) {
-        if (!node.name) {
-          throw new Error(
-            `dont handle anonymous functions yet: ${node.fullText}`
-          );
-        }
-
-        decls.push({
-          node: node,
-          name: node.name,
-          exported: false,
-          parent: parent ? parent : null
-        });
-      }
-
-      const oldParent = parent;
-
-      if (node instanceof BSClassDeclaration) {
-        parent = node;
-      }
-
-      node.forEachChild(helper);
-
-      parent = oldParent;
-    };
-
-    this.forEachChild(helper);
-
-    return decls;
   }
 
   private findAllJsTypes(): { [jsType: string]: string } {
@@ -133,9 +80,11 @@ export class BSSourceFile extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    const functions = this.declaredFunctions;
-    const exportedFunctions = functions.filter(f => f.exported);
-    const jsTypes = this.jsTypes;
+    const functions         = ctx.getAllFunctions();
+    const exportedFunctions = functions.filter(f => f.node instanceof BSFunctionDeclaration);
+    const jsTypes           = this.jsTypes;
+
+    // console.log(functions.map(x => x.bsname));
 
     ctx.addJsTypes(jsTypes);
 
@@ -149,13 +98,19 @@ export class BSSourceFile extends BSNode {
         if (fn.node instanceof BSFunctionDeclaration) {
           return fn.node.compile(ctx);
         } else if (fn.node instanceof BSMethodDeclaration) {
-          return fn.node.compile(ctx);
+          // TODO: Fix this up
+
+          ctx.pushScopeFor(fn.node.parent);
+          const result = fn.node.compile(ctx);
+          ctx.popScope();
+
+          return result;
         }
 
         throw new Error("i got some weird type of function i cant handle.");
       }),
       // ...parseStatementListBS(ctx, this.statements),
-      ...exportedFunctions.map(fn => S.Export(fn.name, "func"))
+      ...exportedFunctions.map(fn => S.Export(fn.fnName))
     );
   }
 }

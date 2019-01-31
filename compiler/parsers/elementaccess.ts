@@ -39,24 +39,11 @@ export class BSElementAccessExpression extends BSNode {
     const array = this.element;
     const arrayType = this.element.tsType;
 
-    if (arrayType.flags & TypeFlags.StringLike) {
-      return ctx.callMethodByOperator({
-        className: ctx.getNativeTypeName("String"),
-        opName   : Operator["[]"],
-        thisExpr : array,
-        argExprs : [arg]
-      });
-    }
-
-    if (isArrayType(ctx, arrayType)) {
-      return ctx.callMethodByOperator({
-        className: ctx.getNativeTypeName("Array"),
-        opName   : Operator["[]"],
-        thisExpr : array,
-        argExprs : [arg]
-      });
-    }
-
-    throw new Error(`Dont know how to index into anything other than strings and arrays. ${ this.fullText } ${arrayType.flags}`);
+    return ctx.callMethodByOperator({
+      type    : arrayType,
+      opName  : Operator["[]"],
+      thisExpr: array,
+      argExprs: [arg]
+    });
   }
 }

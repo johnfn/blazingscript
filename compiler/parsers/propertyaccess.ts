@@ -6,6 +6,7 @@ import { BSExpression } from "./expression";
 import { BSIdentifier } from "./identifier";
 import { isArrayType } from "./arrayliteral";
 import { buildNode } from "./nodeutil";
+import { flatArray } from "../util";
 
 /**
  * e.g. const x = foo.bar
@@ -19,18 +20,18 @@ export class BSPropertyAccessExpression extends BSNode {
   constructor(ctx: Context, node: PropertyAccessExpression) {
     super(ctx, node);
 
-    const x  = buildNode(ctx, node.name);
-    this.expression = buildNode(ctx, node.expression);
-    this.name       = buildNode(ctx, node.name);
-    this.children   = [
-      this.expression,
-      this.name,
-    ];
+    this.children = flatArray(
+      this.expression = buildNode(ctx, node.expression),
+      this.name       = buildNode(ctx, node.name),
+    );
   }
 
   compile(ctx: Context): Sexpr {
     const property = this.name.text;
 
+    return ctx.getProperty(this.expression, this.name.text);
+
+    /*
     if (
       this.expression.tsType.flags & TypeFlags.StringLike ||
       this.expression.tsType.symbol.name === ctx.getNativeTypeName("String") // for this types
@@ -57,5 +58,6 @@ export class BSPropertyAccessExpression extends BSNode {
     }
 
     throw new Error(`Todo ${this.fullText}`);
+    */
   }
 }

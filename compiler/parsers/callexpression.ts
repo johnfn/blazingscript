@@ -63,7 +63,7 @@ export class BSCallExpression extends BSNode {
         fooDotBarType.symbol.name === ctx.getNativeTypeName("String") // for this types
       ) {
         return ctx.callMethod({
-          className : ctx.getNativeTypeName("String"),
+          type      : fooDotBarType,
           methodName: justBar.text,
           thisExpr  : fooDotBar,
           argExprs  : [...this.arguments]

@@ -40,12 +40,7 @@ export class BSMethodDeclaration extends BSNode {
   name      : string | null;
 
   decorators: BSDecorator[];
-
-  /**
-   * TODO: I cant really get rid of this until i can pass it in, which i cant do until class nodes generate all their functions
-   * properly.
-   */
-  parent     : BSClassDeclaration;
+  parent    : BSClassDeclaration;
 
   constructor(
     ctx       : Context,
@@ -136,9 +131,7 @@ export class BSMethodDeclaration extends BSNode {
         ...params
       ],
       body: [
-        ...ctx
-          .getVariablesInCurrentScope(false)
-          .map(decl => S.DeclareLocal(decl)),
+        ...ctx.getVariablesInCurrentScope({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
         ...sb,
         ...(ret ? [ret] : [])
       ]
@@ -151,7 +144,7 @@ export class BSMethodDeclaration extends BSNode {
 
   readableName(): string {
     if (this.name) {
-      return `method ${ this.parent.name }#${ this.name }`;
+      return `Method: ${ this.parent.name }#${ this.name }`;
     } else {
       return "anonymous function";
     }

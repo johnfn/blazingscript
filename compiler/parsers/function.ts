@@ -54,7 +54,7 @@ export class BSFunctionDeclaration extends BSNode {
       params: params,
       body: [
         ...ctx
-          .getVariablesInCurrentScope(false)
+          .getVariablesInCurrentScope({ wantParameters: false })
           .map(decl => S.DeclareLocal(decl)),
         ...sb,
         ...(ret ? [ret] : [])

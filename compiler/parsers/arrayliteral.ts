@@ -42,7 +42,6 @@ export class BSArrayLiteral extends BSNode {
     const allocatedLength = 16;
 
     return S("i32", "block", S("[]", "result", "i32"),
-
       S.SetLocal(
         "myalocal",
         S("i32", "call", "$malloc", S.Const(this.elements.length * 4 + 4))
@@ -72,6 +71,6 @@ export function isArrayType(ctx: Context, type: Type) {
   return (
     // TODO: i KNOW there is a better way here.
     ctx.typeChecker.typeToString(type) === "number[]" ||
-    ctx.getNativeTypeName("String")
+    (type.symbol && type.symbol.name === ctx.getNativeTypeName("Array"))
   );
 }

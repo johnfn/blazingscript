@@ -13,6 +13,7 @@ import { BSNode } from "./bsnode";
 import { BSIdentifier } from "./identifier";
 import { flatArray } from "../util";
 import { buildNode } from "./nodeutil";
+import { BSExpression } from "./expression";
 
 /**
  * e.g. const x = 1 + 3
@@ -20,8 +21,8 @@ import { buildNode } from "./nodeutil";
  */
 export class BSBinaryExpression extends BSNode {
   children     : BSNode[];
-  left         : BSNode;
-  right        : BSNode;
+  left         : BSExpression;
+  right        : BSExpression;
   operatorToken: Token<BinaryOperator>;
   fullText     : string;
 
@@ -42,13 +43,6 @@ export class BSBinaryExpression extends BSNode {
     const leftParsed  = this.left.compile(ctx);
     const rightParsed = this.right.compile(ctx);
 
-    if (!rightParsed) {
-      throw new Error("rightParsed not defined asdkfjlh");
-    }
-    if (!leftParsed) {
-      throw new Error("leftParsed not defined asdkfjlh");
-    }
-
     if (this.operatorToken.kind === SyntaxKind.EqualsToken) {
       if (this.left instanceof BSIdentifier) {
         return S.SetLocal(this.left.text, rightParsed);
@@ -60,15 +54,11 @@ export class BSBinaryExpression extends BSNode {
     }
 
     if (this.operatorToken.kind === SyntaxKind.EqualsEqualsToken) {
-      throw new Error(
-        `unsupported token == in : ${this.fullText} (hint: use ===)`
-      );
+      throw new Error(`unsupported token == in : ${this.fullText} (hint: use ===)`);
     }
 
     if (this.operatorToken.kind === SyntaxKind.ExclamationEqualsToken) {
-      throw new Error(
-        `unsupported token == in : ${this.fullText} (hint: use ===)`
-      );
+      throw new Error(`unsupported token == in : ${this.fullText} (hint: use ===)`);
     }
 
     // if (leftType.flags !== rightType.flags) {
@@ -156,27 +146,27 @@ export class BSBinaryExpression extends BSNode {
     }
 
     if (
-      this.left.tsType.flags & TypeFlags.StringLike &&
+      this.left.tsType.flags  & TypeFlags.StringLike &&
       this.right.tsType.flags & TypeFlags.StringLike
     ) {
       switch (this.operatorToken.kind) {
         case SyntaxKind.EqualsEqualsEqualsToken:
           return ctx.callMethodByOperator({
-            className: ctx.getNativeTypeName("String"),
+            type: this.left.tsType,
             opName: Operator["==="],
             thisExpr: this.left,
             argExprs: [this.right]
           });
         case SyntaxKind.ExclamationEqualsEqualsToken:
           return ctx.callMethodByOperator({
-            className: ctx.getNativeTypeName("String"),
+            type: this.left.tsType,
             opName: Operator["!=="],
             thisExpr: this.left,
             argExprs: [this.right]
           });
         case SyntaxKind.PlusToken:
           return ctx.callMethodByOperator({
-            className: ctx.getNativeTypeName("String"),
+            type: this.left.tsType,
             opName: Operator["+"],
             thisExpr: this.left,
             argExprs: [this.right]

@@ -1,10 +1,10 @@
 import { BSDecorator } from "./decorator";
-import { Decorator, Node, SyntaxKind, NodeArray, Block, ParameterDeclaration, Expression, Statement, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, ParenthesizedExpression, PropertyAccessExpression, ElementAccessExpression, ThisExpression, ArrayLiteralExpression, ReturnStatement, ExpressionStatement, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, TypeAliasDeclaration, InterfaceDeclaration, FunctionDeclaration, ClassDeclaration, BindingName, VariableDeclaration } from "typescript";
+import { Decorator, Node, SyntaxKind, NodeArray, Block, ParameterDeclaration, Expression, Statement, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, ParenthesizedExpression, PropertyAccessExpression, ElementAccessExpression, ThisExpression, ArrayLiteralExpression, ReturnStatement, ExpressionStatement, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, TypeAliasDeclaration, InterfaceDeclaration, FunctionDeclaration, ClassDeclaration, BindingName, VariableDeclaration, PropertyName } from "typescript";
 import { Context } from "../context";
 import { BSNode } from "./bsnode";
 import { BSBlock } from "./block";
 import { BSParameter } from "./parameter";
-import { BSExpression } from "./expression";
+import { BSExpression, BSPropertyName } from "./expression";
 import { BSStatement } from "./statement";
 import { BSBinaryExpression } from "./binaryexpression";
 import { BSCallExpression } from "./callexpression";
@@ -49,6 +49,7 @@ import { BSVariableDeclaration } from "./variabledeclaration";
   * Given a TypeScript AST node, returns the BS AST node equivalent.
   */
 export function buildNode(ctx: Context, obj: Identifier            ): BSIdentifier;
+export function buildNode(ctx: Context, obj: PropertyName          ): BSPropertyName;
 export function buildNode(ctx: Context, obj: Decorator  | undefined): BSDecorator  | null;
 export function buildNode(ctx: Context, obj: BindingName| undefined): BSBindingName| null;
 export function buildNode(ctx: Context, obj: BindingName           ): BSBindingName;

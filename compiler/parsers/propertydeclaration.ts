@@ -6,8 +6,9 @@ import { BSDecorator } from "./decorator";
 import { BSCallExpression } from "./callexpression";
 import { BSIdentifier } from "./identifier";
 import { BSNumericLiteral } from "./numericliteral";
-import { buildNodeArray } from "./nodeutil";
+import { buildNodeArray, buildNode } from "./nodeutil";
 import { flatArray } from "../util";
+import { BSPropertyName } from "./expression";
 
 /**
  * e.g. class Foo { x: number = 5 }
@@ -16,17 +17,30 @@ import { flatArray } from "../util";
 export class BSPropertyDeclaration extends BSNode {
   children  : BSNode[];
   decorators: BSDecorator[];
+  name      : BSPropertyName;
 
   constructor(ctx: Context, node: PropertyDeclaration) {
     super(ctx, node);
 
     this.children = flatArray(
       this.decorators = buildNodeArray(ctx, node.decorators),
+      this.name       = buildNode(ctx, node.name),
     );
 
-    console.log(this.getOffset(this.decorators));
-    // console.log(this.fullText);
-    this.children = [];
+    const offset = this.getOffset(this.decorators);
+
+    if (offset !== null) {
+      if (this.name instanceof BSIdentifier) {
+        ctx.addPropertyToScope({
+          name    : this.name.text,
+          offset  : offset,
+          tsType  : this.tsType,
+          wasmType: "i32",
+        });
+      } else {
+        throw new Error("I currently dont handle property names that aren't identifiers.");
+      }
+    }
   }
 
   compile(ctx: Context): Sexpr {
@@ -34,8 +48,6 @@ export class BSPropertyDeclaration extends BSNode {
   }
 
   getOffset(decorators: BSDecorator[]): number | null {
-    let offset: number | null = null;
-
     for (const deco of decorators) {
       if (!(deco.expression instanceof BSCallExpression)) {
         continue;

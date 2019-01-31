@@ -2,13 +2,10 @@ import fs from "fs";
 import { Program } from "./program";
 
 // TODO:
-// * build up context on the first pass.
-//   * dont pop from the context, just move up and down.
 // * @offset() for members which are memory offsets.
 // * should work out what left hand side expression is. see: decorator.ts
 // * better error handling
-// * there are still some lingering REMOVE
-// * myslocal is a huge hack, remove it!
+// * rename myslocal, myalocal
 // * the initial pass to add functions to the file is now entirely unnecessary
 // * Figure out some way to write Sexprs better.
 // * statements can return null, but expressions cant. lots of stuff can be cleaned up!
