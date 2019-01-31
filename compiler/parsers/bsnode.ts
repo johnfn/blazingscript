@@ -1,5 +1,5 @@
 import { Sexpr } from "../sexpr";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { Node, Type, Modifier } from "typescript";
 
 let uid = 0;

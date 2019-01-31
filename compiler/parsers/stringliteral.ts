@@ -1,4 +1,4 @@
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { StringLiteral } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
 import { BSNode } from "./bsnode";

@@ -1,7 +1,7 @@
 import { VariableDeclarationList, SyntaxKind } from "typescript";
 import { BSVariableDeclaration } from "./variabledeclaration";
 import { BSNode } from "./bsnode";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { S, Sexpr } from "../sexpr";
 import { buildNodeArray } from "./nodeutil";
 

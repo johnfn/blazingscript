@@ -1,4 +1,4 @@
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { CallExpression, TypeFlags } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
 import { flatten } from "../rewriter";
@@ -119,11 +119,11 @@ export class BSCallExpression extends BSNode {
           } else if (arg instanceof BSIdentifier) {
             if (arg.tsType.flags & TypeFlags.StringLike) {
               logArgs.push({
-                size: S.Load("i32", ctx.getVariable(arg.text)),
-                start: ctx.getVariable(arg.text),
+                size: S.Load("i32", ctx.scope.variables.get(arg.text)),
+                start: ctx.scope.variables.get(arg.text),
                 type: 2,
                 putValueInMemory: [
-                  S.Store(S.Const(offset), ctx.getVariable(arg.text))
+                  S.Store(S.Const(offset), ctx.scope.variables.get(arg.text))
                 ]
               });
             } else if (arg.tsType.flags & TypeFlags.NumberLike) {
@@ -132,7 +132,7 @@ export class BSCallExpression extends BSNode {
                 start: S.Const(offset),
                 type: 1,
                 putValueInMemory: [
-                  S.Store(S.Const(offset), ctx.getVariable(arg.text))
+                  S.Store(S.Const(offset), ctx.scope.variables.get(arg.text))
                 ]
               });
             } else {

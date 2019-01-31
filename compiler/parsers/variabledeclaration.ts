@@ -1,7 +1,7 @@
 import { BSExpression, BSBindingName } from "./expression";
 import { VariableDeclaration, TypeFlags } from "typescript";
 import { BSNode } from "./bsnode";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { S, Sexpr } from "../sexpr";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";

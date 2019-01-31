@@ -1,5 +1,5 @@
 import { BSNode } from "./bsnode";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { Sexpr, S } from "../sexpr";
 import { Node } from "typescript";
 

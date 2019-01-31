@@ -1,5 +1,5 @@
 import { ConditionalExpression } from "typescript";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { Sexpr, S } from "../sexpr";
 import { BSNode } from "./bsnode";
 import { BSExpression } from "./expression";

@@ -1,6 +1,6 @@
 import { BSDecorator } from "./decorator";
 import { Decorator, Node, SyntaxKind, NodeArray, Block, ParameterDeclaration, Expression, Statement, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, ParenthesizedExpression, PropertyAccessExpression, ElementAccessExpression, ThisExpression, ArrayLiteralExpression, ReturnStatement, ExpressionStatement, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, TypeAliasDeclaration, InterfaceDeclaration, FunctionDeclaration, ClassDeclaration, BindingName, VariableDeclaration, PropertyName } from "typescript";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { BSNode } from "./bsnode";
 import { BSBlock } from "./block";
 import { BSParameter } from "./parameter";

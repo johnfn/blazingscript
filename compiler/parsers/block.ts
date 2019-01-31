@@ -1,7 +1,7 @@
 import { Block, isSwitchStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseStatementListBS } from "./statementlist";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { BSStatement } from "./statement";
 import { BSNode } from "./bsnode";
 import { flatArray } from "../util";

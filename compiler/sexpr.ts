@@ -1,4 +1,4 @@
-import { Variable } from "./context";
+import { Variable } from "./scope/context";
 
 export type WasmType = "i32" | "f32" | "i64" | "f64" | "[]";
 

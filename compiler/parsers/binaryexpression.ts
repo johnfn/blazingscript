@@ -8,7 +8,7 @@ import {
 } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Operator } from "./method";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { BSNode } from "./bsnode";
 import { BSIdentifier } from "./identifier";
 import { flatArray } from "../util";

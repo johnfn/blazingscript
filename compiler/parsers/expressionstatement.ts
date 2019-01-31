@@ -1,4 +1,4 @@
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { ExpressionStatement, isExpressionStatement } from "typescript";
 import { Sexpr } from "../sexpr";
 import { BSNode } from "./bsnode";

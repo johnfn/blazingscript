@@ -1,7 +1,7 @@
 import { BSExpression } from "./expression";
 import { AsExpression } from "typescript";
 import { BSNode } from "./bsnode";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { Sexpr } from "../sexpr";
 import { flatArray } from "../util";
 import { buildNodeArray, buildNode } from "./nodeutil";

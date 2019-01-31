@@ -1,15 +1,15 @@
 import ts, { TypeFlags, Type } from "typescript";
-import { Sexpr, S, Param, WasmType } from "./sexpr";
-import { BSExpression } from "./parsers/expression";
-import { OperatorOverload, Operator, BSMethodDeclaration } from "./parsers/method";
-import { parseStatementListBS } from "./parsers/statementlist";
-import { BSNode } from "./parsers/bsnode";
-import { BSFunctionDeclaration } from "./parsers/function";
-import { BSParameter } from "./parsers/parameter";
-import { BSClassDeclaration } from "./parsers/class";
-import { BSForStatement } from "./parsers/for";
-import { assertNever } from "./util";
-import { isArrayType } from "./parsers/arrayliteral";
+import { Sexpr, S, Param, WasmType } from "../sexpr";
+import { BSExpression } from "../parsers/expression";
+import { OperatorOverload, Operator, BSMethodDeclaration } from "../parsers/method";
+import { parseStatementListBS } from "../parsers/statementlist";
+import { BSNode } from "../parsers/bsnode";
+import { BSFunctionDeclaration } from "../parsers/function";
+import { BSParameter } from "../parsers/parameter";
+import { BSClassDeclaration } from "../parsers/class";
+import { BSForStatement } from "../parsers/for";
+import { assertNever } from "../util";
+import { isArrayType } from "../parsers/arrayliteral";
 
 enum ScopeType {
   Function = "function",

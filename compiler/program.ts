@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { sexprToString, Sexpr, S } from "./sexpr";
-import { Context } from "./context";
+import { Context } from "./scope/context";
 import { BSSourceFile } from "./parsers/sourcefile";
 
 export const THIS_NAME = "__this";

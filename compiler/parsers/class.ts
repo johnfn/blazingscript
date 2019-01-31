@@ -4,7 +4,7 @@ import {
   MethodDeclaration,
   PropertyDeclaration
 } from "typescript";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { BSNode } from "./bsnode";
 import { BSMethodDeclaration } from "./method";
 import { BSPropertyDeclaration } from "./propertydeclaration";

@@ -1,6 +1,6 @@
 import { PropertyDeclaration } from "typescript";
 import { Sexpr } from "../sexpr";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { BSNode } from "./bsnode";
 import { BSDecorator } from "./decorator";
 import { BSCallExpression } from "./callexpression";

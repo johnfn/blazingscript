@@ -1,6 +1,6 @@
 import { ParameterDeclaration, TypeFlags } from "typescript";
 import { BSNode } from "./bsnode";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { buildNode } from "./nodeutil";
 import { isArrayType } from "./arrayliteral";
 import { flatArray } from "../util";

@@ -1,6 +1,6 @@
 import { BSNode } from "./bsnode";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { Decorator } from "typescript";
 import { BSExpression } from "./expression";
 import { flatArray } from "../util";

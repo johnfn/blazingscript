@@ -1,6 +1,6 @@
 import { PrefixUnaryExpression, SyntaxKind, PrefixUnaryOperator } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { BSNode } from "./bsnode";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";

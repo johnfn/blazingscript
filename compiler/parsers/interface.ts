@@ -1,6 +1,6 @@
 import { InterfaceDeclaration } from "typescript";
 import { BSNode } from "./bsnode";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 
 /**
  * e.g. interface Foo { x: number }

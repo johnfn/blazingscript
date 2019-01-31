@@ -1,6 +1,6 @@
 import { ParenthesizedExpression } from "typescript";
 import { BSNode } from "./bsnode";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { Sexpr } from "../sexpr";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";

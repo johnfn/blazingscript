@@ -6,7 +6,7 @@ import {
 } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseStatementListBS } from "./statementlist";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { BSFunctionDeclaration } from "./function";
 import { BSMethodDeclaration } from "./method";
 import { BSStatement } from "./statement";

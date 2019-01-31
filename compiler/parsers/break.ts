@@ -1,6 +1,6 @@
 import { Block, BreakStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { BSNode } from "./bsnode";
 
 // TODO: Handle label.

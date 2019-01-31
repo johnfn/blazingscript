@@ -2,7 +2,7 @@ import {
   FunctionDeclaration,
 } from "typescript";
 import { Sexpr, Param, S } from "../sexpr";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { BSNode } from "./bsnode";
 
 /**

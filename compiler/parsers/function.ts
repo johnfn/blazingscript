@@ -1,6 +1,6 @@
 import { FunctionDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { parseStatementListBS } from "./statementlist";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";

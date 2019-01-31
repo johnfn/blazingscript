@@ -1,6 +1,6 @@
 import { VariableStatement, SyntaxKind, Modifier } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../context";
+import { Context } from "../scope/context";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
 import { BSNode } from "./bsnode";
 
