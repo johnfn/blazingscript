@@ -5,7 +5,6 @@ import { Program } from "./program";
 // * @offset() for members which are memory offsets.
 // * should work out what left hand side expression is. see: decorator.ts
 // * better error handling
-// * rename myslocal, myalocal
 // * the initial pass to add functions to the file is now entirely unnecessary
 // * Figure out some way to write Sexprs better.
 // * statements can return null, but expressions cant. lots of stuff can be cleaned up!

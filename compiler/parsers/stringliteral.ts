@@ -11,7 +11,7 @@ export class BSStringLiteral extends BSNode {
     super(ctx, node);
 
     this.text = node.text;
-    ctx.addVariableToScopeOnce("myslocal", this.tsType, "i32");
+    ctx.addVariableToScopeOnce("string_temp", this.tsType, "i32");
   }
 
   compile(ctx: Context): Sexpr {
@@ -19,14 +19,14 @@ export class BSStringLiteral extends BSNode {
       "block",
       S("[]", "result", "i32"),
       S.SetLocal(
-        "myslocal",
+        "string_temp",
         S("i32", "call", "$malloc", S.Const(this.text.length + 4))
       ),
       // store length first
-      S.Store(ctx.getVariable("myslocal"), this.text.length),
+      S.Store(ctx.getVariable("string_temp"), this.text.length),
       // then contents
-      ...Sx.SetStringLiteralAtSexpr(ctx.getVariable("myslocal"), this.text),
-      ctx.getVariable("myslocal")
+      ...Sx.SetStringLiteralAtSexpr(ctx.getVariable("string_temp"), this.text),
+      ctx.getVariable("string_temp")
     );
   }
 }

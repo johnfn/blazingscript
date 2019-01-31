@@ -6,11 +6,6 @@ import { BSExpression } from "./expression";
 import { flatArray } from "../util";
 import { buildNodeArray } from "./nodeutil";
 
-const enum ArrayType {
-  ValueArray     = 0,
-  ReferenceArray = 1,
-}
-
 /**
  * Memory layout:
  *
@@ -35,7 +30,7 @@ export class BSArrayLiteral extends BSNode {
       this.elements = buildNodeArray(ctx, node.elements)
     );
 
-    ctx.addVariableToScopeOnce("myalocal", this.tsType, "i32");
+    ctx.addVariableToScopeOnce("array_temp", this.tsType, "i32");
   }
 
   compile(ctx: Context): Sexpr {
@@ -43,26 +38,26 @@ export class BSArrayLiteral extends BSNode {
 
     return S("i32", "block", S("[]", "result", "i32"),
       S.SetLocal(
-        "myalocal",
+        "array_temp",
         S("i32", "call", "$malloc", S.Const(this.elements.length * 4 + 4))
       ),
 
       // store allocated length
-      S.Store(ctx.getVariable("myalocal"), allocatedLength),
+      S.Store(ctx.getVariable("array_temp"), allocatedLength),
 
       // store length
-      S.Store(S.Add(ctx.getVariable("myalocal"), 4), this.elements.length),
+      S.Store(S.Add(ctx.getVariable("array_temp"), 4), this.elements.length),
 
       ...(
         this.elements.map((elem, i) =>
           S.Store(
-            S.Add(ctx.getVariable("myalocal"), i * 4 + 4 * 2),
+            S.Add(ctx.getVariable("array_temp"), i * 4 + 4 * 2),
             elem.compile(ctx)
           )
         )
       ),
 
-      ctx.getVariable("myalocal")
+      ctx.getVariable("array_temp")
     );
   }
 }

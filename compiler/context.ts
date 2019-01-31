@@ -80,7 +80,7 @@ class Scope {
     this.loopStack  = [];
     this.children   = [];
 
-    this.type = this.getScopeType(node);
+    this.type       = this.getScopeType(node);
   }
 
   getScopeType(node: NodesWithScope | null) {

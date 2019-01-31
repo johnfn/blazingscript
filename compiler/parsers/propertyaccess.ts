@@ -27,37 +27,6 @@ export class BSPropertyAccessExpression extends BSNode {
   }
 
   compile(ctx: Context): Sexpr {
-    const property = this.name.text;
-
     return ctx.getProperty(this.expression, this.name.text);
-
-    /*
-    if (
-      this.expression.tsType.flags & TypeFlags.StringLike ||
-      this.expression.tsType.symbol.name === ctx.getNativeTypeName("String") // for this types
-    ) {
-      if (property === "length") {
-        return ctx.callMethod({
-          className : ctx.getNativeTypeName("String"),
-          methodName: "strLen",
-          thisExpr  : this.expression,
-          argExprs  : []
-        });
-      }
-    }
-
-    if (isArrayType(ctx, this.expression.tsType)) {
-      if (property === "length") {
-        return ctx.callMethod({
-          className : ctx.getNativeTypeName("Array"),
-          methodName: "arrLen",
-          thisExpr  : this.expression,
-          argExprs  : []
-        });
-      }
-    }
-
-    throw new Error(`Todo ${this.fullText}`);
-    */
   }
 }
