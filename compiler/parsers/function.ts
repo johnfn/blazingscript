@@ -1,10 +1,10 @@
 import { FunctionDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import { parseStatementListBS } from "./statementlist";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
-import { BSNode } from "./bsnode";
+import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
 import { buildNode, buildNodeArray } from "./nodeutil";
 import { flatArray } from "../util";
 
@@ -20,23 +20,23 @@ export class BSFunctionDeclaration extends BSNode {
   name      : string | null;
   fullText  : string;
 
-  constructor(ctx: Context, node: FunctionDeclaration) {
+  constructor(ctx: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     ctx.addScopeFor(this);
-    ctx.pushScopeFor(this); {
-      this.body       = buildNode(ctx, node.body);
-      this.parameters = buildNodeArray(ctx, node.parameters);
+    const childCtx = ctx.getChildScope(this); {
+      this.body       = buildNode(childCtx, node.body);
+      this.parameters = buildNodeArray(childCtx, node.parameters);
       this.children   = flatArray(this.parameters, this.body);
       this.name       = node.name ? node.name.text : null;
       this.fullText   = node.getFullText();
-    } ctx.popScope();
+    }
 
-    ctx.scope.functions.addFunction(this);
+    ctx.functions.addFunction(this);
   }
 
-  compile(ctx: Context): Sexpr {
-    ctx.pushScopeFor(this);
+  compile(parentCtx: Scope): Sexpr {
+    const ctx = parentCtx.getChildScope(this)
 
     const params = ctx.getParameters(this.parameters);
     const sb = parseStatementListBS(ctx, this.body!.children);
@@ -50,16 +50,14 @@ export class BSFunctionDeclaration extends BSNode {
     const ret = last && last.type === "i32" ? undefined : S.Const(0);
 
     const result = S.Func({
-      name: ctx.scope.functions.getFunctionByNode(this).bsname,
+      name: ctx.functions.getFunctionByNode(this).bsName,
       params: params,
       body: [
-        ...ctx.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
+        ...ctx.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
         ...sb,
         ...(ret ? [ret] : [])
       ]
     });
-
-    ctx.popScope()
 
     return result;
   }

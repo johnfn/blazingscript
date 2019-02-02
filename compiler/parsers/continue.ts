@@ -1,7 +1,7 @@
 import { ContinueStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 
 // TODO: Handle label.
 
@@ -12,11 +12,11 @@ import { BSNode } from "./bsnode";
 export class BSContinueStatement extends BSNode {
   children: BSNode[] = [];
 
-  constructor(ctx: Context, node: ContinueStatement) {
+  constructor(ctx: Scope, node: ContinueStatement, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
   }
 
-  compile(ctx: Context): Sexpr {
-    return ctx.scope.loops.getContinue();
+  compile(ctx: Scope): Sexpr {
+    return ctx.loops.getContinue();
   }
 }

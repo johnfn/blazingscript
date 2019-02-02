@@ -4,8 +4,8 @@ import {
   MethodDeclaration,
   PropertyDeclaration
 } from "typescript";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSMethodDeclaration } from "./method";
 import { BSPropertyDeclaration } from "./propertydeclaration";
 import { BSDecorator } from "./decorator";
@@ -23,7 +23,7 @@ export class BSClassDeclaration extends BSNode {
 
   name: string;
 
-  constructor(ctx: Context, node: ClassDeclaration) {
+  constructor(ctx: Scope, node: ClassDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     if (node.name) {
@@ -33,13 +33,13 @@ export class BSClassDeclaration extends BSNode {
     }
 
     ctx.addScopeFor(this);
-    ctx.pushScopeFor(this); {
-      this.decorators = buildNodeArray(ctx, node.decorators);
+    const childCtx = ctx.getChildScope(this); {
+      this.decorators = buildNodeArray(childCtx, node.decorators);
       this.members = [...node.members].map(mem => {
         if (mem.kind === SyntaxKind.MethodDeclaration) {
-          return new BSMethodDeclaration(ctx, mem as MethodDeclaration, this);
+          return new BSMethodDeclaration(childCtx, mem as MethodDeclaration, this);
         } else if (mem.kind === SyntaxKind.PropertyDeclaration) {
-          return new BSPropertyDeclaration(ctx, mem as PropertyDeclaration);
+          return new BSPropertyDeclaration(childCtx, mem as PropertyDeclaration);
         } else if (mem.kind === SyntaxKind.IndexSignature) {
           return null;
         } else {
@@ -54,14 +54,13 @@ export class BSClassDeclaration extends BSNode {
         this.members,
       );
     }
-    ctx.popScope();
   }
 
   readableName() {
     return `Class ${ this.name }`;
   }
 
-  compile(ctx: Context): null {
+  compile(ctx: Scope): null {
     return null;
   }
 }

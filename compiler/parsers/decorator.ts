@@ -1,6 +1,6 @@
-import { BSNode } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import { Decorator } from "typescript";
 import { BSExpression } from "./expression";
 import { flatArray } from "../util";
@@ -17,7 +17,7 @@ export class BSDecorator extends BSNode {
   children  : BSNode[];
   expression: BSExpression;
 
-  constructor(ctx: Context, node: Decorator) {
+  constructor(ctx: Scope, node: Decorator, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -25,7 +25,7 @@ export class BSDecorator extends BSNode {
     );
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     throw new Error("Cant compile decorators! They are only currently for metadata.");
   }
 }

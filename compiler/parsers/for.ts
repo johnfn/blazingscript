@@ -1,4 +1,4 @@
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import {
   ForStatement,
   SyntaxKind,
@@ -7,7 +7,7 @@ import {
 import { Sexpr, S } from "../sexpr";
 import { BSStatement } from "./statement";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
-import { BSNode } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
 
@@ -23,7 +23,7 @@ export class BSForStatement extends BSNode {
   condition: BSExpression | null;
   body: BSStatement | null;
 
-  constructor(ctx: Context, node: ForStatement) {
+  constructor(ctx: Scope, node: ForStatement, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     if (node.initializer === undefined) {
@@ -61,7 +61,7 @@ export class BSForStatement extends BSNode {
   }
 
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     const initializerSexprs: Sexpr[] = [];
 
     if (this.initializer) {
@@ -83,7 +83,7 @@ export class BSForStatement extends BSNode {
     // TODO - we generate an increment with every continue statement. im sure
     // there's a better way!
 
-    ctx.scope.loops.add(inc);
+    ctx.loops.add(inc);
 
     const bodyComp = this.body ? this.body.compile(ctx) : null;
     const cond = this.condition ? this.condition.compile(ctx) : null;
@@ -91,22 +91,22 @@ export class BSForStatement extends BSNode {
     const result = S(
       "i32",
       "block",
-      ctx.scope.loops.getBreakLabel(),
+      ctx.loops.getBreakLabel(),
       ...initializerSexprs,
       S(
         "[]",
         "loop",
-        ctx.scope.loops.getContinueLabel(),
+        ctx.loops.getContinueLabel(),
         ...(cond
-          ? [S("[]", "br_if", ctx.scope.loops.getBreakLabel(), S("i32", "i32.eqz", cond))]
+          ? [S("[]", "br_if", ctx.loops.getBreakLabel(), S("i32", "i32.eqz", cond))]
           : []),
         ...(bodyComp ? [bodyComp] : []),
         ...(inc ? [inc] : []),
-        S("[]", "br", ctx.scope.loops.getContinueLabel())
+        S("[]", "br", ctx.loops.getContinueLabel())
       )
     );
 
-    ctx.scope.loops.pop();
+    ctx.loops.pop();
 
     return result;
   }

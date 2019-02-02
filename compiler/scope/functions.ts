@@ -1,12 +1,12 @@
 import { BSMethodDeclaration, OperatorOverload, Operator } from "../parsers/method";
 import { BSClassDeclaration } from "../parsers/class";
 import { BSFunctionDeclaration } from "../parsers/function";
-import { Scope } from "./context";
 import { Type } from "typescript";
 import { BSExpression } from "../parsers/expression";
 import { Sexpr, S } from "../sexpr";
 import { parseStatementListBS } from "../parsers/statementlist";
 import { BSNode } from "../parsers/bsnode";
+import { Scope } from "./scope";
 
 // TODO should probably rename this as to not clash with Function the js type
 
@@ -14,7 +14,7 @@ export type Function = {
   node     : BSFunctionDeclaration | BSMethodDeclaration;
   className: string | null;
   fnName   : string;
-  bsname   : string;
+  bsName   : string;
   overload : OperatorOverload | null;
 };
 
@@ -47,7 +47,7 @@ export class Functions {
     className = parent.name;
 
     this.functions.push({
-      bsname   : fqName,
+      bsName   : fqName,
       node     ,
       fnName   ,
       className,
@@ -55,28 +55,29 @@ export class Functions {
     });
   }
 
+  // TODO These are some terrible variable names.
   addFunction(node: BSFunctionDeclaration): void {
-    let fqName: string;
-    let fnName: string;
+    let bsName: string;
+    let tsName: string;
     let className: string | null = null;
 
     if (!node.name) {
       throw new Error("anonymous functions not supported yet!");
     }
 
-    fqName = "$" + node.name;
-    fnName = node.name;
+    bsName = "$" + node.name;
+    tsName = node.name;
 
     for (const fn of this.functions) {
-      if (fn.bsname === fqName) {
-        throw new Error(`Redeclaring function named ${fqName}.`);
+      if (fn.bsName === bsName) {
+        throw new Error(`Redeclaring function named ${bsName}.`);
       }
     }
 
     this.functions.push({
-      bsname   : fqName,
+      bsName   : bsName,
       node     : node,
-      fnName   ,
+      fnName   : tsName   ,
       className,
       overload : null
     });
@@ -97,7 +98,7 @@ export class Functions {
   getAll(scope: Scope | null = null): Function[] {
     if (scope === null) { scope = this.scope.topmostScope(); }
 
-    const scopes = this.scope.context.getAllScopes(scope);
+    const scopes = this.scope.getAllScopes(scope);
     const functions = ([] as Function[]).concat(...scopes.map(x => x.functions.functions));
 
     return functions;
@@ -112,7 +113,7 @@ export class Functions {
     const { type, methodName, thisExpr: thisNode, argExprs } = props;
 
     const fn = this.getMethodByNames(type, methodName);
-    const thisExpr = thisNode.compile(this.scope.context);
+    const thisExpr = thisNode.compile(this.scope);
 
     if (!thisExpr) {
       throw new Error("no thisexpr in Context#callMethod");
@@ -121,9 +122,9 @@ export class Functions {
     return S(
       "i32",
       "call",
-      fn.bsname,
+      fn.bsName,
       thisExpr,
-      ...parseStatementListBS(this.scope.context, argExprs)
+      ...parseStatementListBS(this.scope, argExprs)
     );
   }
 
@@ -136,7 +137,7 @@ export class Functions {
     const { type, thisExpr: thisNode, opName, argExprs } = props;
 
     const fn = this.getMethodByOperator(type, opName);
-    const thisExpr = thisNode.compile(this.scope.context);
+    const thisExpr = thisNode.compile(this.scope);
 
     if (!thisExpr) {
       throw new Error("wanted nonnull");
@@ -145,9 +146,9 @@ export class Functions {
     return S(
       "i32",
       "call",
-      fn.bsname,
+      fn.bsName,
       thisExpr,
-      ...parseStatementListBS(this.scope.context, argExprs)
+      ...parseStatementListBS(this.scope, argExprs)
     );
   }
 
@@ -168,7 +169,7 @@ export class Functions {
   }
 
   getMethodByNames(type: Type, methodName: string): Function {
-    const cls = this.scope.context.getScopeForClass(type);
+    const cls = this.scope.getScopeForClass(type);
 
     if (cls === null) {
       throw new Error(`Cant find appropriate method`);
@@ -181,12 +182,12 @@ export class Functions {
     }
 
     throw new Error(
-      `Failed to find function ref by class name ${this.scope.context.typeChecker.typeToString(type)} and method name ${methodName}`
+      `Failed to find function ref by class name ${this.scope.typeChecker.typeToString(type)} and method name ${methodName}`
     );
   }
 
   getMethodByOperator(type: Type, operator: Operator): Function {
-    const cls = this.scope.context.getScopeForClass(type);
+    const cls = this.scope.getScopeForClass(type);
 
     if (cls === null) {
       throw new Error(`Cant find appropriate method by operator`);
@@ -204,7 +205,7 @@ export class Functions {
     }
 
     throw new Error(
-      `Failed to find function ref by class name ${this.scope.context.typeChecker.typeToString(type)} and operator name ${operator}`
+      `Failed to find function ref by class name ${this.scope.typeChecker.typeToString(type)} and operator name ${operator}`
     );
   }
 }

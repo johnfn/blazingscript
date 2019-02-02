@@ -1,7 +1,7 @@
 import { NumericLiteral } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 
 /**
  * e.g. const x = 20;
@@ -11,7 +11,7 @@ export class BSNumericLiteral extends BSNode {
   children: BSNode[] = [];
   value   : number;
 
-  constructor(ctx: Context, node: NumericLiteral) {
+  constructor(ctx: Scope, node: NumericLiteral, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     // TODO: Won't handle weird literals?
@@ -19,7 +19,7 @@ export class BSNumericLiteral extends BSNode {
     this.value = Number(node.text);
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     return S.Const(this.value);
   }
 }

@@ -1,20 +1,20 @@
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import { StringLiteral } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
-import { BSNode } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 
 export class BSStringLiteral extends BSNode {
   children: BSNode[] = [];
   text: string;
 
-  constructor(ctx: Context, node: StringLiteral) {
+  constructor(ctx: Scope, node: StringLiteral, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.text = node.text;
-    ctx.scope.variables.addOnce("string_temp", this.tsType, "i32");
+    ctx.variables.addOnce("string_temp", this.tsType, "i32");
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     return S("i32",
       "block",
       S("[]", "result", "i32"),
@@ -23,10 +23,10 @@ export class BSStringLiteral extends BSNode {
         S("i32", "call", "$malloc", S.Const(this.text.length + 4))
       ),
       // store length first
-      S.Store(ctx.scope.variables.get("string_temp"), this.text.length),
+      S.Store(ctx.variables.get("string_temp"), this.text.length),
       // then contents
-      ...Sx.SetStringLiteralAtSexpr(ctx.scope.variables.get("string_temp"), this.text),
-      ctx.scope.variables.get("string_temp")
+      ...Sx.SetStringLiteralAtSexpr(ctx.variables.get("string_temp"), this.text),
+      ctx.variables.get("string_temp")
     );
   }
 }

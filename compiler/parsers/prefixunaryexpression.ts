@@ -1,7 +1,7 @@
 import { PrefixUnaryExpression, SyntaxKind, PrefixUnaryOperator } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
@@ -15,7 +15,7 @@ export class BSPrefixUnaryExpression extends BSNode {
   expression: BSExpression;
   operator  : PrefixUnaryOperator;
 
-  constructor(ctx: Context, node: PrefixUnaryExpression) {
+  constructor(ctx: Scope, node: PrefixUnaryExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -25,7 +25,7 @@ export class BSPrefixUnaryExpression extends BSNode {
     this.operator = node.operator;
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     switch (this.operator) {
       case SyntaxKind.ExclamationToken:
         return S("i32", "i32.eqz", this.expression.compile(ctx));

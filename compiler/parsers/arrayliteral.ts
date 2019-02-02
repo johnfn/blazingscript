@@ -1,7 +1,7 @@
-import { Context } from "../scope/context";
-import { ArrayLiteralExpression, Type } from "typescript";
+import { Scope } from "../scope/scope";
+import { ArrayLiteralExpression, Type, SignatureKind } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
-import { BSNode } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { flatArray } from "../util";
 import { buildNodeArray } from "./nodeutil";
@@ -23,49 +23,73 @@ export class BSArrayLiteral extends BSNode {
   children: BSNode[] = [];
   elements: BSExpression[] = [];
 
-  constructor(ctx: Context, node: ArrayLiteralExpression) {
+  constructor(ctx: Scope, node: ArrayLiteralExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
       this.elements = buildNodeArray(ctx, node.elements)
     );
 
-    ctx.scope.variables.addOnce("array_temp", this.tsType, "i32");
+    ctx.variables.addOnce("array_temp", this.tsType, "i32");
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     const allocatedLength = 16;
+
+    const elemSize = BSArrayLiteral.GetArrayElemSize(ctx, this.tsType);
 
     return S("i32", "block", S("[]", "result", "i32"),
       S.SetLocal(
         "array_temp",
-        S("i32", "call", "$malloc", S.Const(this.elements.length * 4 + 4))
+        S("i32", "call", "$malloc", S.Const(this.elements.length * 4 + 4 * 3))
       ),
 
       // store allocated length
-      S.Store(ctx.scope.variables.get("array_temp"), allocatedLength),
+      S.Store(ctx.variables.get("array_temp"), allocatedLength),
 
       // store length
-      S.Store(S.Add(ctx.scope.variables.get("array_temp"), 4), this.elements.length),
+      S.Store(S.Add(ctx.variables.get("array_temp"), 4), this.elements.length),
+
+      // store element size
+      S.Store(S.Add(ctx.variables.get("array_temp"), 8), elemSize),
 
       ...(
         this.elements.map((elem, i) =>
           S.Store(
-            S.Add(ctx.scope.variables.get("array_temp"), i * 4 + 4 * 2),
+            S.Add(ctx.variables.get("array_temp"), i * 4 + 4 * 3),
             elem.compile(ctx)
           )
         )
       ),
 
-      ctx.scope.variables.get("array_temp")
+      ctx.variables.get("array_temp")
     );
+  }
+
+  public static GetArrayElemSize(ctx: Scope, type: Type) {
+    const typeArguments = [...(type as any).typeArguments] as Type[];
+
+    if (typeArguments.length > 1) {
+      throw new Error("Dont handle multidimensional arrays yet!")
+    }
+
+    if (typeArguments.length === 0) {
+      throw new Error("That's not an array...")
+    }
+
+    const argName = ctx.typeChecker.typeToString(typeArguments[0]);
+
+    if (argName === "number") {
+      return 4;
+    } else {
+      throw new Error(`Unhandled array type ${ argName }`);
+    }
   }
 }
 
-export function isArrayType(ctx: Context, type: Type) {
+export function isArrayType(ctx: Scope, type: Type) {
   return (
-    // TODO: i KNOW there is a better way here.
-    ctx.typeChecker.typeToString(type) === "number[]" ||
+    (type.symbol && type.symbol.name === "Array") ||
     (type.symbol && type.symbol.name === ctx.getNativeTypeName("Array"))
   );
 }

@@ -1,7 +1,7 @@
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import { ExpressionStatement, isExpressionStatement } from "typescript";
 import { Sexpr } from "../sexpr";
-import { BSNode } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
 
@@ -13,7 +13,7 @@ export class BSExpressionStatement extends BSNode {
   children: BSNode[];
   expression: BSNode;
 
-  constructor(ctx: Context, node: ExpressionStatement) {
+  constructor(ctx: Scope, node: ExpressionStatement, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -21,7 +21,7 @@ export class BSExpressionStatement extends BSNode {
     );
   }
 
-  compile(ctx: Context): Sexpr | null {
+  compile(ctx: Scope): Sexpr | null {
     return this.expression.compile(ctx);
   }
 }

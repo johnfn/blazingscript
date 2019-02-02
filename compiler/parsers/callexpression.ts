@@ -1,8 +1,8 @@
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import { CallExpression, TypeFlags } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
 import { flatten } from "../rewriter";
-import { BSNode } from "./bsnode";
+import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { parseStatementListBS } from "./statementlist";
 import { BSIdentifier } from "./identifier";
@@ -10,6 +10,7 @@ import { BSPropertyAccessExpression } from "./propertyaccess";
 import { BSStringLiteral } from "./stringliteral";
 import { buildNode, buildNodeArray } from "./nodeutil";
 import { flatArray } from "../util";
+import { BSArrayLiteral, isArrayType } from "./arrayliteral";
 
 /**
  * e.g. const x = myFunction(1, 5);
@@ -20,7 +21,7 @@ export class BSCallExpression extends BSNode {
   expression: BSExpression;
   arguments : BSExpression[];
 
-  constructor(ctx: Context, node: CallExpression) {
+  constructor(ctx: Scope, node: CallExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -29,14 +30,14 @@ export class BSCallExpression extends BSNode {
     );
   }
 
-  compile(ctx: Context): Sexpr {
-    // TODO: This is wrong, I actualy have to resolve the lhs
-
+  compile(ctx: Scope): Sexpr {
     const special = this.handleSpecialFunctions(ctx);
 
     if (special !== null) {
       return special;
     }
+
+    // TODO: This is wrong, I actualy have to resolve the lhs
 
     if (this.expression instanceof BSIdentifier) {
       return S(
@@ -50,7 +51,7 @@ export class BSCallExpression extends BSNode {
     }
   }
 
-  handleSpecialFunctions(ctx: Context): Sexpr | null {
+  handleSpecialFunctions(ctx: Scope): Sexpr | null {
     if (this.expression instanceof BSPropertyAccessExpression) {
       // If we have Foo.Bar
 
@@ -62,7 +63,16 @@ export class BSCallExpression extends BSNode {
         fooDotBarType.flags & TypeFlags.StringLike ||
         fooDotBarType.symbol.name === ctx.getNativeTypeName("String") // for this types
       ) {
-        return ctx.scope.functions.callMethod({
+        return ctx.functions.callMethod({
+          type      : fooDotBarType,
+          methodName: justBar.text,
+          thisExpr  : fooDotBar,
+          argExprs  : [...this.arguments]
+        });
+      } else if (
+        isArrayType(ctx, fooDotBarType)
+      ) {
+        return ctx.functions.callMethod({
           type      : fooDotBarType,
           methodName: justBar.text,
           thisExpr  : fooDotBar,
@@ -79,6 +89,8 @@ export class BSCallExpression extends BSNode {
         return res;
       } else if (this.expression.text === "memread") {
         return S.Load("i32", this.arguments[0].compile(ctx)!);
+      } else if (this.expression.text === "elemSize") {
+        return S.Const(BSArrayLiteral.GetArrayElemSize(ctx, this.arguments[0].tsType));
       } else if (this.expression.text === "divfloor") {
         return S(
           "i32",
@@ -102,11 +114,11 @@ export class BSCallExpression extends BSNode {
           putValueInMemory: Sexpr[];
         }[] = [];
 
-        let offset = 10000;
+        let offset = 50000;
 
         for (const arg of this.arguments) {
           if (arg instanceof BSStringLiteral) {
-            const str = arg.text.slice(1, -1);
+            const str = arg.text;
 
             logArgs.push({
               size: S.Const(str.length),
@@ -119,11 +131,11 @@ export class BSCallExpression extends BSNode {
           } else if (arg instanceof BSIdentifier) {
             if (arg.tsType.flags & TypeFlags.StringLike) {
               logArgs.push({
-                size: S.Load("i32", ctx.scope.variables.get(arg.text)),
-                start: ctx.scope.variables.get(arg.text),
+                size: S.Load("i32", ctx.variables.get(arg.text)),
+                start: ctx.variables.get(arg.text),
                 type: 2,
                 putValueInMemory: [
-                  S.Store(S.Const(offset), ctx.scope.variables.get(arg.text))
+                  S.Store(S.Const(offset), ctx.variables.get(arg.text))
                 ]
               });
             } else if (arg.tsType.flags & TypeFlags.NumberLike) {
@@ -132,14 +144,12 @@ export class BSCallExpression extends BSNode {
                 start: S.Const(offset),
                 type: 1,
                 putValueInMemory: [
-                  S.Store(S.Const(offset), ctx.scope.variables.get(arg.text))
+                  S.Store(S.Const(offset), ctx.variables.get(arg.text))
                 ]
               });
             } else {
               throw new Error(
-                `dont know how to log that!! ${
-                  TypeFlags[arg.tsType.flags]
-                }... ${arg.tsType.flags & TypeFlags.String} in ${arg.text}`
+                `dont know how to log that!! ${ TypeFlags[arg.tsType.flags] }... ${arg.tsType.flags & TypeFlags.String} in ${arg.text}`
               );
             }
 

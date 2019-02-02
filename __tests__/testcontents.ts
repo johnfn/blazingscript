@@ -5,12 +5,13 @@
 // types specially handled by the BlazingScript compiler
 
 declare type LogType = string | number;
-declare const log: (a: LogType, b?: LogType, c?: LogType) => void;
+declare const log     : (a: LogType, b?: LogType, c?: LogType) => void;
 declare const memwrite: (pos: number, val: number) => void;
-declare const memread: (pos: number) => number;
+declare const memread : (pos: number) => number;
 declare const divfloor: (a: number, b: number) => number;
 declare const operator: (type: "+" | "===" | "!==" | "[]") => ((target: any, propertyKey: string, descriptor: PropertyDescriptor) => void);
-declare const offset: (offset: number) => any;
+declare const offset  : (offset: number) => any;
+declare const elemSize: <T> (array: Array<T> | ArrayInternal<T>) => number;
 
 @jsType("String")
 class StringInternal {
@@ -131,19 +132,31 @@ class ArrayInternal<T> {
   @offset(4)
   length = 0;
 
+  @offset(8)
+  elemSize = 0;
+
   [key: number]: T;
   @operator("[]")
   index(i: number): T {
-    return memread(((this as any) as number) + 4 * 2 + i * 4) as any as T;
+    return memread(((this as any) as number) + 4 * 3 + i * this.elemSize) as any as T;
   }
 
-  getAllocatedLength() {
-    return this.allocatedLength;
+  push(value: number) {
+    if (this.length >= this.allocatedLength) {
+      this.allocatedLength = this.allocatedLength * 2;
+    }
+
+    memwrite(
+      ((this as any) as number) +
+      4 * 3 +
+      this.length * this.elemSize, value as any as number);
+
+    this.length = this.length + 1;
   }
 }
 
 interface Array<T> extends ArrayInternal<T> {
-  [key: number]: T;
+  // [key: number]: T;
 }
 
 function getOffset(): number {
@@ -434,6 +447,20 @@ function test_array_access() {
     array[0] === 1 &&
     array[1] === 2 &&
     array[2] === 3
+  );
+}
+
+function test_easy_push() {
+  const array = [3, 2, 1];
+
+  array.push(1);
+  array.push(2);
+  array.push(3);
+  array.push(4);
+
+  return (
+    (array[0] + array[1] + array[2] + array[3] + array[4] + array[5] + array[6]) === 16 &&
+    array.length === 7
   );
 }
 

@@ -1,7 +1,7 @@
 import { BSExpression, BSBindingName } from "./expression";
 import { VariableDeclaration, TypeFlags } from "typescript";
-import { BSNode } from "./bsnode";
-import { Context } from "../scope/context";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { Scope } from "../scope/scope";
 import { S, Sexpr } from "../sexpr";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
@@ -13,7 +13,7 @@ export class BSVariableDeclaration extends BSNode {
   name       : string;
   initializer: BSExpression | null;
 
-  constructor(ctx: Context, node: VariableDeclaration) {
+  constructor(ctx: Scope, node: VariableDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -26,7 +26,7 @@ export class BSVariableDeclaration extends BSNode {
       this.tsType.flags & TypeFlags.StringLike ||
       isArrayType(ctx, this.tsType)
     ) {
-      ctx.scope.variables.add({ name: this.nameNode.text, tsType: this.tsType, wasmType: "i32", isParameter: false });
+      ctx.variables.add({ name: this.nameNode.text, tsType: this.tsType, wasmType: "i32", isParameter: false });
     } else {
       throw new Error(`Do not know how to handle that type: ${ TypeFlags[this.tsType.flags] } for ${ this.fullText }`);
     }
@@ -34,7 +34,7 @@ export class BSVariableDeclaration extends BSNode {
     this.name = this.nameNode.text;
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     const name = this.name;
 
     return S.SetLocal(

@@ -1,9 +1,9 @@
 import { Block, isSwitchStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseStatementListBS } from "./statementlist";
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import { BSStatement } from "./statement";
-import { BSNode } from "./bsnode";
+import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
 import { flatArray } from "../util";
 import { buildNode, buildNodeArray } from "./nodeutil";
 
@@ -15,7 +15,7 @@ export class BSBlock extends BSNode {
   children : BSNode[];
   statement: BSStatement[] | null;
 
-  constructor(ctx: Context, node: Block) {
+  constructor(ctx: Scope, node: Block, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -23,7 +23,7 @@ export class BSBlock extends BSNode {
     );
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     return S.Block(parseStatementListBS(ctx, this.children));
   }
 }

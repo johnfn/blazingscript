@@ -1,7 +1,7 @@
 import { PropertyDeclaration } from "typescript";
 import { Sexpr } from "../sexpr";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSDecorator } from "./decorator";
 import { BSCallExpression } from "./callexpression";
 import { BSIdentifier } from "./identifier";
@@ -19,7 +19,7 @@ export class BSPropertyDeclaration extends BSNode {
   decorators: BSDecorator[];
   name      : BSPropertyName;
 
-  constructor(ctx: Context, node: PropertyDeclaration) {
+  constructor(ctx: Scope, node: PropertyDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -31,7 +31,7 @@ export class BSPropertyDeclaration extends BSNode {
 
     if (offset !== null) {
       if (this.name instanceof BSIdentifier) {
-        ctx.scope.properties.add({
+        ctx.properties.add({
           name    : this.name.text,
           offset  : offset,
           tsType  : this.tsType,
@@ -43,7 +43,7 @@ export class BSPropertyDeclaration extends BSNode {
     }
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     throw new Error("Method not implemented.");
   }
 

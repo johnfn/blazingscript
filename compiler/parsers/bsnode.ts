@@ -1,6 +1,12 @@
 import { Sexpr } from "../sexpr";
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import { Node, Type, Modifier } from "typescript";
+
+export type NodeInfo = {
+  isLhs: boolean;
+};
+
+export const defaultNodeInfo = Object.freeze({ isLhs: false });
 
 let uid = 0;
 export function getUid() { return ++uid; }
@@ -15,7 +21,7 @@ export abstract class BSNode {
   modifiers        : Modifier[];
   uid              : number;
 
-  constructor(ctx: Context, node: Node) {
+  constructor(ctx: Scope, node: Node, info: NodeInfo = defaultNodeInfo) {
     this.uid = getUid();
     this.modifiers = [...(node.modifiers || [])];
 
@@ -37,5 +43,5 @@ export abstract class BSNode {
 
   readableName(): string { return "unimplemented"; }
 
-  abstract compile(ctx: Context): Sexpr | null;
+  abstract compile(ctx: Scope): Sexpr | null;
 }

@@ -1,7 +1,7 @@
 import { PropertyAccessExpression, TypeFlags } from "typescript";
-import { Sexpr } from "../sexpr";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Sexpr, S } from "../sexpr";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { BSIdentifier } from "./identifier";
 import { buildNode } from "./nodeutil";
@@ -15,9 +15,12 @@ export class BSPropertyAccessExpression extends BSNode {
   children  : BSNode[];
   expression: BSExpression;
   name      : BSIdentifier;
+  isLhs     : boolean;
 
-  constructor(ctx: Context, node: PropertyAccessExpression) {
+  constructor(ctx: Scope, node: PropertyAccessExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
+
+    this.isLhs = info.isLhs;
 
     this.children = flatArray(
       this.expression = buildNode(ctx, node.expression),
@@ -25,7 +28,13 @@ export class BSPropertyAccessExpression extends BSNode {
     );
   }
 
-  compile(ctx: Context): Sexpr {
-    return ctx.scope.properties.get(this.expression, this.name.text);
+  compile(ctx: Scope): Sexpr {
+    const prop = ctx.properties.get({ expr: this.expression, exprCtx: ctx, name: this.name.text });
+
+    if (this.isLhs) {
+      return prop;
+    } else {
+      return S.Load("i32", prop);
+    }
   }
 }

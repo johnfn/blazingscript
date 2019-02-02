@@ -1,5 +1,5 @@
 import { Sexpr, S } from "../sexpr";
-import { Scope } from "./context";
+import { Scope } from "./scope";
 
 export type Loop = {
   continueLabel: string;
@@ -22,13 +22,13 @@ export class Loops {
     Loops.NumberOfLoopsSeen++;
 
     this.loops.push({
-      continueLabel: `$loopcontinue${ Scope.NumberOfLoopsSeen }`,
-      breakLabel   : `$loopbreak${ Scope.NumberOfLoopsSeen }`,
+      continueLabel: `$loopcontinue${ Loops.NumberOfLoopsSeen }`,
+      breakLabel   : `$loopbreak${ Loops.NumberOfLoopsSeen }`,
       inc
     });
   }
 
-  pop() {
+  pop(): void {
     this.loops.pop();
   }
 

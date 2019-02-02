@@ -1,15 +1,15 @@
 import { TypeAliasDeclaration } from "typescript";
-import { BSNode } from "./bsnode";
-import { Context } from "../scope/context";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { Scope } from "../scope/scope";
 
 export class BSTypeAliasDeclaration extends BSNode {
   children: BSNode[] = [];
 
-  constructor(ctx: Context, node: TypeAliasDeclaration) {
+  constructor(ctx: Scope, node: TypeAliasDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
   }
 
-  compile(ctx: Context): null {
+  compile(ctx: Scope): null {
     return null;
   }
 }

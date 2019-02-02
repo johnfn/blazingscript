@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { sexprToString, Sexpr, S } from "./sexpr";
-import { Context } from "./scope/context";
+import { Scope } from "./scope/scope";
 import { BSSourceFile } from "./parsers/sourcefile";
 
 export const THIS_NAME = "__this";
@@ -76,12 +76,13 @@ export class Program {
   }
 
   parse(): string {
-    const ctx = new Context(this.typeChecker);
     const source = this.program.getSourceFile("file.ts");
 
     if (!source) {
       throw new Error("source undefined, something has gone horribly wrong!!!");
     }
+
+    const ctx = new Scope(this.typeChecker, source, null, null);
 
     const result = new BSSourceFile(ctx, source).compile(ctx);
 

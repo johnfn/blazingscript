@@ -1,18 +1,18 @@
 import { ThisExpression } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 
 export class BSThisKeyword extends BSNode {
   children: BSNode[];
 
-  constructor(ctx: Context, node: ThisExpression) {
+  constructor(ctx: Scope, node: ThisExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = [];
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     return S.GetLocal("i32", "__this");
   }
 }

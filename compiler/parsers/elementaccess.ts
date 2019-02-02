@@ -4,8 +4,8 @@ import {
   ElementAccessExpression
 } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { Operator } from "./method";
 import { isArrayType } from "./arrayliteral";
@@ -23,7 +23,7 @@ export class BSElementAccessExpression extends BSNode {
 
   fullText: string;
 
-  constructor(ctx: Context, node: ElementAccessExpression) {
+  constructor(ctx: Scope, node: ElementAccessExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -34,12 +34,12 @@ export class BSElementAccessExpression extends BSNode {
     this.fullText = node.getFullText();
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     const arg = this.argument;
     const array = this.element;
     const arrayType = this.element.tsType;
 
-    return ctx.scope.functions.callMethodByOperator({
+    return ctx.functions.callMethodByOperator({
       type    : arrayType,
       opName  : Operator["[]"],
       thisExpr: array,

@@ -1,7 +1,7 @@
 import { ReturnStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
 
@@ -9,7 +9,7 @@ export class BSReturnStatement extends BSNode {
   children  : BSNode[];
   expression: BSNode | null;
 
-  constructor(ctx: Context, node: ReturnStatement) {
+  constructor(ctx: Scope, node: ReturnStatement, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -17,7 +17,7 @@ export class BSReturnStatement extends BSNode {
     );
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     if (this.expression) {
       const exprCompiled = this.expression.compile(ctx);
 

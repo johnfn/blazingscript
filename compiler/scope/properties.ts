@@ -1,4 +1,4 @@
-import { Property, Scope } from "./context";
+import { Property, Scope } from "./scope";
 import { Type } from "typescript";
 import { WasmType, Sexpr, S } from "../sexpr";
 import { BSExpression } from "../parsers/expression";
@@ -25,13 +25,13 @@ export class Properties {
     return this.properties;
   }
 
-  get(
-    expr: BSExpression,
-    name: string
-  ): Sexpr {
+  get({ expr, exprCtx, name }: {
+    expr   : BSExpression,
+    exprCtx: Scope,
+    name   : string
+  }): Sexpr {
     // TODO: I could store the properties directly on the class node itself, so that i dont have to go hunting them down later.
-    // TODO: This is bad?
-    const cls = this.scope.context.getScopeForClass(expr.tsType);
+    const cls = this.scope.getScopeForClass(expr.tsType);
 
     if (cls === null) {
       throw new Error(`Cant find appropriate scope for ${ expr.fullText }`);
@@ -43,13 +43,13 @@ export class Properties {
     const relevantProperty = relevantProperties[0];
 
     if (!relevantProperty) {
-      throw new Error(`cant find property in class`);
+      throw new Error(`cant find property in class: ${ expr.fullText }`);
     }
 
-    const res = S.Load("i32", S.Add(
-      expr.compile(cls.context),
+    const res = S.Add(
+      expr.compile(exprCtx),
       relevantProperty.offset
-    ));
+    );
 
     return res;
   }

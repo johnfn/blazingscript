@@ -6,10 +6,10 @@ import {
   BinaryOperator,
   Token
 } from "typescript";
-import { Sexpr, S } from "../sexpr";
+import { Sexpr, S, sexprToString } from "../sexpr";
 import { Operator } from "./method";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSIdentifier } from "./identifier";
 import { flatArray } from "../util";
 import { buildNode } from "./nodeutil";
@@ -26,20 +26,25 @@ export class BSBinaryExpression extends BSNode {
   operatorToken: Token<BinaryOperator>;
   fullText     : string;
 
-  constructor(ctx: Context, node: BinaryExpression) {
+  constructor(ctx: Scope, node: BinaryExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.operatorToken = node.operatorToken;
+    const nodeInfo: NodeInfo = { isLhs: false }
+
+    if (node.operatorToken.kind === SyntaxKind.EqualsToken) {
+      nodeInfo.isLhs = true;
+    }
 
     this.children = flatArray(
-      this.left  = buildNode(ctx, node.left),
+      this.left  = buildNode(ctx, node.left, nodeInfo),
       this.right = buildNode(ctx, node.right),
     );
 
     this.fullText = node.getFullText();
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     const leftParsed  = this.left.compile(ctx);
     const rightParsed = this.right.compile(ctx);
 
@@ -47,9 +52,7 @@ export class BSBinaryExpression extends BSNode {
       if (this.left instanceof BSIdentifier) {
         return S.SetLocal(this.left.text, rightParsed);
       } else {
-        throw new Error(
-          "literally no idea what to do with other types of LHSs in assignments!"
-        );
+        return S.Store(leftParsed, rightParsed);
       }
     }
 
@@ -151,21 +154,21 @@ export class BSBinaryExpression extends BSNode {
     ) {
       switch (this.operatorToken.kind) {
         case SyntaxKind.EqualsEqualsEqualsToken:
-          return ctx.scope.functions.callMethodByOperator({
+          return ctx.functions.callMethodByOperator({
             type    : this.left.tsType,
             opName  : Operator["==="],
             thisExpr: this.left,
             argExprs: [this.right]
           });
         case SyntaxKind.ExclamationEqualsEqualsToken:
-          return ctx.scope.functions.callMethodByOperator({
+          return ctx.functions.callMethodByOperator({
             type    : this.left.tsType,
             opName  : Operator["!=="],
             thisExpr: this.left,
             argExprs: [this.right]
           });
         case SyntaxKind.PlusToken:
-          return ctx.scope.functions.callMethodByOperator({
+          return ctx.functions.callMethodByOperator({
             type    : this.left.tsType,
             opName  : Operator["+"],
             thisExpr: this.left,

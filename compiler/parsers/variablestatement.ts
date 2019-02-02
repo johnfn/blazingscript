@@ -1,15 +1,15 @@
 import { VariableStatement, SyntaxKind, Modifier } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
-import { BSNode } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 
 export class BSVariableStatement extends BSNode {
   children       : BSNode[];
   declarationList: BSVariableDeclarationList | null;
   isDeclare      = false;
 
-  constructor(ctx: Context, node: VariableStatement) {
+  constructor(ctx: Scope, node: VariableStatement, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     for (const mod of this.modifiers || []) {
@@ -39,7 +39,7 @@ export class BSVariableStatement extends BSNode {
     }
   }
 
-  compile(ctx: Context): Sexpr | null {
+  compile(ctx: Scope): Sexpr | null {
     if (this.isDeclare) {
       return null
     } else {

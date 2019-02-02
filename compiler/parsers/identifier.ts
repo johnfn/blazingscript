@@ -1,7 +1,7 @@
 import { Identifier } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 
 /**
  * e.g. const foo = 5
@@ -11,13 +11,13 @@ export class BSIdentifier extends BSNode {
   children: BSNode[] = [];
   text: string;
 
-  constructor(ctx: Context, node: Identifier) {
+  constructor(ctx: Scope, node: Identifier, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.text = node.text;
   }
 
-  compile(ctx: Context): Sexpr {
-    return ctx.scope.variables.get(this.text);
+  compile(ctx: Scope): Sexpr {
+    return ctx.variables.get(this.text);
   }
 }

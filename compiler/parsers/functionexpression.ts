@@ -2,8 +2,8 @@ import {
   FunctionDeclaration,
 } from "typescript";
 import { Sexpr, Param, S } from "../sexpr";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 
 /**
  * e.g. const x = function () { }
@@ -12,11 +12,11 @@ import { BSNode } from "./bsnode";
 export class BSFunctionExpression extends BSNode {
   children = [];
 
-  constructor(ctx: Context, node: FunctionDeclaration) {
+  constructor(ctx: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     throw new Error("unhandled node: function expression")
   }
 }

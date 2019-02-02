@@ -6,11 +6,11 @@ import {
 } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseStatementListBS } from "./statementlist";
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import { BSFunctionDeclaration } from "./function";
 import { BSMethodDeclaration } from "./method";
 import { BSStatement } from "./statement";
-import { BSNode } from "./bsnode";
+import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
 import { BSClassDeclaration } from "./class";
 import { BSCallExpression } from "./callexpression";
 import { BSIdentifier } from "./identifier";
@@ -33,9 +33,8 @@ export class BSSourceFile extends BSNode {
   statements       : BSStatement[];
 
   fileName         : string;
-  jsTypes          : { [jsType: string]: string };
 
-  constructor(ctx: Context, file: SourceFile) {
+  constructor(ctx: Scope, file: SourceFile, info: NodeInfo = defaultNodeInfo) {
     super(ctx, file);
 
     this.fileName = file.fileName;
@@ -43,8 +42,6 @@ export class BSSourceFile extends BSNode {
     this.children = flatArray(
       this.statements = buildNodeArray(ctx, file.statements)
     );
-
-    this.jsTypes = this.findAllJsTypes();
   }
 
   private findAllJsTypes(): { [jsType: string]: string } {
@@ -79,10 +76,10 @@ export class BSSourceFile extends BSNode {
     return jsTypes;
   }
 
-  compile(ctx: Context): Sexpr {
-    const functions         = ctx.scope.functions.getAll();
+  compile(ctx: Scope): Sexpr {
+    const functions         = ctx.functions.getAll();
     const exportedFunctions = functions.filter(f => f.node instanceof BSFunctionDeclaration);
-    const jsTypes           = this.jsTypes;
+    const jsTypes           = this.findAllJsTypes();
 
     // console.log(functions.map(x => x.bsname));
 
@@ -98,18 +95,11 @@ export class BSSourceFile extends BSNode {
         if (fn.node instanceof BSFunctionDeclaration) {
           return fn.node.compile(ctx);
         } else if (fn.node instanceof BSMethodDeclaration) {
-          // TODO: Fix this up
-
-          ctx.pushScopeFor(fn.node.parent);
-          const result = fn.node.compile(ctx);
-          ctx.popScope();
-
-          return result;
+          return fn.node.compile(ctx.getChildScope(fn.node.parent));
         }
 
         throw new Error("i got some weird type of function i cant handle.");
       }),
-      // ...parseStatementListBS(ctx, this.statements),
       ...exportedFunctions.map(fn => S.Export(fn.fnName))
     );
   }

@@ -1,7 +1,7 @@
 import { ConditionalExpression } from "typescript";
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import { Sexpr, S } from "../sexpr";
-import { BSNode } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { flatArray } from "../util";
 import { buildNode } from "./nodeutil";
@@ -17,7 +17,7 @@ export class BSConditionalExpression extends BSNode {
   whenFalse: BSExpression;
   whenTrue : BSExpression;
 
-  constructor(ctx: Context, node: ConditionalExpression) {
+  constructor(ctx: Scope, node: ConditionalExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -27,7 +27,7 @@ export class BSConditionalExpression extends BSNode {
     );
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     // TODO this is wrong because it always evaluates both sides
 
     const whenTrueExpr = this.whenTrue.compile(ctx);

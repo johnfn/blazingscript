@@ -1,8 +1,8 @@
 import { IfStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import { BSStatement } from "./statement";
-import { BSNode } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
@@ -18,7 +18,7 @@ export class BSIfStatement extends BSNode {
   ifTrue    : BSStatement | null;
   ifFalse   : BSStatement | null;
 
-  constructor(ctx: Context, node: IfStatement) {
+  constructor(ctx: Scope, node: IfStatement, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -28,7 +28,7 @@ export class BSIfStatement extends BSNode {
     );
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     let thn = (this.ifTrue && this.ifTrue.compile(ctx)) || S.Const(0);
     let els = (this.ifFalse && this.ifFalse.compile(ctx)) || S.Const(0);
 

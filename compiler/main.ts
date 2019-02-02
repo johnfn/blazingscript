@@ -2,10 +2,11 @@ import fs from "fs";
 import { Program } from "./program";
 
 // TODO:
-// * fix scope abstraction and then make context into scope
-// * @offset() for members which are memory offsets.
 // * should work out what left hand side expression is. see: decorator.ts
+// * rename ctx to environment (or env i guess.)
 // * better error handling
+// * type parameters are hard - i have to generate the same code for each thing they could plausibly be.
+// * offset() could also indicate arrays.
 // * the initial pass to add functions to the file is now entirely unnecessary
 // * Figure out some way to write Sexprs better.
 // * rename terrible variable names like fd vdl etc etc etc
@@ -47,12 +48,6 @@ import { Program } from "./program";
 //   * pull out constant expressions that are repeatedly evaluated
 //   * inline functions
 
-// TODO: double pass: convert to reasonable data structure first, then convert to sexprs
-// First pass:
-//   1. convert to reasonable data structure.
-//   2. find all
-//     1. local variables
-//     2. exported functions
 // TODO: generate a d.ts file for the exported members of the wasm thing
 // TODO: actually check for TS errors n stuff.
 

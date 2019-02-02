@@ -1,7 +1,7 @@
 import { PostfixUnaryExpression } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Context } from "../scope/context";
-import { BSNode } from "./bsnode";
+import { Scope } from "../scope/scope";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
 
@@ -14,7 +14,7 @@ export class BSPostfixUnaryExpression extends BSNode {
   expression : BSNode;
   operandName: string;
 
-  constructor(ctx: Context, node: PostfixUnaryExpression) {
+  constructor(ctx: Scope, node: PostfixUnaryExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -24,7 +24,7 @@ export class BSPostfixUnaryExpression extends BSNode {
     this.operandName = node.operand.getText();
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     // TODO: Check types! (mostly vs f32 etc)
     // TODO: Return previous value.
     // TODO: consider ++ vs --

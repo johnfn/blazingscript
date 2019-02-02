@@ -1,4 +1,4 @@
-import { Context } from "../scope/context";
+import { Scope } from "../scope/scope";
 import {
   Statement,
   SyntaxKind,
@@ -28,20 +28,20 @@ import { BSTypeAliasDeclaration } from "./typealias";
 import { BSInterfaceDeclaration } from "./interface";
 import { BSFunctionDeclaration } from "./function";
 import { BSClassDeclaration } from "./class";
-import { BSNode } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 
 export class BSStatement extends BSNode {
   children: BSNode[];
   statement : BSNode;
 
-  constructor(ctx: Context, statement: Statement) {
+  constructor(ctx: Scope, statement: Statement, info: NodeInfo = defaultNodeInfo) {
     super(ctx, statement);
 
     this.statement = this.getStatement(ctx, statement);
     this.children = [this.statement];
   }
 
-  getStatement(ctx: Context, statement: Statement): BSNode {
+  getStatement(ctx: Scope, statement: Statement): BSNode {
     switch (statement.kind) {
       case SyntaxKind.ExpressionStatement:
         return new BSExpressionStatement(ctx, statement as ExpressionStatement);
@@ -72,7 +72,7 @@ export class BSStatement extends BSNode {
     }
   }
 
-  compile(ctx: Context): Sexpr | null {
+  compile(ctx: Scope): Sexpr | null {
     return this.statement.compile(ctx);
   }
 }

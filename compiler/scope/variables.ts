@@ -1,6 +1,6 @@
-import { Scope } from "./context";
 import { Sexpr, S, WasmType } from "../sexpr";
 import { Type } from "typescript";
+import { Scope } from "./scope";
 
 export type Variable = {
   tsType     : Type | undefined;

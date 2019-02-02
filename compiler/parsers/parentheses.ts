@@ -1,6 +1,6 @@
 import { ParenthesizedExpression } from "typescript";
-import { BSNode } from "./bsnode";
-import { Context } from "../scope/context";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { Scope } from "../scope/scope";
 import { Sexpr } from "../sexpr";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
@@ -14,7 +14,7 @@ export class BSParenthesizedExpression extends BSNode {
   children  : BSNode[];
   expression: BSExpression;
 
-  constructor(ctx: Context, node: ParenthesizedExpression) {
+  constructor(ctx: Scope, node: ParenthesizedExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = flatArray(
@@ -22,7 +22,7 @@ export class BSParenthesizedExpression extends BSNode {
     );
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     return this.expression.compile(ctx);
   }
 }

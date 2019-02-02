@@ -1,6 +1,6 @@
 import { ParameterDeclaration, TypeFlags } from "typescript";
-import { BSNode } from "./bsnode";
-import { Context } from "../scope/context";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { Scope } from "../scope/scope";
 import { buildNode } from "./nodeutil";
 import { isArrayType } from "./arrayliteral";
 import { flatArray } from "../util";
@@ -15,7 +15,7 @@ export class BSParameter extends BSNode {
   initializer: BSNode | null;
   bindingName: BSBindingName;
 
-  constructor(ctx: Context, node: ParameterDeclaration) {
+  constructor(ctx: Scope, node: ParameterDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     if (this.tsType === undefined) {
@@ -34,13 +34,13 @@ export class BSParameter extends BSNode {
       this.tsType.flags & TypeFlags.StringLike ||
       isArrayType(ctx, this.tsType)
     ) {
-      ctx.scope.variables.add({ name: this.bindingName.text, tsType: this.tsType, wasmType: "i32", isParameter: true });
+      ctx.variables.add({ name: this.bindingName.text, tsType: this.tsType, wasmType: "i32", isParameter: true });
     } else {
       throw new Error(`Do not know how to handle that type: ${ TypeFlags[this.tsType.flags] } for ${ this.fullText }`);
     }
   }
 
-  compile(ctx: Context): null {
+  compile(ctx: Scope): null {
     throw new Error("Trying to compile a parameter but dunno how");
   }
 }

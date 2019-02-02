@@ -1,5 +1,5 @@
-import { BSNode } from "./bsnode";
-import { Context } from "../scope/context";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { Scope } from "../scope/scope";
 import { Sexpr, S } from "../sexpr";
 import { Node } from "typescript";
 
@@ -10,13 +10,13 @@ import { Node } from "typescript";
 export class BSFalseKeyword extends BSNode {
   children: BSNode[];
 
-  constructor(ctx: Context, node: Node) {
+  constructor(ctx: Scope, node: Node, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     this.children = [];
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     return S.Const(0);
   }
 }

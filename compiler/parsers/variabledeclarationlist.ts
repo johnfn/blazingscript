@@ -1,7 +1,7 @@
 import { VariableDeclarationList, SyntaxKind } from "typescript";
 import { BSVariableDeclaration } from "./variabledeclaration";
-import { BSNode } from "./bsnode";
-import { Context } from "../scope/context";
+import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { Scope } from "../scope/scope";
 import { S, Sexpr } from "../sexpr";
 import { buildNodeArray } from "./nodeutil";
 
@@ -10,7 +10,7 @@ export class BSVariableDeclarationList extends BSNode {
   declarations: BSVariableDeclaration[];
   isDeclare   = false;
 
-  constructor(ctx: Context, node: VariableDeclarationList) {
+  constructor(ctx: Scope, node: VariableDeclarationList, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
     for (const mod of this.modifiers || []) {
@@ -36,7 +36,7 @@ export class BSVariableDeclarationList extends BSNode {
     this.children = this.declarations;
   }
 
-  compile(ctx: Context): Sexpr {
+  compile(ctx: Scope): Sexpr {
     if (this.isDeclare) {
       return S.Const(0);
     } else {
