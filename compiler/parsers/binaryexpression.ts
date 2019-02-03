@@ -156,21 +156,21 @@ export class BSBinaryExpression extends BSNode {
         case SyntaxKind.EqualsEqualsEqualsToken:
           return ctx.functions.callMethodByOperator({
             type    : this.left.tsType,
-            opName  : Operator["==="],
+            opName  : Operator.TripleEquals,
             thisExpr: this.left,
             argExprs: [this.right]
           });
         case SyntaxKind.ExclamationEqualsEqualsToken:
           return ctx.functions.callMethodByOperator({
             type    : this.left.tsType,
-            opName  : Operator["!=="],
+            opName  : Operator.NotEquals,
             thisExpr: this.left,
             argExprs: [this.right]
           });
         case SyntaxKind.PlusToken:
           return ctx.functions.callMethodByOperator({
             type    : this.left.tsType,
-            opName  : Operator["+"],
+            opName  : Operator.Add,
             thisExpr: this.left,
             argExprs: [this.right]
           });

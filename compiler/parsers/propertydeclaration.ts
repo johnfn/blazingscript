@@ -1,14 +1,18 @@
 import { PropertyDeclaration } from "typescript";
 import { Sexpr } from "../sexpr";
-import { Scope } from "../scope/scope";
+import { Scope, InternalPropertyType } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSDecorator } from "./decorator";
 import { BSCallExpression } from "./callexpression";
 import { BSIdentifier } from "./identifier";
 import { BSNumericLiteral } from "./numericliteral";
 import { buildNodeArray, buildNode } from "./nodeutil";
-import { flatArray } from "../util";
+import { flatArray, assertNever } from "../util";
 import { BSPropertyName } from "./expression";
+
+type PropertyType =
+  | { type: InternalPropertyType.Value, offset: number }
+  | { type: InternalPropertyType.Array, offset: number }
 
 /**
  * e.g. class Foo { x: number = 5 }
@@ -27,16 +31,29 @@ export class BSPropertyDeclaration extends BSNode {
       this.name       = buildNode(ctx, node.name),
     );
 
-    const offset = this.getOffset(this.decorators);
+    const propInfo = this.getPropertyType(this.decorators);
 
-    if (offset !== null) {
+    if (propInfo !== null) {
       if (this.name instanceof BSIdentifier) {
-        ctx.properties.add({
-          name    : this.name.text,
-          offset  : offset,
-          tsType  : this.tsType,
-          wasmType: "i32",
-        });
+        if (propInfo.type === InternalPropertyType.Value) {
+          ctx.properties.add({
+            name    : this.name.text,
+            offset  : propInfo.offset,
+            tsType  : this.tsType,
+            type    : InternalPropertyType.Value,
+            wasmType: "i32",
+          });
+        } else if (propInfo.type === InternalPropertyType.Array) {
+          ctx.properties.add({
+            name    : this.name.text,
+            offset  : propInfo.offset,
+            tsType  : this.tsType,
+            type    : InternalPropertyType.Array,
+            wasmType: "i32",
+          });
+        } else {
+          assertNever(propInfo);
+        }
       } else {
         throw new Error("I currently dont handle property names that aren't identifiers.");
       }
@@ -47,7 +64,7 @@ export class BSPropertyDeclaration extends BSNode {
     throw new Error("Method not implemented.");
   }
 
-  getOffset(decorators: BSDecorator[]): number | null {
+  getPropertyType(decorators: BSDecorator[]): PropertyType | null {
     for (const deco of decorators) {
       if (!(deco.expression instanceof BSCallExpression)) {
         continue;
@@ -63,10 +80,20 @@ export class BSPropertyDeclaration extends BSNode {
         const firstArgument = deco.expression.arguments[0];
 
         if (!(firstArgument instanceof BSNumericLiteral)) {
-          continue;
+          throw new Error("Invalid arguments to @property")
         }
 
-        return firstArgument.value;
+        return { type: InternalPropertyType.Value, offset: firstArgument.value };
+      }
+
+      if (calledFunction === "arrayProperty") {
+        const firstArgument = deco.expression.arguments[0];
+
+        if (!(firstArgument instanceof BSNumericLiteral)) {
+          throw new Error("Invalid arguments to @arrayProperty")
+        }
+
+        return { type: InternalPropertyType.Array, offset: firstArgument.value };
       }
     }
 

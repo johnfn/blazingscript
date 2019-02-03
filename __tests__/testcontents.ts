@@ -10,7 +10,8 @@ declare const memwrite: (pos: number, val: number) => void;
 declare const memread : (pos: number) => number;
 declare const divfloor: (a: number, b: number) => number;
 declare const operator: (type: "+" | "===" | "!==" | "[]") => ((target: any, propertyKey: string, descriptor: PropertyDescriptor) => void);
-declare const property  : (offset: number) => any;
+declare const property: (offset: number) => any;
+declare const arrayProperty: (offset: number) => any;
 declare const elemSize: <T> (array: Array<T> | ArrayInternal<T>) => number;
 
 @jsType("String")
@@ -134,6 +135,9 @@ class ArrayInternal<T> {
 
   @property(8)
   elemSize = 0;
+
+  @arrayProperty(12)
+  contents: number[] = [];
 
   [key: number]: T;
   @operator("[]")

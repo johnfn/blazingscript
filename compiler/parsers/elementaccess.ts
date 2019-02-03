@@ -41,7 +41,7 @@ export class BSElementAccessExpression extends BSNode {
 
     return ctx.functions.callMethodByOperator({
       type    : arrayType,
-      opName  : Operator["[]"],
+      opName  : Operator.ArrayIndex,
       thisExpr: array,
       argExprs: [arg]
     });

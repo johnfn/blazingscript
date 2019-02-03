@@ -15,10 +15,10 @@ import { buildNode, buildNodeArray } from "./nodeutil";
 import { BSClassDeclaration } from "./class";
 
 export enum Operator {
-  "===" = "===",
-  "!==" = "!==",
-  "+"   = "+",
-  "[]"  = "[]",
+  TripleEquals = "===",
+  NotEquals    = "!==",
+  Add          = "+",
+  ArrayIndex   = "[]",
 };
 
 export type OperatorOverload = {
@@ -91,14 +91,14 @@ export class BSMethodDeclaration extends BSNode {
 
         const opName = firstArgument.text as Operator;
 
-        if (opName === Operator["!=="]) {
-          return { operator: Operator["!=="] };
-        } else if (opName === Operator["+"]) {
-          return { operator: Operator["+"] };
-        } else if (opName === Operator["==="]) {
-          return { operator: Operator["==="] };
-        } else if (opName === Operator["[]"]) {
-          return { operator: Operator["[]"] };
+        if (opName === Operator.NotEquals) {
+          return { operator: Operator.NotEquals };
+        } else if (opName === Operator.Add) {
+          return { operator: Operator.Add };
+        } else if (opName === Operator.TripleEquals) {
+          return { operator: Operator.TripleEquals };
+        } else if (opName === Operator.ArrayIndex) {
+          return { operator: Operator.ArrayIndex };
         } else {
           assertNever(opName);
         }

@@ -13,6 +13,11 @@ import { Properties } from "./properties";
 import { Functions } from "./functions";
 import { Loops } from "./loops";
 
+export enum InternalPropertyType {
+  Value,
+  Array,
+}
+
 enum ScopeType {
   Function = "function",
   Method   = "method",
@@ -26,6 +31,7 @@ export type Property = {
   wasmType : WasmType;
   name     : string;
   offset   : number;
+  type     : InternalPropertyType;
 };
 
 type NodesWithScope =
