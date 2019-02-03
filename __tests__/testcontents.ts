@@ -155,23 +155,39 @@ class ArrayInternal<T> {
     return 1;
   }
 
+  private reallocate() {
+    this.allocatedLength = this.allocatedLength * 2;
+
+    const newContent = malloc(this.allocatedLength * 4);
+
+    for (let i = 0; i < this.length; i++) {
+      memwrite(newContent + i * 4, this.get(i));
+    }
+
+    this.contents = newContent;
+
+    return 1;
+  }
+
   push(value: number): number {
     if (this.length >= this.allocatedLength) {
-      this.allocatedLength = this.allocatedLength * 2;
-
-      const newContent = malloc(this.allocatedLength * 4);
-
-      for (let i = 0; i < this.length; i++) {
-        memwrite(newContent + i * 4, this.get(i));
-      }
-
-      this.contents = newContent;
+      this.reallocate();
     }
 
     this.set(this.length, value);
     this.length = this.length + 1;
 
     return 1;
+  }
+
+  indexOf(value: number): number {
+    for (let i = 0; i < this.length; i++) {
+      if (this.get(i) === value) {
+        return i;
+      }
+    }
+
+    return -1;
   }
 }
 
@@ -501,6 +517,18 @@ function test_long_push() {
   return sum === 99;
 }
 
+function test_array_indexOf() {
+  const array = [5, 9, 1, 0, 4];
+
+  return (
+    array.indexOf(5) === 0 &&
+    array.indexOf(9) === 1 &&
+    array.indexOf(1) === 2 &&
+    array.indexOf(0) === 3 &&
+    array.indexOf(4) === 4 &&
+    array.indexOf(777) === -1
+  )
+}
 /*
 
 function test_for_loop_no_init() {
