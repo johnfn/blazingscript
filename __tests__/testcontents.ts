@@ -10,12 +10,12 @@ declare const memwrite: (pos: number, val: number) => void;
 declare const memread : (pos: number) => number;
 declare const divfloor: (a: number, b: number) => number;
 declare const operator: (type: "+" | "===" | "!==" | "[]") => ((target: any, propertyKey: string, descriptor: PropertyDescriptor) => void);
-declare const offset  : (offset: number) => any;
+declare const property  : (offset: number) => any;
 declare const elemSize: <T> (array: Array<T> | ArrayInternal<T>) => number;
 
 @jsType("String")
 class StringInternal {
-  @offset(0)
+  @property(0)
   readonly length = 0;
 
   charCodeAt(i: number): number {
@@ -126,13 +126,13 @@ interface String extends StringInternal {
 
 @jsType("Array")
 class ArrayInternal<T> {
-  @offset(0)
+  @property(0)
   allocatedLength = 0;
 
-  @offset(4)
+  @property(4)
   length = 0;
 
-  @offset(8)
+  @property(8)
   elemSize = 0;
 
   [key: number]: T;

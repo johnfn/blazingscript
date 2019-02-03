@@ -59,7 +59,7 @@ export class BSPropertyDeclaration extends BSNode {
 
       const calledFunction = deco.expression.expression.text;
 
-      if (calledFunction === "offset") {
+      if (calledFunction === "property") {
         const firstArgument = deco.expression.arguments[0];
 
         if (!(firstArgument instanceof BSNumericLiteral)) {
