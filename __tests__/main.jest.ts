@@ -110,9 +110,13 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
   // const foo = fufu.parseWat("", sexprs);
   //   const bin = foo.toBinary(importObject);
 
+  let currentTest = "";
+
   await WebAssembly.instantiate(buff, importObject)
     .then(result => {
       for (const fn in result.instance.exports) {
+        currentTest = fn;
+
         if (!fn.includes("test_")) {
           continue;
         }
@@ -120,7 +124,10 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
         results[fn] = result.instance.exports[fn]();
       }
     })
-    .catch(e => console.log(e));
+    .catch(e => {
+      console.log("Error in test", currentTest);
+      console.log(e);
+    });
 
   return results;
 }

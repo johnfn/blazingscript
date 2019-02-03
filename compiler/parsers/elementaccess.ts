@@ -1,49 +1,60 @@
-import {
-  PropertyAccessExpression,
-  TypeFlags,
-  ElementAccessExpression
-} from "typescript";
-import { Sexpr, S } from "../sexpr";
+import { ElementAccessExpression, TypeFlags } from "typescript";
+import { Sexpr, S, sexprToString } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
-import { Operator } from "./method";
-import { isArrayType } from "./arrayliteral";
 import { flatArray } from "../util";
 import { buildNode } from "./nodeutil";
+import { BSArrayLiteral, isArrayType } from "./arrayliteral";
+import { Operator } from "./method";
 
 /**
  * e.g. const x = myArray[5];
  *                ^^^^^^^^^^^
  */
 export class BSElementAccessExpression extends BSNode {
-  children: BSNode[];
-  element : BSExpression;
-  argument: BSExpression;
+  children : BSNode[];
+  array    : BSExpression;
+  index    : BSExpression;
 
-  fullText: string;
+  isLhs = false;
 
   constructor(ctx: Scope, node: ElementAccessExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
-    this.children = flatArray(
-      this.element  = buildNode(ctx, node.expression),
-      this.argument = buildNode(ctx, node.argumentExpression),
-    );
+    this.isLhs = info.isLhs;
 
-    this.fullText = node.getFullText();
+    this.children = flatArray(
+      this.array = buildNode(ctx, node.expression, { isLhs: true }),
+      this.index = buildNode(ctx, node.argumentExpression),
+    );
   }
 
   compile(ctx: Scope): Sexpr {
-    const arg = this.argument;
-    const array = this.element;
-    const arrayType = this.element.tsType;
+    const arrayType = this.array.tsType;
 
-    return ctx.functions.callMethodByOperator({
-      type    : arrayType,
-      opName  : Operator.ArrayIndex,
-      thisExpr: array,
-      argExprs: [arg]
-    });
+    if (arrayType.symbol && arrayType.symbol.name === "BuiltInArray") {
+      const expr = S.Add(this.array.compile(ctx), S.Mul(this.index.compile(ctx), 4));
+
+      if (this.isLhs) {
+        return expr;
+      } else {
+        return S.Load("i32", expr);
+      }
+    }
+
+    if (
+      this.array.tsType.flags & TypeFlags.StringLike ||
+      isArrayType(ctx, this.array.tsType)
+    ) {
+      return ctx.functions.callMethodByOperator({
+        type    : arrayType,
+        opName  : Operator.ArrayIndex,
+        thisExpr: this.array,
+        argExprs: [this.index],
+      });
+    }
+
+    throw new Error("Do not know how to access the element of that.");
   }
 }

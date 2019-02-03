@@ -1,6 +1,6 @@
 import { Property, Scope, InternalPropertyType } from "./scope";
 import { Type } from "typescript";
-import { WasmType, Sexpr, S } from "../sexpr";
+import { WasmType, Sexpr, S, sexprToString } from "../sexpr";
 import { BSExpression } from "../parsers/expression";
 
 export class Properties {

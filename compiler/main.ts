@@ -2,7 +2,16 @@ import fs from "fs";
 import { Program } from "./program";
 
 // TODO:
+// * log:
+//   * pull line number ha! This is not even that hard!
+//   * get correct file name.
+// * if a property is marked as @arrayProperty, then it should automatically be compiled correctly. I do some hacks in elementaccess.ts
+// * looks liek we're generating string_temp when we shouldnt be
 // * should work out what left hand side expression is. see: decorator.ts
+// * Remove the string-specific array handling in elementaccess.ts
+// * BuiltInArrays need to be generic.
+//   * elementAccess needs to calculate the element size offset propertly rather than defaulting to 4.
+// * stack information, debug mode.
 // * rename ctx to environment (or env i guess.)
 // * better error handling
 // * type parameters are hard - i have to generate the same code for each thing they could plausibly be.
@@ -24,9 +33,6 @@ import { Program } from "./program";
 // * assertEquals() rather than just returning true from inside code blocks
 // * pushScope and popScope should be a with() sort of thing.
 // * eventually eradicate all getText()
-// * log:
-//   * get correct file name.
-//   * pull line number ha!
 // * hard stuff
 //   * closures
 // * rewrite log to use malloc so its not a ticking time bomb!!!!!!! it was overwriting my malloc offset and causing everything to explode.

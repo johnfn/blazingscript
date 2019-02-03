@@ -136,7 +136,7 @@ export class Functions {
   }): Sexpr {
     const { type, thisExpr: thisNode, opName, argExprs } = props;
 
-    const fn = this.getMethodByOperator(type, opName);
+    const fn       = this.getMethodByOperator(type, opName);
     const thisExpr = thisNode.compile(this.scope);
 
     if (!thisExpr) {

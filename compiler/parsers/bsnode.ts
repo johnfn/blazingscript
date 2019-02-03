@@ -1,5 +1,5 @@
 import { Sexpr } from "../sexpr";
-import { Scope } from "../scope/scope";
+import { Scope, Property } from "../scope/scope";
 import { Node, Type, Modifier } from "typescript";
 
 export type NodeInfo = {
@@ -20,10 +20,12 @@ export abstract class BSNode {
   fullText         : string;
   modifiers        : Modifier[];
   uid              : number;
+  property         : Property | null;
 
   constructor(ctx: Scope, node: Node, info: NodeInfo = defaultNodeInfo) {
-    this.uid = getUid();
+    this.uid       = getUid();
     this.modifiers = [...(node.modifiers || [])];
+    this.property  = null;
 
     if (node.parent) {
       this.tsType = ctx.typeChecker.getTypeAtLocation(node);

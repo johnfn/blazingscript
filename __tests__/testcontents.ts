@@ -14,6 +14,8 @@ declare const property: (offset: number) => any;
 declare const arrayProperty: (offset: number) => any;
 declare const elemSize: <T> (array: Array<T> | ArrayInternal<T>) => number;
 
+interface BuiltInArray { [key: number]: number; }
+
 @jsType("String")
 class StringInternal {
   @property(0)
@@ -137,12 +139,12 @@ class ArrayInternal<T> {
   elemSize = 0;
 
   @arrayProperty(12)
-  contents: number[] = [];
+  contents: BuiltInArray = 0 as any;
 
   [key: number]: T;
   @operator("[]")
-  index(i: number): T {
-    return memread(((this as any) as number) + 4 * 3 + i * this.elemSize) as any as T;
+  index(i: number): number {
+    return this.contents[i];
   }
 
   push(value: number) {
@@ -150,10 +152,7 @@ class ArrayInternal<T> {
       this.allocatedLength = this.allocatedLength * 2;
     }
 
-    memwrite(
-      ((this as any) as number) +
-      4 * 3 +
-      this.length * this.elemSize, value as any as number);
+    this.contents[this.length] = value;
 
     this.length = this.length + 1;
   }
@@ -287,7 +286,7 @@ function test_for_loop() {
 }
 
 function test_basic_string() {
-  let x = "abcd";
+  let x   = "abcd";
   const y = "12345";
 
   if (x.length === 4 && y.length === 5) {
@@ -304,11 +303,11 @@ function test_string_length() {
 }
 
 function test_string_squarebrackets() {
-  const x = "abcde";
+  const squarebr = "abcde";
 
   return (
-    x[0] === "a" &&
-    x[2] === "c"
+    squarebr[0] === "a" &&
+    squarebr[2] === "c"
   );
 }
 
@@ -445,7 +444,7 @@ function test_basic_array() {
 }
 
 function test_array_access() {
-  const array = [1, 2, 3, 4];
+  const array = [1, 2, 3, 4, 5, 6, 7];
 
   return (
     array[0] === 1 &&

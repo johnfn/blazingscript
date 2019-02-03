@@ -1,7 +1,7 @@
 import fs from 'fs'
 
 var memory = new WebAssembly.Memory({
-  initial: 10, 
+  initial: 10,
   maximum: 100
 });
 
@@ -48,5 +48,5 @@ WebAssembly.instantiate(
   console.log("");
 
   console.log(result.instance.exports)
-  console.log(result.instance.exports.foo(9, 5))
+  console.log(result.instance.exports.test_string_squarebrackets())
 }).catch(e => console.log(e))

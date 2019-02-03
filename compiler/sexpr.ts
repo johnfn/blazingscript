@@ -32,14 +32,18 @@ S.Block = (body: Sexpr[]): Sexpr =>
 S.Const = (value: number, type: WasmType = "i32"): Sexpr => S(type, "i32.const", String(value));
 
 S.Add = (left: Sexpr | number, right: Sexpr | number): Sexpr => {
-  return generateAddOrSubSexpr(left, right, "add");
+  return generateBinarySexpr(left, right, "add");
 }
 
 S.Sub = (left: Sexpr | number, right: Sexpr | number): Sexpr => {
-  return generateAddOrSubSexpr(left, right, "sub");
+  return generateBinarySexpr(left, right, "sub");
 }
 
-function generateAddOrSubSexpr(left: number | Sexpr, right: number | Sexpr, fn: "add" | "sub"): Sexpr {
+S.Mul = (left: Sexpr | number, right: Sexpr | number): Sexpr => {
+  return generateBinarySexpr(left, right, "mul");
+}
+
+function generateBinarySexpr(left: number | Sexpr, right: number | Sexpr, fn: "add" | "sub" | "mul"): Sexpr {
   let leftSexpr : Sexpr;
   let rightSexpr: Sexpr;
   let type      : WasmType;
