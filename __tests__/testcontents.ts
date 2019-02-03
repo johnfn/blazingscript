@@ -143,7 +143,7 @@ class ArrayInternal<T> {
 
   [key: number]: T;
   @operator("[]")
-  index(i: number): number {
+  get(i: number): number {
     return memread(this.contents + i * 4);
   }
 
@@ -151,6 +151,7 @@ class ArrayInternal<T> {
     // TODO: Can i use []
     memwrite(this.contents + index * 4, value);
 
+    // TODO some sort of hack beacuse bs doesnt accept void functions yet? i think?
     return 1;
   }
 
@@ -158,7 +159,13 @@ class ArrayInternal<T> {
     if (this.length >= this.allocatedLength) {
       this.allocatedLength = this.allocatedLength * 2;
 
-      // TODO: Reallocate and stuff.
+      const newContent = malloc(this.allocatedLength * 4);
+
+      for (let i = 0; i < this.length; i++) {
+        memwrite(newContent + i * 4, this.get(i));
+      }
+
+      this.contents = newContent;
     }
 
     this.set(this.length, value);
@@ -474,6 +481,24 @@ function test_easy_push() {
     (array[0] + array[1] + array[2] + array[3] + array[4] + array[5] + array[6]) === 16 &&
     array.length === 7
   );
+}
+
+function test_long_push() {
+  // TODO: Cant figure out how to do this the right way. TS gets antsy without a proper type.
+
+  const array = [0];
+
+  for (let i = 1; i < 100; i++) {
+    array.push(1);
+  }
+
+  let sum = 0;
+
+  for (let j = 0; j < 100; j++) {
+    sum = sum + array[j];
+  }
+
+  return sum === 99;
 }
 
 /*

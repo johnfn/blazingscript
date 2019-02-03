@@ -1,68 +1,6 @@
 import fs from "fs";
 import { Program } from "./program";
 
-// TODO:
-// * log:
-//   * pull line number ha! This is not even that hard!
-//   * get correct file name.
-// * looks liek we're generating string_temp when we shouldnt be
-// * should work out what left hand side expression is. see: decorator.ts
-// * Remove the string-specific array handling in elementaccess.ts
-// * BuiltInArrays need to be generic.
-//   * elementAccess needs to calculate the element size offset propertly rather than defaulting to 4.
-// * stack information, debug mode.
-// * rename ctx to environment (or env i guess.)
-// * better error handling
-// * type parameters are hard - i have to generate the same code for each thing they could plausibly be.
-// * offset() could also indicate arrays.
-// * the initial pass to add functions to the file is now entirely unnecessary
-// * Figure out some way to write Sexprs better.
-// * rename terrible variable names like fd vdl etc etc etc
-// * figure out a way to inline constructors
-//     this is still hard...
-// * THOUGHT: should Sexpr be Sexpr<T> where T is the type? I feel like it could be?
-// * put getExpressionNode on BaseNode
-//    cant be done, circular dependencies.
-// * add imports so that my code isnt such a mess
-//   * http://fredkschott.com/post/2014/06/require-and-the-module-system/
-// * remove all !
-// * rename parseStatementListBS
-// * for special functions (like log), we should ensure you actually imported them from somewhere,
-//   otherwise you dont get them.
-// * assertEquals() rather than just returning true from inside code blocks
-// * pushScope and popScope should be a with() sort of thing.
-// * eventually eradicate all getText()
-// * hard stuff
-//   * closures
-// * rewrite log to use malloc so its not a ticking time bomb!!!!!!! it was overwriting my malloc offset and causing everything to explode.
-//    * i think i can do it much better now.
-// * use data segment
-// * define lib.d.ts for bs
-//   * ok... bs is a pretty bad acronym...
-// X add simple memory allocator
-//   * string allocations need to be declared up front
-//   * all temporary variables need to know their type (string, object, etc etc etc)
-//   * each block should have a way to declare ahead of time what local variable names its going to need
-//     * actually i think a better way would be to request a NUMBER of local variables, so that we can continue to
-//       use from the same pile rather than having a ton of unnecessary ones.
-// * which gets added to every program
-// * figure out how to do simple dispatches on strings, like length
-// * generate straight wasm rather than wat
-
-// * fun optimization ideas:
-//   * pull out constant expressions that are repeatedly evaluated
-//   * inline functions
-
-// TODO: generate a d.ts file for the exported members of the wasm thing
-// TODO: actually check for TS errors n stuff.
-
-// useful to get wat snippets
-// https://mbebenita.github.io/WasmExplorer/
-// https://blog.scottlogic.com/2018/05/29/transpiling-webassembly.html
-
-// JS unit tests as far as the eye can see.
-// https://github.com/v8/v8/tree/master/test/mjsunit
-
 // utility
 
 const p = new Program(`

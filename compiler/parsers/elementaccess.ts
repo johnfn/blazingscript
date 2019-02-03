@@ -1,11 +1,11 @@
 import { ElementAccessExpression, TypeFlags } from "typescript";
-import { Sexpr, S, sexprToString } from "../sexpr";
+import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { flatArray } from "../util";
 import { buildNode } from "./nodeutil";
-import { BSArrayLiteral, isArrayType } from "./arrayliteral";
+import { isArrayType } from "./arrayliteral";
 import { Operator } from "./method";
 
 /**
