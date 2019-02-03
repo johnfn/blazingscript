@@ -138,23 +138,33 @@ class ArrayInternal<T> {
   @property(8)
   elemSize = 0;
 
-  @arrayProperty(12)
-  contents: BuiltInArray = 0 as any;
+  @property(12)
+  contents = 0;
 
   [key: number]: T;
   @operator("[]")
   index(i: number): number {
-    return this.contents[i];
+    return memread(this.contents + i * 4);
   }
 
-  push(value: number) {
+  set(index: number, value: number): number {
+    // TODO: Can i use []
+    memwrite(this.contents + index * 4, value);
+
+    return 1;
+  }
+
+  push(value: number): number {
     if (this.length >= this.allocatedLength) {
       this.allocatedLength = this.allocatedLength * 2;
+
+      // TODO: Reallocate and stuff.
     }
 
-    this.contents[this.length] = value;
-
+    this.set(this.length, value);
     this.length = this.length + 1;
+
+    return 1;
   }
 }
 
@@ -454,12 +464,11 @@ function test_array_access() {
 }
 
 function test_easy_push() {
-  const array = [3, 2, 1];
+  const array = [1, 2, 3, 4];
 
   array.push(1);
   array.push(2);
   array.push(3);
-  array.push(4);
 
   return (
     (array[0] + array[1] + array[2] + array[3] + array[4] + array[5] + array[6]) === 16 &&

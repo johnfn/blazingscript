@@ -31,18 +31,16 @@ export class BSArrayLiteral extends BSNode {
     );
 
     ctx.variables.addOnce("array_temp", this.tsType, "i32");
+    ctx.variables.addOnce("array_content_temp", this.tsType, "i32");
   }
 
   compile(ctx: Scope): Sexpr {
     const allocatedLength = 16;
-
     const elemSize = BSArrayLiteral.GetArrayElemSize(ctx, this.tsType);
 
     return S("i32", "block", S("[]", "result", "i32"),
-      S.SetLocal(
-        "array_temp",
-        S("i32", "call", "$malloc", S.Const(this.elements.length * 4 + 4 * 3))
-      ),
+      S.SetLocal("array_temp"        , S("i32", "call", "$malloc", S.Const(4 * 4))),
+      S.SetLocal("array_content_temp", S("i32", "call", "$malloc", S.Const(this.elements.length * 4))),
 
       // store allocated length
       S.Store(ctx.variables.get("array_temp"), allocatedLength),
@@ -50,13 +48,16 @@ export class BSArrayLiteral extends BSNode {
       // store length
       S.Store(S.Add(ctx.variables.get("array_temp"), 4), this.elements.length),
 
-      // store element size
+      // store element size (probably unnecessary)
       S.Store(S.Add(ctx.variables.get("array_temp"), 8), elemSize),
+
+      // store content
+      S.Store(S.Add(ctx.variables.get("array_temp"), 12), ctx.variables.get("array_content_temp")),
 
       ...(
         this.elements.map((elem, i) =>
           S.Store(
-            S.Add(ctx.variables.get("array_temp"), i * 4 + 4 * 3),
+            S.Add(ctx.variables.get("array_content_temp"), i * 4),
             elem.compile(ctx)
           )
         )

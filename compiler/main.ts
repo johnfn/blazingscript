@@ -5,7 +5,6 @@ import { Program } from "./program";
 // * log:
 //   * pull line number ha! This is not even that hard!
 //   * get correct file name.
-// * if a property is marked as @arrayProperty, then it should automatically be compiled correctly. I do some hacks in elementaccess.ts
 // * looks liek we're generating string_temp when we shouldnt be
 // * should work out what left hand side expression is. see: decorator.ts
 // * Remove the string-specific array handling in elementaccess.ts
