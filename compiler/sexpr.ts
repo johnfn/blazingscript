@@ -113,7 +113,7 @@ S.Func = ({
   params: Param[];
 }): Sexpr =>
   S(
-    "[]",
+    "i32",
     "func",
     name,
     ...Sx.Params(params),

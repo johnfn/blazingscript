@@ -1,24 +1,37 @@
 TODO:
 * cant have two for loops in scope with the same name lol. i think the i should be scoped INSIDE the for loop ??????
    * come to think of it, even if has its own scope.
+* functions should pass in Function into S.Func
+   * They should also pass in the appropriate (wasm) return value
+* make array[1] = 10; work.
+* need some sort of debug flag to keep debug information
+   * position in stack
+   * names of functions (or even variables).
+* have some sort of sexpr option for newlines at end of sexprs.
+* Sexprs can be better created if i use some sort of function overloading syntax such that S("add") automagically
+  figures out the right arguments (and return type!).
 * log:
   * pull line number ha! This is not even that hard!
   * get correct file name.
+* i should handle functions returning void rather than just saying everything returns an i32 lol (in functions.ts)
+* move everything in functions towards getting functions by identifier
 * looks liek we're generating string_temp when we shouldnt be
+* callexpression ALWAYS uses the function table. however it's pretty easy not to when we have identifiers.
 * should work out what left hand side expression is. see: decorator.ts
 * Remove the string-specific array handling in elementaccess.ts
 * BuiltInArrays need to be generic.
   * elementAccess needs to calculate the element size offset propertly rather than defaulting to 4.
-* stack information, debug mode.
 * rename ctx to environment (or env i guess.)
 * better error handling
 * type parameters are hard - i have to generate the same code for each thing they could plausibly be.
 * offset() could also indicate arrays.
 * the initial pass to add functions to the file is now entirely unnecessary
 * Figure out some way to write Sexprs better.
-* rename terrible variable names like fd vdl etc etc etc
+* vscode integration
 * figure out a way to inline constructors
-    this is still hard...
+   * I'm beginning to have a good idea of how to do this. The only "hard" part is parsing the string/array literal. the
+   rest i can write code for. So I should just have a couple of builtins for the literals, and then use a constructor like
+   normal.
 * THOUGHT: should Sexpr be Sexpr<T> where T is the type? I feel like it could be?
 * put getExpressionNode on BaseNode
    cant be done, circular dependencies.
@@ -29,12 +42,14 @@ TODO:
 * for special functions (like log), we should ensure you actually imported them from somewhere,
   otherwise you dont get them.
 * assertEquals() rather than just returning true from inside code blocks
-* pushScope and popScope should be a with() sort of thing.
 * eventually eradicate all getText()
 * hard stuff
   * closures
+  * generics (is there a better way than just copy pasting the asm implementation n times for n call sites)
 * rewrite log to use malloc so its not a ticking time bomb!!!!!!! it was overwriting my malloc offset and causing everything to explode.
-   * i think i can do it much better now.
+   * okay so the main thing is that log is polymorphic on argument type, but that's impossible to currently do rn because
+   all values are the same and have no type information. HOWEVER, it's not impossible in theory because i could write
+   static functions to... wait no, yeah, it's impossible. lol.
 * use data segment
 * define lib.d.ts for bs
   * ok... bs is a pretty bad acronym...

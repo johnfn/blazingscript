@@ -45,8 +45,8 @@ export class BSMethodDeclaration extends BSNode {
   constructor(
     ctx       : Scope,
     node      : MethodDeclaration,
-    parentNode: BSClassDeclaration
-, info: NodeInfo = defaultNodeInfo
+    parentNode: BSClassDeclaration,
+    info      : NodeInfo = defaultNodeInfo
   ) {
     super(ctx, node);
 

@@ -71,7 +71,10 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
         console.log("__tests__/testcontents.ts log:", ...res);
       }
     },
-    js: { mem: memory },
+    js: {
+      mem: memory,
+      table: new WebAssembly.Table({ initial: 1000, element: "anyfunc" }),
+    },
     imports: {
       imported_func: (arg: string) => {
         console.log(arg);

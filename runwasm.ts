@@ -31,7 +31,10 @@ var importObject = {
       console.log(s1, e1)
     },
   },
-  js: { mem: memory },
+  js: {
+    mem: memory,
+    table: new WebAssembly.Table({ initial: 1000, element: "anyfunc" }),
+  },
   imports: {
     imported_func: (arg: string) => {
       console.log(arg);

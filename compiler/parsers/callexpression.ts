@@ -37,21 +37,27 @@ export class BSCallExpression extends BSNode {
       return special;
     }
 
-    // TODO: This is wrong, I actualy have to resolve the lhs
-
     if (this.expression instanceof BSIdentifier) {
+      const fn = ctx.functions.getFunctionByIdentifier(this.expression);
+
       return S(
         "i32",
-        "call",
-        "$" + this.expression.text,
-        ...parseStatementListBS(ctx, this.arguments)
+        "call_indirect",
+        S("[]", "type", fn.signature.name),
+        ...parseStatementListBS(ctx, this.arguments),
+        S.Const(fn.tableIndex),
+        `;; ${ fn.fnName }\n`
       );
     } else {
+      // TODO: Should be able to do this now.
+
       throw new Error("Cant call anything which isn't an identifier yet");
     }
   }
 
   handleSpecialFunctions(ctx: Scope): Sexpr | null {
+    // TODO: This special cases property accesses. Remove
+
     if (this.expression instanceof BSPropertyAccessExpression) {
       // If we have Foo.Bar
 

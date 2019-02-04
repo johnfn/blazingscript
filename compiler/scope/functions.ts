@@ -3,28 +3,66 @@ import { BSClassDeclaration } from "../parsers/class";
 import { BSFunctionDeclaration } from "../parsers/function";
 import { Type } from "typescript";
 import { BSExpression } from "../parsers/expression";
-import { Sexpr, S } from "../sexpr";
+import { Sexpr, S, WasmType } from "../sexpr";
 import { parseStatementListBS } from "../parsers/statementlist";
 import { BSNode } from "../parsers/bsnode";
 import { Scope } from "./scope";
+import { BSIdentifier } from "../parsers/identifier";
 
 // TODO should probably rename this as to not clash with Function the js type
 
+export const TsTypeToWasmType = (type: Type): WasmType => {
+  return "i32";
+}
+
+export type WasmFunctionSignature = {
+  parameters: WasmType[];
+  return    : WasmType;
+  name      : string;
+}
+
 export type Function = {
-  node     : BSFunctionDeclaration | BSMethodDeclaration;
-  className: string | null;
-  fnName   : string;
-  bsName   : string;
-  overload : OperatorOverload | null;
+  node      : BSFunctionDeclaration | BSMethodDeclaration;
+  className : string | null;
+  fnName    : string;
+  bsName    : string;
+  overload  : OperatorOverload | null;
+  tableIndex: number;
+  signature : WasmFunctionSignature;
 };
 
 export class Functions {
+  private static TableIndex = 0;
+
+  /**
+   * These are used for building the function table.
+   */
+  public static AllSignatures: { [key: string]: WasmFunctionSignature } = {};
+
   functions: Function[];
   scope    : Scope;
 
   constructor(scope: Scope) {
     this.functions = [];
     this.scope     = scope;
+  }
+
+  getSignature(node: BSMethodDeclaration | BSFunctionDeclaration): WasmFunctionSignature {
+    const params = node.parameters.map(param => TsTypeToWasmType(param.tsType));
+    const ret    = TsTypeToWasmType(node.tsType);
+    const name   = "$" + params.join("_") + "__" + ret;
+
+    if (!Functions.AllSignatures[name]) {
+      const sig    : WasmFunctionSignature = {
+        parameters: params,
+        return    : ret,
+        name      : name,
+      };
+
+      Functions.AllSignatures[name] = sig;
+    }
+
+    return Functions.AllSignatures[name];
   }
 
   addMethod(props: {
@@ -40,18 +78,20 @@ export class Functions {
 
     if (!node.name) { throw new Error("anonymous methods not supported yet!"); }
     if (!parent) { throw new Error("no parent provided to addFunction for method."); }
-    if (!parent.name) { throw new Error("dont support classes without names yet"); }
+    if (!parent.name) { throw new Error("dont support anonymous classes yet!"); }
 
     fqName    = "$" + parent.name + "__" + node.name;
     fnName    = node.name;
     className = parent.name;
 
     this.functions.push({
-      bsName   : fqName,
-      node     ,
-      fnName   ,
-      className,
-      overload
+      bsName    : fqName,
+      node      ,
+      fnName    ,
+      className ,
+      overload  ,
+      tableIndex: Functions.TableIndex++,
+      signature : this.getSignature(node),
     });
   }
 
@@ -75,11 +115,13 @@ export class Functions {
     }
 
     this.functions.push({
-      bsName   : bsName,
-      node     : node,
-      fnName   : tsName   ,
-      className,
-      overload : null
+      bsName    : bsName,
+      node      : node,
+      fnName    : tsName,
+      className ,
+      tableIndex: Functions.TableIndex++,
+      overload  : null,
+      signature : this.getSignature(node),
     });
   }
 
@@ -112,7 +154,7 @@ export class Functions {
   }): Sexpr {
     const { type, methodName, thisExpr: thisNode, argExprs } = props;
 
-    const fn = this.getMethodByNames(type, methodName);
+    const fn = this.getMethodByName(type, methodName);
     const thisExpr = thisNode.compile(this.scope);
 
     if (!thisExpr) {
@@ -168,7 +210,23 @@ export class Functions {
     throw new Error("Failed to find function by node");
   }
 
-  getMethodByNames(type: Type, methodName: string): Function {
+  getFunctionByIdentifier(identifier: BSIdentifier): Function {
+    let currScope: Scope | null = this.scope;
+
+    while (currScope !== null) {
+      for (const fn of currScope.functions.functions) {
+        if (fn.fnName === identifier.text) {
+          return fn;
+        }
+      }
+
+      currScope = currScope.parent;
+    }
+
+    throw new Error(`Can't find function ${ identifier.text }`);
+  }
+
+  getMethodByName(type: Type, methodName: string): Function {
     const cls = this.scope.getScopeForClass(type);
 
     if (cls === null) {

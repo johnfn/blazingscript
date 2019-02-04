@@ -16,6 +16,7 @@ import { BSCallExpression } from "./callexpression";
 import { BSIdentifier } from "./identifier";
 import { flatArray } from "../util";
 import { buildNodeArray } from "./nodeutil";
+import { Functions } from "../scope/functions";
 
 type FunctionDecl = {
   node: BSFunctionDeclaration | BSMethodDeclaration;
@@ -43,6 +44,8 @@ export class BSSourceFile extends BSNode {
       this.statements = buildNodeArray(ctx, file.statements)
     );
   }
+
+  // TODO: This is the wrong way to do this.
 
   private findAllJsTypes(): { [jsType: string]: string } {
     const jsTypes: { [jsType: string]: string } = {};
@@ -77,9 +80,15 @@ export class BSSourceFile extends BSNode {
   }
 
   compile(ctx: Scope): Sexpr {
-    const functions         = ctx.functions.getAll();
+    const functions         = ctx.functions.getAll().sort((a, b) => a.tableIndex - b.tableIndex);
     const exportedFunctions = functions.filter(f => f.node instanceof BSFunctionDeclaration);
     const jsTypes           = this.findAllJsTypes();
+
+    const uniqueFunctionTypes: { [key: string]: boolean } = {};
+
+    for (const fn of functions) {
+      uniqueFunctionTypes[fn.signature.name] = true;
+    }
 
     // console.log(functions.map(x => x.bsname));
 
@@ -88,9 +97,24 @@ export class BSSourceFile extends BSNode {
     return S(
       "[]", "module",
       S("[]", "import", '"js"', '"mem"', S("[]", "memory", "1")),
+      S("[]", "import", '"js"', '"table"', S("[]", "table", String(functions.length), "anyfunc")),
       S("[]", "import", '"c"', '"log"',
         S("[]", "func", "$log", ...[...Array(9).keys()].map(_ => S("[]", "param", "i32")))
       ),
+      ...Object.keys(Functions.AllSignatures).map(sigName => {
+        const sig = Functions.AllSignatures[sigName];
+
+        return S(
+          "[]", "type",
+          sig.name,
+          S("[]", "func",
+            ...sig.parameters.map(param => S("[]", "param", param)),
+            S("[]", "result", "i32")
+          ),
+          ";; \n"
+        );
+      }),
+
       ...functions.map(fn => {
         if (fn.node instanceof BSFunctionDeclaration) {
           return fn.node.compile(ctx);
@@ -100,7 +124,12 @@ export class BSSourceFile extends BSNode {
 
         throw new Error("i got some weird type of function i cant handle.");
       }),
-      ...exportedFunctions.map(fn => S.Export(fn.fnName))
+      ...exportedFunctions.map(fn => S.Export(fn.fnName)),
+      S("[]", "elem", S.Const(0),
+        ...functions.map(fn => {
+          return `${ fn.bsName } ;; ${ fn.tableIndex }\n`;
+        })
+      )
     );
   }
 }
