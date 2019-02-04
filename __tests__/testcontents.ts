@@ -147,7 +147,7 @@ class ArrayInternal<T> {
     return memread(this.contents + i * 4);
   }
 
-  set(index: number, value: number): number {
+  private set(index: number, value: number): number {
     // TODO: Can i use []
     memwrite(this.contents + index * 4, value);
 
@@ -190,7 +190,7 @@ class ArrayInternal<T> {
     return -1;
   }
 
-  constructArray(size: number): number[] {
+  private constructArrayWithSize(size: number): number[] {
     const result: number[] = malloc(4 * 4) as any as number[];
 
     result.contents        = malloc((size + 1) * 4);
@@ -202,8 +202,8 @@ class ArrayInternal<T> {
   }
 
   concat(secondArray: number[]): number[] {
-    const myLength  = this.length;
-    const result = this.constructArray(myLength + secondArray.length);
+    const myLength = this.length;
+    const result = this.constructArrayWithSize(myLength + secondArray.length);
 
     for (let i = 0; i < myLength; i++) {
       result.set(i, this.get(i));
@@ -214,6 +214,20 @@ class ArrayInternal<T> {
     }
 
     return result as any;
+  }
+
+  reverse(): number[] {
+    const myLength = this.length;
+    let temp = 0;
+
+    for (let i = 0; i < myLength / 2; i++) {
+      temp = this.get(i);
+
+      this.set(i, this.get(this.length - i - 1));
+      this.set(this.length - i - 1, temp);
+    }
+
+    return this as any;
   }
 }
 
@@ -568,6 +582,42 @@ function test_array_concat() {
   );
 }
 
+function test_reverse() {
+  const arr1 = [1, 2, 3];
+
+  arr1.reverse();
+
+  return (
+    arr1[0] === 3 &&
+    arr1[1] === 2 &&
+    arr1[2] === 1
+  );
+}
+
+function test_reverse_even() {
+  const arr1 = [1, 2, 3, 4];
+
+  arr1.reverse();
+
+  return (
+    arr1[0] === 4 &&
+    arr1[1] === 3 &&
+    arr1[2] === 2 &&
+    arr1[3] === 1
+  );
+}
+
+function test_reverse_result() {
+  const arr1 = [1, 2, 3, 4];
+  const result = arr1.reverse();
+
+  return (
+    result[0] === 4 &&
+    result[1] === 3 &&
+    result[2] === 2 &&
+    result[3] === 1
+  );
+}
 
 /*
 

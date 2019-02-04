@@ -1,13 +1,13 @@
 import { Scope } from "../scope/scope";
 import { ExpressionStatement, isExpressionStatement } from "typescript";
-import { Sexpr } from "../sexpr";
+import { Sexpr, S } from "../sexpr";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
 
 /**
- * e.g. for (let x = 1; x < 5; x += 1) { }
- *                             ^^^^^^
+ * e.g. result.length = size;
+ *      ^^^^^^^^^^^^^^^^^^^^^
  */
 export class BSExpressionStatement extends BSNode {
   children: BSNode[];
@@ -22,6 +22,16 @@ export class BSExpressionStatement extends BSNode {
   }
 
   compile(ctx: Scope): Sexpr | null {
-    return this.expression.compile(ctx);
+    const result = this.expression.compile(ctx);
+
+    if (result === null) {
+      return null
+    } else {
+      if (result.type !== "[]") {
+        return S.Drop(result);
+      } else {
+        return result;
+      }
+    }
   }
 }
