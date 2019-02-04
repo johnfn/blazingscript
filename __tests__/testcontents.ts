@@ -130,16 +130,16 @@ interface String extends StringInternal {
 @jsType("Array")
 class ArrayInternal<T> {
   @property(0)
-  allocatedLength = 0;
+  private allocatedLength = 0;
 
   @property(4)
   length = 0;
 
   @property(8)
-  elemSize = 0;
+  private elemSize = 0;
 
   @property(12)
-  contents = 0;
+  private contents = 0;
 
   [key: number]: T;
   @operator("[]")
@@ -188,6 +188,32 @@ class ArrayInternal<T> {
     }
 
     return -1;
+  }
+
+  constructArray(size: number): number[] {
+    const result: number[] = malloc(4 * 4) as any as number[];
+
+    result.contents        = malloc((size + 1) * 4);
+    result.allocatedLength = (size + 1) * 4;
+    result.length          = size;
+    result.elemSize        = 4;
+
+    return result;
+  }
+
+  concat(secondArray: number[]): number[] {
+    const myLength  = this.length;
+    const result = this.constructArray(myLength + secondArray.length);
+
+    for (let i = 0; i < myLength; i++) {
+      result.set(i, this.get(i));
+    }
+
+    for (let j = 0; j < secondArray.length; j++) {
+      result.set(j + myLength, secondArray.get(j));
+    }
+
+    return result as any;
   }
 }
 
@@ -521,14 +547,28 @@ function test_array_indexOf() {
   const array = [5, 9, 1, 0, 4];
 
   return (
-    array.indexOf(5) === 0 &&
-    array.indexOf(9) === 1 &&
-    array.indexOf(1) === 2 &&
-    array.indexOf(0) === 3 &&
-    array.indexOf(4) === 4 &&
+    array.indexOf(5)   === 0 &&
+    array.indexOf(9)   === 1 &&
+    array.indexOf(1)   === 2 &&
+    array.indexOf(0)   === 3 &&
+    array.indexOf(4)   === 4 &&
     array.indexOf(777) === -1
-  )
+  );
 }
+
+function test_array_concat() {
+  const arr1 = [1, 2, 3];
+  const arr2 = [4, 5, 6, 7, 8];
+
+  const result = arr1.concat(arr2);
+
+  return (
+    result.length === 8 &&
+    result[3] === 4
+  );
+}
+
+
 /*
 
 function test_for_loop_no_init() {

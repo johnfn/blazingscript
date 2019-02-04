@@ -156,14 +156,18 @@ export class Scope {
     return nodes.map(node => {
       let wasmType: "i32" = "i32";
 
-      if (!(node.tsType.flags & TypeFlags.Number) && !(node.tsType.flags & TypeFlags.String)) {
-        throw new Error("Unsupported parameter type!");
+      if (
+        (node.tsType.flags & TypeFlags.Number) ||
+        (node.tsType.flags & TypeFlags.String) ||
+        isArrayType(this, node.tsType)
+      ) {
+        return {
+          name: node.bindingName.text,
+          type: wasmType,
+        };
       }
 
-      return {
-        name: node.bindingName.text,
-        type: wasmType,
-      };
+      throw new Error("Unsupported parameter type!");
     });
   }
 
