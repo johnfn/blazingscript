@@ -73,7 +73,7 @@ Well, if you say so.
 | :white_check_mark: | String.prototype.charAt()
 | :white_check_mark: | String.prototype.charCodeAt()
 | :wavy_dash: | String.prototype.codePointAt()
-| :white_check_mark: | String.prototype.concat() | Needs var-arg support |
+| :black_square_button: | String.prototype.concat() |
 | :black_square_button: | String.prototype.endsWith()
 | :x: | String.prototype.fixed()
 | :x: | String.prototype.fontcolor()
@@ -113,3 +113,57 @@ Well, if you say so.
 | :black_square_button: | String.prototype.valueOf()
 | :black_square_button: | String.prototype[@@iterator]()
 | :wavy_dash: | String.raw()
+
+### Array
+
+Properties
+
+| Progress | Feature | Notes |
+|----------|---------|-------|
+| :white_check_mark:    | Array.length             |
+| :arrow_down:          | Array.prototype                |
+| :arrow_down:          | Array.prototype[@@unscopables] | We will not support `with` |
+
+Methods
+
+| Progress | Feature | Notes |
+|----------|---------|-------|
+| :black_square_button: | Array.from()
+| :black_square_button: | Array.isArray()
+| :x:                   | Array.observe()
+| :black_square_button: | Array.of()
+| :white_check_mark:    | Array.prototype.concat() |  Needs var-arg support |
+| :black_square_button: | Array.prototype.copyWithin()
+| :black_square_button: | Array.prototype.entries()
+| :black_square_button: | Array.prototype.every()
+| :black_square_button: | Array.prototype.fill()
+| :black_square_button: | Array.prototype.filter()
+| :black_square_button: | Array.prototype.find()
+| :black_square_button: | Array.prototype.findIndex()
+| :black_square_button: | Array.prototype.flat()
+| :black_square_button: | Array.prototype.flatMap()
+| :black_square_button: | Array.prototype.forEach()
+| :black_square_button: | Array.prototype.includes()
+| :white_check_mark:    | Array.prototype.indexOf()
+| :black_square_button: | Array.prototype.join()
+| :black_square_button: | Array.prototype.keys()
+| :black_square_button: | Array.prototype.lastIndexOf()
+| :white_check_mark:    | Array.prototype.map() | needs to pass in index and current value
+| :black_square_button: | Array.prototype.pop()
+| :white_check_mark:    | Array.prototype.push()
+| :black_square_button: | Array.prototype.reduce()
+| :black_square_button: | Array.prototype.reduceRight()
+| :white_check_mark:    | Array.prototype.reverse()
+| :black_square_button: | Array.prototype.shift()
+| :black_square_button: | Array.prototype.slice()
+| :black_square_button: | Array.prototype.some()
+| :black_square_button: | Array.prototype.sort()
+| :black_square_button: | Array.prototype.splice()
+| :black_square_button: | Array.prototype.toLocaleString()
+| :black_square_button: | Array.prototype.toSource()
+| :black_square_button: | Array.prototype.toString()
+| :black_square_button: | Array.prototype.unshift()
+| :black_square_button: | Array.prototype.values()
+| :black_square_button: | Array.prototype[@@iterator]()
+| :arrow_down:          | Array.unobserve()
+| :black_square_button: | get Array[@@species]
