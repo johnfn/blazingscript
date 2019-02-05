@@ -8,8 +8,8 @@ import { flatArray } from "../util";
 import { buildNode, buildNodeArray } from "./nodeutil";
 
 /**
- * e.g. if (x) { console.log("Hello") }
- *             ^^^^^^^^^^^^^^^^^^^^^^^^
+ * e.g. if (x) { myLongFunction("Hello") }
+ *             ^^^^^^^^^^^^^^^^^^^^^^^^^
  */
 export class BSBlock extends BSNode {
   children : BSNode[];

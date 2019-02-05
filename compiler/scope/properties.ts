@@ -38,20 +38,25 @@ export class Properties {
       throw new Error(`Cant find appropriate scope for ${ expr.fullText }`);
     }
 
-    const props = cls.properties;
-
-    const relevantProperties = props.getAll().filter(prop => prop.name === name);
+    const relevantProperties = cls.properties.getAll().filter(prop => prop.name === name);
     const relevantProperty = relevantProperties[0];
 
-    if (!relevantProperty) {
-      throw new Error(`cant find property in class: ${ expr.fullText }`);
+    if (relevantProperty) {
+      const res = S.Add(
+        expr.compile(exprCtx),
+        relevantProperty.offset
+      );
+
+      return res;
     }
 
-    const res = S.Add(
-      expr.compile(exprCtx),
-      relevantProperty.offset
-    );
+    const relevantFunctions = cls.functions.getAll().filter(fn => fn.fnName === name);
+    const relevantFunction  = relevantFunctions[0];
 
-    return res;
+    if (relevantFunction) {
+      return S.Const(relevantFunction.tableIndex);
+    }
+
+    throw new Error(`cant find property ${ name } in class ${ expr.fullText }`);
   }
 }

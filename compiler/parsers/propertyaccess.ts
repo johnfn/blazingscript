@@ -1,5 +1,5 @@
 import { PropertyAccessExpression, TypeFlags } from "typescript";
-import { Sexpr, S } from "../sexpr";
+import { Sexpr, S, sexprToString } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
@@ -13,7 +13,15 @@ import { flatArray } from "../util";
  */
 export class BSPropertyAccessExpression extends BSNode {
   children  : BSNode[];
+
+  /**
+   * e.g. "foo" in the example
+   */
   expression: BSExpression;
+
+  /**
+   * e.g. "bar" in the example
+   */
   name      : BSIdentifier;
   isLhs     : boolean;
 

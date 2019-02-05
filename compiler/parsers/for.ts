@@ -12,8 +12,8 @@ import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
 
 /**
- * e.g. for (let x = 1; x < 5; x += 1) { console.log("hello"); }
- *      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ * e.g. for (let x = 1; x < 5; x += 1) { myFunction("hello"); }
+ *      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  */
 export class BSForStatement extends BSNode {
   children: BSNode[];

@@ -1,11 +1,5 @@
-import {
-  SourceFile,
-  SyntaxKind,
-  ClassDeclaration,
-  CallExpression,
-} from "typescript";
+import { SourceFile } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { parseStatementListBS } from "./statementlist";
 import { Scope } from "../scope/scope";
 import { BSFunctionDeclaration } from "./function";
 import { BSMethodDeclaration } from "./method";
@@ -80,7 +74,7 @@ export class BSSourceFile extends BSNode {
   }
 
   compile(ctx: Scope): Sexpr {
-    const functions         = ctx.functions.getAll().sort((a, b) => a.tableIndex - b.tableIndex);
+    const functions         = ctx.functions.getAll(ctx.topmostScope()).sort((a, b) => a.tableIndex - b.tableIndex);
     const exportedFunctions = functions.filter(f => f.node instanceof BSFunctionDeclaration);
     const jsTypes           = this.findAllJsTypes();
 

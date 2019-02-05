@@ -143,24 +143,24 @@ test("all tests", async () => {
   const result = await runProgram(
     fs.readFileSync("__tests__/testcontents.ts").toString()
   );
-  let anyfail =
+  let failCount =
     Object.keys(result)
       .map(key => !result[key])
-      .filter(x => x).length > 0;
+      .filter(x => x).length;
 
-  if (anyfail) {
-    console.log("FAIL!");
+  if (failCount > 0) {
+    console.log(`FAIL ${ failCount } of ${ Object.keys(result).length }!`);
 
     for (const key of Object.keys(result)) {
       if (result[key]) {
         // console.log(`pass ${ key }`);
       } else {
-        console.log(`FAIL ${key} got ${result[key]}`);
+        console.log(`FAIL ${ key } got ${ result[key] }`);
       }
     }
   } else {
     console.log(`Pass ${Object.keys(result).length} tests`);
   }
 
-  expect(anyfail).toBe(false);
+  expect(failCount).toBe(0);
 });

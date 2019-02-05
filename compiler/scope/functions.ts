@@ -8,6 +8,7 @@ import { parseStatementListBS } from "../parsers/statementlist";
 import { BSNode } from "../parsers/bsnode";
 import { Scope } from "./scope";
 import { BSIdentifier } from "../parsers/identifier";
+import { BSCallExpression } from "../parsers/callexpression";
 
 // TODO should probably rename this as to not clash with Function the js type
 
@@ -48,9 +49,16 @@ export class Functions {
   }
 
   getSignature(node: BSMethodDeclaration | BSFunctionDeclaration): WasmFunctionSignature {
-    const params = node.parameters.map(param => TsTypeToWasmType(param.tsType));
+    let params = node.parameters.map(param => TsTypeToWasmType(param.tsType));
+
+    if (node instanceof BSMethodDeclaration) {
+      // Need to add implicit this argument!
+
+      params = ["i32", ...params];
+    }
+
     const ret    = TsTypeToWasmType(node.tsType);
-    const name   = "$" + params.join("_") + "__" + ret;
+    const name   = "$" + params.join("_") + "__ret_" + ret;
 
     if (!Functions.AllSignatures[name]) {
       const sig    : WasmFunctionSignature = {
@@ -138,7 +146,7 @@ export class Functions {
    * everything.
    */
   getAll(scope: Scope | null = null): Function[] {
-    if (scope === null) { scope = this.scope.topmostScope(); }
+    if (scope === null) { scope = this.scope; }
 
     const scopes = this.scope.getAllScopes(scope);
     const functions = ([] as Function[]).concat(...scopes.map(x => x.functions.functions));
@@ -154,7 +162,7 @@ export class Functions {
   }): Sexpr {
     const { type, methodName, thisExpr: thisNode, argExprs } = props;
 
-    const fn = this.getMethodByName(type, methodName);
+    const fn       = this.getMethodByName(type, methodName);
     const thisExpr = thisNode.compile(this.scope);
 
     if (!thisExpr) {

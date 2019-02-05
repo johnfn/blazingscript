@@ -51,5 +51,6 @@ WebAssembly.instantiate(
   console.log("");
 
   console.log(result.instance.exports)
+  console.log(result.instance.exports.malloc())
   console.log(result.instance.exports.test_string_squarebrackets())
 }).catch(e => console.log(e))

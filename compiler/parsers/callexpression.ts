@@ -1,6 +1,6 @@
 import { Scope } from "../scope/scope";
 import { CallExpression, TypeFlags } from "typescript";
-import { Sexpr, S, Sx } from "../sexpr";
+import { Sexpr, S, Sx, sexprToString } from "../sexpr";
 import { flatten } from "../rewriter";
 import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
@@ -11,6 +11,7 @@ import { BSStringLiteral } from "./stringliteral";
 import { buildNode, buildNodeArray } from "./nodeutil";
 import { flatArray } from "../util";
 import { BSArrayLiteral, isArrayType } from "./arrayliteral";
+import { TsTypeToWasmType } from "../scope/functions";
 
 /**
  * e.g. const x = myFunction(1, 5);
@@ -25,7 +26,7 @@ export class BSCallExpression extends BSNode {
     super(ctx, node);
 
     this.children = flatArray(
-      this.expression = buildNode(ctx, node.expression),
+      this.expression = buildNode(ctx, node.expression, { isLhs: true }),
       this.arguments  = buildNodeArray(ctx, node.arguments),
     );
   }
@@ -40,6 +41,8 @@ export class BSCallExpression extends BSNode {
     if (this.expression instanceof BSIdentifier) {
       const fn = ctx.functions.getFunctionByIdentifier(this.expression);
 
+      // TODO: This doesnt have to be indirect.
+
       return S(
         "i32",
         "call_indirect",
@@ -49,43 +52,45 @@ export class BSCallExpression extends BSNode {
         `;; ${ fn.fnName }\n`
       );
     } else {
-      // TODO: Should be able to do this now.
+      if (this.expression instanceof BSPropertyAccessExpression) {
+        let params = this.arguments.map(param => TsTypeToWasmType(param.tsType));
+        params = ["i32", ...params];
 
-      throw new Error("Cant call anything which isn't an identifier yet");
+        const ret    = TsTypeToWasmType(this.tsType);
+        const name   = "$" + params.join("_") + "__ret_" + ret;
+
+        // pass in "this" argument
+
+        const res = S(
+          "i32",
+          "call_indirect",
+          S("[]", "type", name),
+          this.expression.expression.compile(ctx),
+          ...parseStatementListBS(ctx, this.arguments),
+          this.expression.compile(ctx),
+          `;; ${ this.fullText.replace(/\n/g, "") } (with this)\n`
+        );
+
+        return res;
+      } else {
+        const params = this.arguments.map(param => TsTypeToWasmType(param.tsType));
+        const ret    = TsTypeToWasmType(this.tsType);
+        const name   = "$" + params.join("_") + "__ret_" + ret;
+
+        return S(
+          "i32",
+          "call_indirect",
+          S("[]", "type", name),
+          ...parseStatementListBS(ctx, this.arguments),
+          this.expression.compile(ctx),
+          `;; ${ this.expression.fullText.replace(/\n/g, "") }\n`
+        );
+      }
     }
   }
 
   handleSpecialFunctions(ctx: Scope): Sexpr | null {
-    // TODO: This special cases property accesses. Remove
-
-    if (this.expression instanceof BSPropertyAccessExpression) {
-      // If we have Foo.Bar
-
-      const fooDotBar = this.expression.expression;
-      const justBar = this.expression.name;
-      const fooDotBarType = fooDotBar.tsType;
-
-      if (
-        fooDotBarType.flags & TypeFlags.StringLike ||
-        fooDotBarType.symbol.name === ctx.getNativeTypeName("String") // for this types
-      ) {
-        return ctx.functions.callMethod({
-          type      : fooDotBarType,
-          methodName: justBar.text,
-          thisExpr  : fooDotBar,
-          argExprs  : [...this.arguments]
-        });
-      } else if (
-        isArrayType(ctx, fooDotBarType)
-      ) {
-        return ctx.functions.callMethod({
-          type      : fooDotBarType,
-          methodName: justBar.text,
-          thisExpr  : fooDotBar,
-          argExprs  : [...this.arguments]
-        });
-      }
-    } else if (this.expression instanceof BSIdentifier) {
+    if (this.expression instanceof BSIdentifier) {
       if (this.expression.text === "memwrite") {
         const res = S.Store(
           this.arguments[0].compile(ctx)!,

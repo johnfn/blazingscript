@@ -6,8 +6,8 @@ import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
 
 /**
- * e.g. console.log(x++)
- *                  ^^^
+ * e.g. myFunction(x++)
+ *                 ^^^
  */
 export class BSPostfixUnaryExpression extends BSNode {
   children   : BSNode[];
