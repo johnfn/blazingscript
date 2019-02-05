@@ -11,7 +11,7 @@ import { BSStringLiteral } from "./stringliteral";
 import { buildNode, buildNodeArray } from "./nodeutil";
 import { flatArray } from "../util";
 import { BSArrayLiteral, isArrayType } from "./arrayliteral";
-import { TsTypeToWasmType } from "../scope/functions";
+import { TsTypeToWasmType, Functions } from "../scope/functions";
 
 /**
  * e.g. const x = myFunction(1, 5);
@@ -53,18 +53,14 @@ export class BSCallExpression extends BSNode {
       );
     } else {
       if (this.expression instanceof BSPropertyAccessExpression) {
-        let params = this.arguments.map(param => TsTypeToWasmType(param.tsType));
-        params = ["i32", ...params];
-
-        const ret    = TsTypeToWasmType(this.tsType);
-        const name   = "$" + params.join("_") + "__ret_" + ret;
+        const sig = Functions.GetSignature(this);
 
         // pass in "this" argument
 
         const res = S(
           "i32",
           "call_indirect",
-          S("[]", "type", name),
+          S("[]", "type", sig.name),
           this.expression.expression.compile(ctx),
           ...parseStatementListBS(ctx, this.arguments),
           this.expression.compile(ctx),
@@ -73,14 +69,12 @@ export class BSCallExpression extends BSNode {
 
         return res;
       } else {
-        const params = this.arguments.map(param => TsTypeToWasmType(param.tsType));
-        const ret    = TsTypeToWasmType(this.tsType);
-        const name   = "$" + params.join("_") + "__ret_" + ret;
+        const sig = Functions.GetSignature(this);
 
         return S(
           "i32",
           "call_indirect",
-          S("[]", "type", name),
+          S("[]", "type", sig.name),
           ...parseStatementListBS(ctx, this.arguments),
           this.expression.compile(ctx),
           `;; ${ this.expression.fullText.replace(/\n/g, "") }\n`

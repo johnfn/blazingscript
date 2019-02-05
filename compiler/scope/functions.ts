@@ -9,6 +9,7 @@ import { BSNode } from "../parsers/bsnode";
 import { Scope } from "./scope";
 import { BSIdentifier } from "../parsers/identifier";
 import { BSCallExpression } from "../parsers/callexpression";
+import { BSPropertyAccessExpression } from "../parsers/propertyaccess";
 
 // TODO should probably rename this as to not clash with Function the js type
 
@@ -48,13 +49,25 @@ export class Functions {
     this.scope     = scope;
   }
 
-  getSignature(node: BSMethodDeclaration | BSFunctionDeclaration): WasmFunctionSignature {
-    let params = node.parameters.map(param => TsTypeToWasmType(param.tsType));
+  static GetSignature(node: BSMethodDeclaration | BSFunctionDeclaration | BSCallExpression): WasmFunctionSignature {
+    let params: WasmType[];
 
-    if (node instanceof BSMethodDeclaration) {
-      // Need to add implicit this argument!
+    if (node instanceof BSMethodDeclaration || node instanceof BSFunctionDeclaration) {
+      params = node.parameters.map(param => TsTypeToWasmType(param.tsType));
 
-      params = ["i32", ...params];
+      if (node instanceof BSMethodDeclaration) {
+        // Need to add implicit this argument!
+
+        params = ["i32", ...params];
+      }
+    } else {
+      params = node.arguments.map(arg => TsTypeToWasmType(arg.tsType));
+
+      if (node.expression instanceof BSPropertyAccessExpression) {
+        // Need to add implicit this argument!
+
+        params = ["i32", ...params];
+      }
     }
 
     const ret    = TsTypeToWasmType(node.tsType);
@@ -99,7 +112,7 @@ export class Functions {
       className ,
       overload  ,
       tableIndex: Functions.TableIndex++,
-      signature : this.getSignature(node),
+      signature : Functions.GetSignature(node),
     });
   }
 
@@ -129,7 +142,7 @@ export class Functions {
       className ,
       tableIndex: Functions.TableIndex++,
       overload  : null,
-      signature : this.getSignature(node),
+      signature : Functions.GetSignature(node),
     });
   }
 
