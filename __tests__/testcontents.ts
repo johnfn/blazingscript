@@ -229,6 +229,16 @@ class ArrayInternal<T> {
 
     return this as any;
   }
+
+  map(fn: (val: number) => number): number[] {
+    const result = this.constructArrayWithSize(this.length);
+
+    for (let i = 0; i < result.length; i++) {
+      result.set(i, fn(this.get(i)));
+    }
+
+    return result;
+  }
 }
 
 interface Array<T> extends ArrayInternal<T> {
@@ -619,12 +629,27 @@ function test_reverse_result() {
   );
 }
 
-function test_stuff() {
+function test_function_reference() {
   const add = toCall;
 
   return add(1, 2) === 3;
 }
 
+function mapMe(x: number) {
+  return x * 2;
+}
+
+function test_array_map() {
+  const myArray = [1, 2, 3, 4];
+  const result = myArray.map(mapMe)
+
+  return (
+    result[0] === 2 &&
+    result[1] === 4 &&
+    result[2] === 6 &&
+    result[3] === 8
+  );
+}
 /*
 
 function test_for_loop_no_init() {

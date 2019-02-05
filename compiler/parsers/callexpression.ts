@@ -38,9 +38,9 @@ export class BSCallExpression extends BSNode {
       return special;
     }
 
-    if (this.expression instanceof BSPropertyAccessExpression) {
-      const sig = Functions.GetSignature(this);
+    const sig = Functions.GetSignature(this);
 
+    if (this.expression instanceof BSPropertyAccessExpression) {
       // pass in "this" argument
 
       const res = S(
@@ -55,8 +55,6 @@ export class BSCallExpression extends BSNode {
 
       return res;
     } else {
-      const sig = Functions.GetSignature(this);
-
       return S(
         "i32",
         "call_indirect",

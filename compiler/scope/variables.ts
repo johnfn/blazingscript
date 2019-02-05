@@ -55,6 +55,9 @@ export class Variables {
     this.add({ name, tsType, wasmType, isParameter });
   }
 
+  /**
+   * Return a variable named name in the current scope, or null if there isn't one.
+   */
   getOrNull(name: string): Sexpr | null {
     let currScope: Scope | null = this.scope;
 
@@ -75,6 +78,11 @@ export class Variables {
     return null;
   }
 
+  /**
+   * Return a variable named name in the current scope, or throw an error if
+   * there isn't one. You better be pretty sure there's a variable named name in
+   * the current scope, buddy.
+   */
   get(name: string): Sexpr {
     const result = this.getOrNull(name);
 
@@ -85,6 +93,9 @@ export class Variables {
     return result;
   }
 
+  /**
+   * Return all variables in the current scope.
+   */
   getAll(props: { wantParameters: boolean } ): Variable[] {
     const vars = this.variables;
 

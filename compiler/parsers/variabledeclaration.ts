@@ -5,7 +5,7 @@ import { Scope } from "../scope/scope";
 import { S, Sexpr } from "../sexpr";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
-import { isArrayType } from "./arrayliteral";
+import { isArrayType, isFunctionType } from "./arrayliteral";
 
 export class BSVariableDeclaration extends BSNode {
   children   : BSNode[];
@@ -24,7 +24,7 @@ export class BSVariableDeclaration extends BSNode {
     if (
       this.tsType.flags & TypeFlags.NumberLike ||
       this.tsType.flags & TypeFlags.StringLike ||
-      this.tsType.flags & TypeFlags.Object ||
+      isFunctionType(ctx, this.tsType)         ||
       isArrayType(ctx, this.tsType)
     ) {
       ctx.variables.add({ name: this.nameNode.text, tsType: this.tsType, wasmType: "i32", isParameter: false });

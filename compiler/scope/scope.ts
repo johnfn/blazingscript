@@ -7,7 +7,7 @@ import { BSParameter } from "../parsers/parameter";
 import { BSClassDeclaration } from "../parsers/class";
 import { BSForStatement } from "../parsers/for";
 import { assertNever } from "../util";
-import { isArrayType } from "../parsers/arrayliteral";
+import { isArrayType, isFunctionType } from "../parsers/arrayliteral";
 import { Variables } from "./variables";
 import { Properties } from "./properties";
 import { Functions } from "./functions";
@@ -86,18 +86,6 @@ export class Scope {
     return this.topmostScope().jsTypes[jsTypeName];
   }
 
-  /*
-  enterScopeFor(node: BSNode): void {
-    const childContext = this.children.filter(context => context.node!.uid === node.uid)[0];
-
-    if (childContext) {
-      this.scope = childContext;
-    } else {
-      throw new Error(`Cant find scope for ${ node.readableName() }`);
-    }
-  }
-  */
-
   getChildScope(node: BSNode): Scope {
     const childContext = this.children.filter(context => context.node!.uid === node.uid)[0];
 
@@ -111,18 +99,6 @@ export class Scope {
   addScopeFor(node: BSFunctionDeclaration | BSForStatement | BSMethodDeclaration | BSClassDeclaration): void {
     this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this));
   }
-
-  /*
-  popScope(): void {
-    const parent = this.parent;
-
-    if (parent === null) {
-      throw new Error("Got a null parent when I shouldn't have!");
-    }
-
-    this.scope = parent;
-  }
-  */
 
   /**
    * By default (with no scope argument) this finds all declared scopes across
@@ -159,6 +135,7 @@ export class Scope {
       if (
         (node.tsType.flags & TypeFlags.Number) ||
         (node.tsType.flags & TypeFlags.String) ||
+        isFunctionType(this, node.tsType)      ||
         isArrayType(this, node.tsType)
       ) {
         return {

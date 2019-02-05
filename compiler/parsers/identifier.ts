@@ -9,12 +9,14 @@ import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
  */
 export class BSIdentifier extends BSNode {
   children: BSNode[] = [];
-  text: string;
+  text    : string;
+  isLhs   : boolean;
 
   constructor(ctx: Scope, node: Identifier, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
-    this.text = node.text;
+    this.text  = node.text;
+    this.isLhs = info.isLhs;
   }
 
   compile(ctx: Scope): Sexpr {

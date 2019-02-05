@@ -2,7 +2,7 @@ import { ParameterDeclaration, TypeFlags } from "typescript";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { Scope } from "../scope/scope";
 import { buildNode } from "./nodeutil";
-import { isArrayType } from "./arrayliteral";
+import { isArrayType, isFunctionType } from "./arrayliteral";
 import { flatArray } from "../util";
 import { BSBindingName } from "./expression";
 
@@ -32,6 +32,7 @@ export class BSParameter extends BSNode {
     if (
       this.tsType.flags & TypeFlags.NumberLike ||
       this.tsType.flags & TypeFlags.StringLike ||
+      isFunctionType(ctx, this.tsType)         ||
       isArrayType(ctx, this.tsType)
     ) {
       ctx.variables.add({ name: this.bindingName.text, tsType: this.tsType, wasmType: "i32", isParameter: true });

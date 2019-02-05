@@ -1,5 +1,5 @@
 import { Scope } from "../scope/scope";
-import { ArrayLiteralExpression, Type, SignatureKind } from "typescript";
+import { ArrayLiteralExpression, Type, SignatureKind, TypeFlags } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
@@ -93,4 +93,11 @@ export function isArrayType(ctx: Scope, type: Type) {
     (type.symbol && type.symbol.name === "Array") ||
     (type.symbol && type.symbol.name === ctx.getNativeTypeName("Array"))
   );
+}
+
+export function isFunctionType(ctx: Scope, type: Type) {
+  const stringType = ctx.typeChecker.typeToString(type);
+
+  // TODO: I'm pretty sure there's a better way here.
+  return stringType.startsWith("(") && stringType.includes("=>");
 }

@@ -64,5 +64,4 @@ export class Loops {
 
     return loopStack[loopStack.length - 1].continueLabel;
   }
-
 }
