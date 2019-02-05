@@ -38,48 +38,33 @@ export class BSCallExpression extends BSNode {
       return special;
     }
 
-    if (this.expression instanceof BSIdentifier) {
-      const fn = ctx.functions.getFunctionByIdentifier(this.expression);
+    if (this.expression instanceof BSPropertyAccessExpression) {
+      const sig = Functions.GetSignature(this);
 
-      // TODO: This doesnt have to be indirect.
+      // pass in "this" argument
+
+      const res = S(
+        "i32",
+        "call_indirect",
+        S("[]", "type", sig.name),
+        this.expression.expression.compile(ctx),
+        ...parseStatementListBS(ctx, this.arguments),
+        this.expression.compile(ctx),
+        `;; ${ this.fullText.replace(/\n/g, "") } (with this)\n`
+      );
+
+      return res;
+    } else {
+      const sig = Functions.GetSignature(this);
 
       return S(
         "i32",
         "call_indirect",
-        S("[]", "type", fn.signature.name),
+        S("[]", "type", sig.name),
         ...parseStatementListBS(ctx, this.arguments),
-        S.Const(fn.tableIndex),
-        `;; ${ fn.fnName }\n`
+        this.expression.compile(ctx),
+        `;; ${ this.expression.fullText.replace(/\n/g, "") }\n`
       );
-    } else {
-      if (this.expression instanceof BSPropertyAccessExpression) {
-        const sig = Functions.GetSignature(this);
-
-        // pass in "this" argument
-
-        const res = S(
-          "i32",
-          "call_indirect",
-          S("[]", "type", sig.name),
-          this.expression.expression.compile(ctx),
-          ...parseStatementListBS(ctx, this.arguments),
-          this.expression.compile(ctx),
-          `;; ${ this.fullText.replace(/\n/g, "") } (with this)\n`
-        );
-
-        return res;
-      } else {
-        const sig = Functions.GetSignature(this);
-
-        return S(
-          "i32",
-          "call_indirect",
-          S("[]", "type", sig.name),
-          ...parseStatementListBS(ctx, this.arguments),
-          this.expression.compile(ctx),
-          `;; ${ this.expression.fullText.replace(/\n/g, "") }\n`
-        );
-      }
     }
   }
 

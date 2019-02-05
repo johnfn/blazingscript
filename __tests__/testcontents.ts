@@ -619,6 +619,12 @@ function test_reverse_result() {
   );
 }
 
+function test_stuff() {
+  const add = toCall;
+
+  return add(1, 2) === 3;
+}
+
 /*
 
 function test_for_loop_no_init() {

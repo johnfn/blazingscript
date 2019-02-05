@@ -55,7 +55,7 @@ export class Variables {
     this.add({ name, tsType, wasmType, isParameter });
   }
 
-  get(name: string): Sexpr {
+  getOrNull(name: string): Sexpr | null {
     let currScope: Scope | null = this.scope;
 
     while (currScope !== null) {
@@ -72,7 +72,17 @@ export class Variables {
       currScope = currScope.parent;
     }
 
-    throw new Error(`variable name ${name} not found in context!`);
+    return null;
+  }
+
+  get(name: string): Sexpr {
+    const result = this.getOrNull(name);
+
+    if (result === null) {
+      throw new Error(`variable name ${ name } not found in context!`);
+    }
+
+    return result;
   }
 
   getAll(props: { wantParameters: boolean } ): Variable[] {

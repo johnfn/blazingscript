@@ -24,6 +24,7 @@ export class BSVariableDeclaration extends BSNode {
     if (
       this.tsType.flags & TypeFlags.NumberLike ||
       this.tsType.flags & TypeFlags.StringLike ||
+      this.tsType.flags & TypeFlags.Object ||
       isArrayType(ctx, this.tsType)
     ) {
       ctx.variables.add({ name: this.nameNode.text, tsType: this.tsType, wasmType: "i32", isParameter: false });

@@ -18,6 +18,20 @@ export class BSIdentifier extends BSNode {
   }
 
   compile(ctx: Scope): Sexpr {
-    return ctx.variables.get(this.text);
+    const asVariable = ctx.variables.getOrNull(this.text);
+
+    if (asVariable) {
+      return asVariable;
+    }
+
+    const fn = ctx.functions.getFunctionByName(this.text);
+
+    if (fn) {
+      return S.Const(fn.tableIndex);
+    }
+
+    console.log(this.fullText);
+
+    throw new Error("Unhandled node type");
   }
 }

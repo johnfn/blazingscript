@@ -231,6 +231,22 @@ export class Functions {
     throw new Error("Failed to find function by node");
   }
 
+  getFunctionByName(name: string): Function | null {
+    let currScope: Scope | null = this.scope;
+
+    while (currScope !== null) {
+      for (const fn of currScope.functions.functions) {
+        if (fn.fnName === name) {
+          return fn;
+        }
+      }
+
+      currScope = currScope.parent;
+    }
+
+    return null;
+  }
+
   getFunctionByIdentifier(identifier: BSIdentifier): Function {
     let currScope: Scope | null = this.scope;
 
