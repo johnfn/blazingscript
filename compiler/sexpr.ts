@@ -115,7 +115,7 @@ S.Func = ({
   S(
     "i32",
     "func",
-    name,
+    "$" + name,
     ...Sx.Params(params),
     S("[]", "result", "i32"),
     ...body

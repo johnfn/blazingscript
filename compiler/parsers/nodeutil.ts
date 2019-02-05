@@ -1,5 +1,5 @@
 import { BSDecorator } from "./decorator";
-import { Decorator, Node, SyntaxKind, NodeArray, Block, ParameterDeclaration, Expression, Statement, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, ParenthesizedExpression, PropertyAccessExpression, ElementAccessExpression, ThisExpression, ArrayLiteralExpression, ReturnStatement, ExpressionStatement, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, TypeAliasDeclaration, InterfaceDeclaration, FunctionDeclaration, ClassDeclaration, BindingName, VariableDeclaration, PropertyName } from "typescript";
+import { Decorator, Node, SyntaxKind, NodeArray, Block, ParameterDeclaration, Expression, Statement, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, ParenthesizedExpression, PropertyAccessExpression, ElementAccessExpression, ThisExpression, ArrayLiteralExpression, ReturnStatement, ExpressionStatement, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, TypeAliasDeclaration, InterfaceDeclaration, FunctionDeclaration, ClassDeclaration, BindingName, VariableDeclaration, PropertyName, ArrowFunction } from "typescript";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo } from "./bsnode";
 import { BSBlock } from "./block";
@@ -34,6 +34,7 @@ import { BSInterfaceDeclaration } from "./interface";
 import { BSFunctionDeclaration } from "./function";
 import { BSClassDeclaration } from "./class";
 import { BSVariableDeclaration } from "./variabledeclaration";
+import { BSArrowFunction } from "./arrowfunction";
 
 /**
  * This is where the (typesafe) sausage is made. Avert your eyes!
@@ -94,6 +95,7 @@ export function buildNode(ctx: Scope, obj: Node | undefined      , info?: NodeIn
     case SyntaxKind.FunctionDeclaration     : return new BSFunctionDeclaration     (ctx, obj as FunctionDeclaration     , info);
     case SyntaxKind.ClassDeclaration        : return new BSClassDeclaration        (ctx, obj as ClassDeclaration        , info);
     case SyntaxKind.VariableDeclaration     : return new BSVariableDeclaration     (ctx, obj as VariableDeclaration     , info);
+    case SyntaxKind.ArrowFunction           : return new BSArrowFunction           (ctx, obj as ArrowFunction           , info);
   }
 
   throw new Error(`Unhandled node in buildNode! ${ SyntaxKind[obj.kind] }`)

@@ -18,7 +18,6 @@ export class BSFunctionDeclaration extends BSNode {
   body      : BSBlock | null;
 
   name      : string | null;
-  fullText  : string;
 
   constructor(ctx: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
@@ -29,33 +28,31 @@ export class BSFunctionDeclaration extends BSNode {
       this.parameters = buildNodeArray(childCtx, node.parameters);
       this.children   = flatArray(this.parameters, this.body);
       this.name       = node.name ? node.name.text : null;
-      this.fullText   = node.getFullText();
     }
 
     ctx.functions.addFunction(this);
   }
 
   compile(parentCtx: Scope): Sexpr {
-    const ctx = parentCtx.getChildScope(this)
+    const ctx        = parentCtx.getChildScope(this)
+    const params     = ctx.getParameters(this.parameters);
+    const statements = parseStatementListBS(ctx, this.body!.children);
 
-    const params = ctx.getParameters(this.parameters);
-    const sb = parseStatementListBS(ctx, this.body!.children);
+    let lastStatement: Sexpr | null = null;
 
-    let last: Sexpr | null = null;
-
-    if (sb.length > 0) {
-      last = sb[sb.length - 1];
+    if (statements.length > 0) {
+      lastStatement = statements[statements.length - 1];
     }
 
-    const ret = last && last.type === "i32" ? undefined : S.Const(0);
+    const wasmReturn = lastStatement && lastStatement.type === "i32" ? undefined : S.Const(0);
 
     const result = S.Func({
-      name: ctx.functions.getFunctionByNode(this).bsName,
+      name  : ctx.functions.getFunctionByNode(this).fullyQualifiedName,
       params: params,
-      body: [
+      body  : [
         ...ctx.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
-        ...sb,
-        ...(ret ? [ret] : [])
+        ...statements,
+        ...(wasmReturn ? [wasmReturn] : [])
       ]
     });
 

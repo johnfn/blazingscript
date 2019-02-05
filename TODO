@@ -1,14 +1,13 @@
 TODO:
-* make array[1] = 10; work.
 * call expression double evaluates a in a.b();. Should probably ensure that this doesn't cause any issues
   or, more ideally, just cache it...
 * fat arrow functions!
+* functions should pass in Function into S.Func
+   * They should also pass in the appropriate (wasm) return value
 * add strings with +
 * print arrays correctly (log pls)
 * cant have two for loops in scope with the same name lol. i think the i should be scoped INSIDE the for loop ??????
    * come to think of it, even if has its own scope.
-* functions should pass in Function into S.Func
-   * They should also pass in the appropriate (wasm) return value
 * merge the logic in callexpression to get the function type name with the logic in function to create a function type name.
 * proprety and function look up e.g. in properties.ts should be done by a class key rather than a filter.
 * need some sort of debug flag to keep debug information

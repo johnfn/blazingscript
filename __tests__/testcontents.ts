@@ -649,6 +649,19 @@ function test_array_assign_squarebrackets() {
     myArray[3] === 0
   );
 }
+
+/*
+function test_simple_fat_arrow_fucntion() {
+  const simpleFunction = (x: number): number => x + 1;
+
+  return (
+    simpleFunction(5) === 6 &&
+    simpleFunction(7) === 8 &&
+    simpleFunction(9) === 10
+  )
+}
+*/
+
 /*
 
 function test_for_loop_no_init() {

@@ -118,10 +118,10 @@ export class BSSourceFile extends BSNode {
 
         throw new Error("i got some weird type of function i cant handle.");
       }),
-      ...exportedFunctions.map(fn => S.Export(fn.fnName)),
+      ...exportedFunctions.map(fn => S.Export(fn.fullyQualifiedName)),
       S("[]", "elem", S.Const(0),
         ...functions.map(fn => {
-          return `${ fn.bsName } ;; ${ fn.tableIndex }\n`;
+          return `$${ fn.fullyQualifiedName } ;; ${ fn.tableIndex }\n`;
         })
       )
     );

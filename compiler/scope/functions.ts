@@ -24,13 +24,21 @@ export type WasmFunctionSignature = {
 }
 
 export type Function = {
-  node      : BSFunctionDeclaration | BSMethodDeclaration;
-  className : string | null;
-  fnName    : string;
-  bsName    : string;
-  overload  : OperatorOverload | null;
-  tableIndex: number;
-  signature : WasmFunctionSignature;
+  /**
+   * Name of the function, e.g. indexOf
+   */
+  name              : string;
+
+  /**
+   * Fully qualified name of the function, e.g. Array__indexOf
+   */
+  fullyQualifiedName: string;
+
+  node              : BSFunctionDeclaration | BSMethodDeclaration;
+  className         : string | null;
+  overload          : OperatorOverload | null;
+  tableIndex        : number;
+  signature         : WasmFunctionSignature;
 };
 
 export class Functions {
@@ -93,57 +101,57 @@ export class Functions {
   }): void {
     const { node, parent, overload } = props;
 
-    let fqName: string;
-    let fnName: string;
+    let fullyQualifiedName: string;
     let className: string;
 
     if (!node.name) { throw new Error("anonymous methods not supported yet!"); }
     if (!parent) { throw new Error("no parent provided to addFunction for method."); }
     if (!parent.name) { throw new Error("dont support anonymous classes yet!"); }
 
-    fqName    = "$" + parent.name + "__" + node.name;
-    fnName    = node.name;
+    fullyQualifiedName    = "$" + parent.name + "__" + node.name;
     className = parent.name;
 
     this.functions.push({
-      bsName    : fqName,
-      node      ,
-      fnName    ,
-      className ,
-      overload  ,
-      tableIndex: Functions.TableIndex++,
-      signature : Functions.GetSignature(node),
+      name              : node.name,
+      fullyQualifiedName,
+      node              ,
+      className         ,
+      overload          ,
+      tableIndex        : Functions.TableIndex++,
+      signature         : Functions.GetSignature(node),
     });
   }
 
   // TODO These are some terrible variable names.
-  addFunction(node: BSFunctionDeclaration): void {
-    let bsName: string;
-    let tsName: string;
+  addFunction(node: BSFunctionDeclaration): Function {
+    let name: string;
     let className: string | null = null;
 
     if (!node.name) {
       throw new Error("anonymous functions not supported yet!");
     }
 
-    bsName = "$" + node.name;
-    tsName = node.name;
+    name = node.name;
 
     for (const fn of this.functions) {
-      if (fn.bsName === bsName) {
-        throw new Error(`Redeclaring function named ${bsName}.`);
+      if (fn.name === name) {
+        throw new Error(`Redeclaring function named ${name}.`);
       }
     }
 
-    this.functions.push({
-      bsName    : bsName,
-      node      : node,
-      fnName    : tsName,
-      className ,
-      tableIndex: Functions.TableIndex++,
-      overload  : null,
-      signature : Functions.GetSignature(node),
-    });
+    const fn: Function = {
+      node              : node,
+      name              : name,
+      fullyQualifiedName: name,
+      className         ,
+      tableIndex        : Functions.TableIndex++,
+      overload          : null,
+      signature         : Functions.GetSignature(node),
+    }
+
+    this.functions.push(fn);
+
+    return fn;
   }
 
   count(): number {
@@ -151,7 +159,7 @@ export class Functions {
   }
 
   toString(): string {
-    return this.functions.map(x => x.fnName).join(", ");
+    return this.functions.map(x => x.name).join(", ");
   }
 
   /**
@@ -165,30 +173,6 @@ export class Functions {
     const functions = ([] as Function[]).concat(...scopes.map(x => x.functions.functions));
 
     return functions;
-  }
-
-  callMethod(props: {
-    type      : Type;
-    methodName: string;
-    thisExpr  : BSExpression;
-    argExprs  : BSExpression[];
-  }): Sexpr {
-    const { type, methodName, thisExpr: thisNode, argExprs } = props;
-
-    const fn       = this.getMethodByName(type, methodName);
-    const thisExpr = thisNode.compile(this.scope);
-
-    if (!thisExpr) {
-      throw new Error("no thisexpr in Context#callMethod");
-    }
-
-    return S(
-      "i32",
-      "call",
-      fn.bsName,
-      thisExpr,
-      ...parseStatementListBS(this.scope, argExprs)
-    );
   }
 
   callMethodByOperator(props: {
@@ -209,7 +193,7 @@ export class Functions {
     return S(
       "i32",
       "call",
-      fn.bsName,
+      "$" + fn.fullyQualifiedName,
       thisExpr,
       ...parseStatementListBS(this.scope, argExprs)
     );
@@ -236,7 +220,7 @@ export class Functions {
 
     while (currScope !== null) {
       for (const fn of currScope.functions.functions) {
-        if (fn.fnName === name) {
+        if (fn.name === name) {
           return fn;
         }
       }
@@ -252,7 +236,7 @@ export class Functions {
 
     while (currScope !== null) {
       for (const fn of currScope.functions.functions) {
-        if (fn.fnName === identifier.text) {
+        if (fn.name === identifier.text) {
           return fn;
         }
       }
@@ -271,7 +255,7 @@ export class Functions {
     }
 
     for (const fn of cls.functions.functions) {
-      if (fn.fnName === methodName) {
+      if (fn.name === methodName) {
         return fn;
       }
     }

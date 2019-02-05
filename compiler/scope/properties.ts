@@ -50,7 +50,7 @@ export class Properties {
       return res;
     }
 
-    const relevantFunctions = cls.functions.getAll().filter(fn => fn.fnName === name);
+    const relevantFunctions = cls.functions.getAll().filter(fn => fn.name === name);
     const relevantFunction  = relevantFunctions[0];
 
     if (relevantFunction) {

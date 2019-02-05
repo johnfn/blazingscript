@@ -12,6 +12,7 @@ import { Variables } from "./variables";
 import { Properties } from "./properties";
 import { Functions } from "./functions";
 import { Loops } from "./loops";
+import { BSArrowFunction } from "../parsers/arrowfunction";
 
 export enum InternalPropertyType {
   Value,
@@ -19,11 +20,12 @@ export enum InternalPropertyType {
 }
 
 enum ScopeType {
-  Function = "function",
-  Method   = "method",
-  Class    = "class",
-  Global   = "global",
-  For      = "for",
+  Function      = "function",
+  Method        = "method",
+  Class         = "class",
+  Global        = "global",
+  For           = "for",
+  ArrowFunction = "arrowfunction",
 };
 
 export type Property = {
@@ -34,11 +36,12 @@ export type Property = {
   type     : InternalPropertyType;
 };
 
-type NodesWithScope =
+type NodeWithScope =
   | BSFunctionDeclaration
   | BSForStatement
   | BSMethodDeclaration
   | BSClassDeclaration
+  | BSArrowFunction
   ;
 
 export class Scope {
@@ -58,7 +61,7 @@ export class Scope {
   constructor(
     tc: ts.TypeChecker,
     sourceFile: SourceFile,
-    node: NodesWithScope | null,
+    node: NodeWithScope | null,
     parent: Scope | null
   ) {
     this.typeChecker = tc;
@@ -96,7 +99,7 @@ export class Scope {
     }
   }
 
-  addScopeFor(node: BSFunctionDeclaration | BSForStatement | BSMethodDeclaration | BSClassDeclaration): void {
+  addScopeFor(node: NodeWithScope): void {
     this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this));
   }
 
@@ -199,7 +202,7 @@ export class Scope {
     return string;
   }
 
-  getScopeType(node: NodesWithScope | null) {
+  getScopeType(node: NodeWithScope | null) {
     if (node instanceof BSFunctionDeclaration) {
       return ScopeType.Function;
     } else if (node instanceof BSForStatement) {
@@ -208,6 +211,8 @@ export class Scope {
       return ScopeType.Method;
     } else if (node instanceof BSClassDeclaration) {
       return ScopeType.Class;
+    } else if (node instanceof BSArrowFunction) {
+      return ScopeType.ArrowFunction;
     } else if (node === null) {
       return ScopeType.Global;
     } else {

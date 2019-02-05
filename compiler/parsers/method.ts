@@ -123,7 +123,7 @@ export class BSMethodDeclaration extends BSNode {
     const ret = last && last.type === "i32" ? undefined : S.Const(0);
 
     const result = S.Func({
-      name: ctx.functions.getFunctionByNode(this).bsName,
+      name: ctx.functions.getFunctionByNode(this).fullyQualifiedName,
       params: [
         {
           name: THIS_NAME,
