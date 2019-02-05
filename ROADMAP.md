@@ -8,6 +8,42 @@
 | :x:                   | Will not be implemented - nonstandard or deprecated API | 
 | :arrow_down:          | Will not be implemented - nonidiomatic TS or could cause performance issues |
 
+### Keywords
+
+| Progress | Feature | Notes |
+|----------|---------|-------|
+| :wavy_dash: | arguments | I can do this, but does anyone want it? |
+| :black_square_button: | async | Oh boy
+| :white_check_mark: | boolean |
+| :white_check_mark: | break |
+| :wavy_dash: | byte | What is this?
+
+
+
+
+### Functions
+
+| Progress | Feature | Notes |
+|----------|---------|-------|
+| :white_check_mark: | Function declarations | 
+| :white_check_mark: | Method declarations | 
+| :white_check_mark: | Arrow functions | 
+| :wavy_dash: | Function expressions | Use arrow functions - it's difficult to ensure `this` is typed correctly. |
+| :white_check_mark: | Arrow functions | 
+| :black_square_button: | Closures |
+| :black_square_button: | Default arguments |
+| :black_square_button: | Optional arguments |
+| :arrow_down:          | Function.prototype.apply |  Might be possible, need to investigate [https://github.com/Microsoft/TypeScript/pull/27028](this PR)
+| :arrow_down:          | Function.prototype.bind | Might be possible, need to investigate [https://github.com/Microsoft/TypeScript/pull/27028](this PR)
+| :arrow_down:          | Function.prototype.call | Might be possible, need to investigate [https://github.com/Microsoft/TypeScript/pull/27028](this PR)
+
+### Modules
+
+| Progress | Feature | Notes |
+|----------|---------|-------|
+| :black_square_button: | Rudimentary module loading and bundling | 
+
+## Standard Library
 
 ### Strings 
 
