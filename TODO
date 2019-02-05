@@ -1,4 +1,7 @@
 TODO:
+* lambda functions need to be compiled with the appropriate context. Would be best to just do it during the normal recursive compile
+   step.
+   * this means that functions need to have declarations which become populated when they get compiled.
 * call expression double evaluates a in a.b();. Should probably ensure that this doesn't cause any issues
   or, more ideally, just cache it...
 * fat arrow functions!

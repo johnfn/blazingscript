@@ -13,11 +13,12 @@ import { flatArray } from "../util";
  *      ^^^^^^^^^^^^^^^^^^^
  */
 export class BSFunctionDeclaration extends BSNode {
-  children  : BSNode[];
-  parameters: BSParameter[];
-  body      : BSBlock | null;
+  children   : BSNode[];
+  parameters : BSParameter[];
+  body       : BSBlock | null;
 
-  name      : string | null;
+  name       : string | null;
+  private declaration: Sexpr  | null = null;
 
   constructor(ctx: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
@@ -46,7 +47,7 @@ export class BSFunctionDeclaration extends BSNode {
 
     const wasmReturn = lastStatement && lastStatement.type === "i32" ? undefined : S.Const(0);
 
-    const result = S.Func({
+    this.declaration = S.Func({
       name  : ctx.functions.getFunctionByNode(this).fullyQualifiedName,
       params: params,
       body  : [
@@ -56,7 +57,15 @@ export class BSFunctionDeclaration extends BSNode {
       ]
     });
 
-    return result;
+    return S.Const(0);
+  }
+
+  getDeclaration(): Sexpr {
+    if (this.declaration) {
+      return this.declaration;
+    }
+
+    throw new Error("This BSFunctionNode needs to be compiled before it has a declaration available.");
   }
 
   readableName(): string {

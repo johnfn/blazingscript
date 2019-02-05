@@ -30,17 +30,18 @@ export type OperatorOverload = {
  *                  ^^^^^^^^^^^^
  */
 export class BSMethodDeclaration extends BSNode {
-  children  : BSNode[];
-  parameters: BSParameter[];
-  body      : BSBlock | null;
+  children   : BSNode[];
+  parameters : BSParameter[];
+  body       : BSBlock | null;
 
   /**
    * Name of the method.
    */
-  name      : string | null;
+  name       : string | null;
 
-  decorators: BSDecorator[];
-  parent    : BSClassDeclaration;
+  decorators : BSDecorator[];
+  parent     : BSClassDeclaration;
+  declaration: Sexpr  | null = null;
 
   constructor(
     ctx       : Scope,
@@ -122,7 +123,7 @@ export class BSMethodDeclaration extends BSNode {
 
     const ret = last && last.type === "i32" ? undefined : S.Const(0);
 
-    const result = S.Func({
+    this.declaration = S.Func({
       name: ctx.functions.getFunctionByNode(this).fullyQualifiedName,
       params: [
         {
@@ -138,7 +139,15 @@ export class BSMethodDeclaration extends BSNode {
       ]
     });
 
-    return result;
+    return S.Const(0);
+  }
+
+  getDeclaration(): Sexpr {
+    if (this.declaration) {
+      return this.declaration;
+    }
+
+    throw new Error("This BSFunctionNode needs to be compiled before it has a declaration available.");
   }
 
   readableName(): string {

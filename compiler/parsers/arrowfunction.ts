@@ -15,14 +15,13 @@ import { BSExpression } from "./expression";
  *                ^^^^^^^^^^^^^^^^^^^^^^^^
  */
 export class BSArrowFunction extends BSNode {
-  children  : BSNode[] = [];
-  parameters: BSParameter[];
-  body      : BSBlock | BSExpression | null;
+  children   : BSNode[] = [];
+  parameters : BSParameter[];
+  body       : BSBlock | BSExpression | null;
+  declaration: Sexpr | null = null;
 
   constructor(ctx: Scope, node: ArrowFunction, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
-
-    node.body
 
     ctx.addScopeFor(this);
     const childCtx = ctx.getChildScope(this); {
@@ -74,5 +73,13 @@ export class BSArrowFunction extends BSNode {
 
     // return result;
     return S.Const(0);
+  }
+
+  getDeclaration(): Sexpr {
+    if (this.declaration) {
+      return this.declaration;
+    }
+
+    throw new Error("This BSArrowNode needs to be compiled before it has a declaration available.");
   }
 }

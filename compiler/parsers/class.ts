@@ -61,6 +61,12 @@ export class BSClassDeclaration extends BSNode {
   }
 
   compile(ctx: Scope): null {
+    const childCtx = ctx.getChildScope(this); {
+      for (const member of this.members) {
+        member.compile(childCtx);
+      }
+    }
+
     return null;
   }
 }

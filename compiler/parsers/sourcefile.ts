@@ -84,9 +84,11 @@ export class BSSourceFile extends BSNode {
       uniqueFunctionTypes[fn.signature.name] = true;
     }
 
-    // console.log(functions.map(x => x.bsname));
-
     ctx.addJsTypes(jsTypes);
+
+    for (const statement of this.statements) {
+      statement.compile(ctx);
+    }
 
     return S(
       "[]", "module",
@@ -110,13 +112,7 @@ export class BSSourceFile extends BSNode {
       }),
 
       ...functions.map(fn => {
-        if (fn.node instanceof BSFunctionDeclaration) {
-          return fn.node.compile(ctx);
-        } else if (fn.node instanceof BSMethodDeclaration) {
-          return fn.node.compile(ctx.getChildScope(fn.node.parent));
-        }
-
-        throw new Error("i got some weird type of function i cant handle.");
+        return fn.node.getDeclaration();
       }),
       ...exportedFunctions.map(fn => S.Export(fn.fullyQualifiedName)),
       S("[]", "elem", S.Const(0),

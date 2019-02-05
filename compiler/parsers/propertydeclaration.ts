@@ -1,5 +1,5 @@
 import { PropertyDeclaration } from "typescript";
-import { Sexpr } from "../sexpr";
+import { Sexpr, S } from "../sexpr";
 import { Scope, InternalPropertyType } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSDecorator } from "./decorator";
@@ -61,7 +61,7 @@ export class BSPropertyDeclaration extends BSNode {
   }
 
   compile(ctx: Scope): Sexpr {
-    throw new Error("Method not implemented.");
+    return S.Const(0);
   }
 
   getPropertyType(decorators: BSDecorator[]): PropertyType | null {

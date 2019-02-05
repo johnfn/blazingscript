@@ -35,7 +35,7 @@ export class Properties {
     const cls = this.scope.getScopeForClass(expr.tsType);
 
     if (cls === null) {
-      throw new Error(`Cant find appropriate scope for ${ expr.fullText }`);
+      throw new Error(`Cant find appropriate scope for ${ name } on ${ expr.fullText }`);
     }
 
     const relevantProperties = cls.properties.getAll().filter(prop => prop.name === name);
