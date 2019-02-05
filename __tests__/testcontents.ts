@@ -12,7 +12,7 @@ declare const divfloor: (a: number, b: number) => number;
 declare const operator: (type: "+" | "===" | "!==" | "[]") => ((target: any, propertyKey: string, descriptor: PropertyDescriptor) => void);
 declare const property: (offset: number) => any;
 declare const arrayProperty: (offset: number) => any;
-declare const elemSize: <T> (array: Array<T> | ArrayInternal<T>) => number;
+declare const elemSize: <T> (array: Array<T> | ArrayInternal) => number;
 
 interface BuiltInArray { [key: number]: number; }
 
@@ -128,7 +128,7 @@ interface String extends StringInternal {
 }
 
 @jsType("Array")
-class ArrayInternal<T> {
+class ArrayInternal {
   @property(0)
   private allocatedLength = 0;
 
@@ -141,22 +141,10 @@ class ArrayInternal<T> {
   @property(12)
   private contents = 0;
 
-  [key: number]: T;
+  [key: number]: number;
   @operator("[]")
   getAddress(i: number): number {
     return this.contents + i * 4;
-  }
-
-  get(i: number): number {
-    return memread(this.contents + i * 4);
-  }
-
-  private set(index: number, value: number): number {
-    // TODO: Can i use []
-    memwrite(this.contents + index * 4, value);
-
-    // TODO some sort of hack beacuse bs doesnt accept void functions yet? i think?
-    return 1;
   }
 
   private reallocate() {
@@ -165,7 +153,7 @@ class ArrayInternal<T> {
     const newContent = malloc(this.allocatedLength * 4);
 
     for (let i = 0; i < this.length; i++) {
-      memwrite(newContent + i * 4, this.get(i));
+      memwrite(newContent + i * 4, this[i]);
     }
 
     this.contents = newContent;
@@ -178,7 +166,7 @@ class ArrayInternal<T> {
       this.reallocate();
     }
 
-    this.set(this.length, value);
+    this[this.length] = value;
     this.length = this.length + 1;
 
     return 1;
@@ -186,7 +174,7 @@ class ArrayInternal<T> {
 
   indexOf(value: number): number {
     for (let i = 0; i < this.length; i++) {
-      if (this.get(i) === value) {
+      if (this[i] === value) {
         return i;
       }
     }
@@ -210,11 +198,11 @@ class ArrayInternal<T> {
     const result = this.constructArrayWithSize(myLength + secondArray.length);
 
     for (let i = 0; i < myLength; i++) {
-      result.set(i, this.get(i));
+      result[i] = this[i];
     }
 
     for (let j = 0; j < secondArray.length; j++) {
-      result.set(j + myLength, secondArray.get(j));
+      result[j + myLength] = secondArray[j];
     }
 
     return result as any;
@@ -225,10 +213,10 @@ class ArrayInternal<T> {
     let temp = 0;
 
     for (let i = 0; i < myLength / 2; i++) {
-      temp = this.get(i);
+      temp = this[i];
 
-      this.set(i, this.get(this.length - i - 1));
-      this.set(this.length - i - 1, temp);
+      this[i] = this[this.length - i - 1];
+      this[this.length - i - 1] = temp;
     }
 
     return this as any;
@@ -238,14 +226,14 @@ class ArrayInternal<T> {
     const result = this.constructArrayWithSize(this.length);
 
     for (let i = 0; i < result.length; i++) {
-      result.set(i, fn(this.get(i)));
+      result[i] = fn(this[i]);
     }
 
     return result;
   }
 }
 
-interface Array<T> extends ArrayInternal<T> {
+interface Array<T> extends ArrayInternal {
   // [key: number]: T;
 }
 

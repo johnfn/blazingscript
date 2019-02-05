@@ -65,9 +65,7 @@ export class BSElementAccessExpression extends BSNode {
     // Also, a string element access being an LHS wouldn't work in the
     // conventional way because str[0] isn't a pointer - it actually creates a
     // new string and returns it.
-    if (
-      this.array.tsType.flags & TypeFlags.StringLike
-    ) {
+    if (this.array.tsType.flags & TypeFlags.StringLike) {
       return expr;
     }
 
