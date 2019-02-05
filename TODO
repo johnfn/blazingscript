@@ -1,10 +1,15 @@
 TODO:
-* lambda functions need to be compiled with the appropriate context. Would be best to just do it during the normal recursive compile
-   step.
-   * this means that functions need to have declarations which become populated when they get compiled.
+* fat arrow functions!
+   * lambda functions need to be compiled with the appropriate context. Would be best to just do it during the normal recursive compile
+      step.
+      * this means that functions need to have declarations which become populated when they get compiled.
+* Fat arrow / function / method declarations share a lot of common code.
+* Remove Sx
+* functions and fat arrows are not compiling BSBlocks correctly. They should just .compile() the block rather than doing...the...thing.
 * call expression double evaluates a in a.b();. Should probably ensure that this doesn't cause any issues
   or, more ideally, just cache it...
-* fat arrow functions!
+* unify the 3 separate methods for compiling functions - and probably name them something else other than compile().
+* It's confusing and inconsistent that methods get compiled with their parent contexts. Make this more normal.
 * functions should pass in Function into S.Func
    * They should also pass in the appropriate (wasm) return value
 * add strings with +

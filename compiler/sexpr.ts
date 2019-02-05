@@ -111,15 +111,14 @@ S.Func = ({
   name: string;
   body: Sexpr[];
   params: Param[];
-}): Sexpr =>
-  S(
-    "i32",
-    "func",
-    "$" + name,
-    ...Sx.Params(params),
-    S("[]", "result", "i32"),
-    ...body
-  );
+}): Sexpr => S(
+  "i32",
+  "func",
+  "$" + name,
+  ...Sx.Params(params),
+  S("[]", "result", "i32"),
+  ...body
+);
 
 /**
  * Reminder: dont use this function! use ctx.getVariable instead.

@@ -23,23 +23,24 @@ export class BSFunctionDeclaration extends BSNode {
   constructor(ctx: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
+    this.name = node.name ? node.name.text : null;
+
     ctx.addScopeFor(this);
     const childCtx = ctx.getChildScope(this); {
-      this.body       = buildNode(childCtx, node.body);
-      this.parameters = buildNodeArray(childCtx, node.parameters);
-      this.children   = flatArray(this.parameters, this.body);
-      this.name       = node.name ? node.name.text : null;
+      this.children = flatArray(
+        this.body       = buildNode(childCtx, node.body),
+        this.parameters = buildNodeArray(childCtx, node.parameters),
+      );
     }
 
     ctx.functions.addFunction(this);
   }
 
   compile(parentCtx: Scope): Sexpr {
-    const ctx        = parentCtx.getChildScope(this)
-    const params     = ctx.getParameters(this.parameters);
-    const statements = parseStatementListBS(ctx, this.body!.children);
-
-    let lastStatement: Sexpr | null = null;
+    const ctx         = parentCtx.getChildScope(this)
+    const params      = ctx.getParameters(this.parameters);
+    const statements  = parseStatementListBS(ctx, this.body!.children);
+    let lastStatement : Sexpr | null = null;
 
     if (statements.length > 0) {
       lastStatement = statements[statements.length - 1];

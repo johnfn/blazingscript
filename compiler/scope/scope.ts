@@ -129,9 +129,7 @@ export class Scope {
     return this.getAllScopes(scope).filter(s => s.type === ScopeType.Class);
   }
 
-  getParameters(
-    nodes: BSParameter[]
-  ): Param[] {
+  getParameters(nodes: BSParameter[]): Param[] {
     return nodes.map(node => {
       let wasmType: "i32" = "i32";
 

@@ -10,6 +10,8 @@ import { Scope } from "./scope";
 import { BSIdentifier } from "../parsers/identifier";
 import { BSCallExpression } from "../parsers/callexpression";
 import { BSPropertyAccessExpression } from "../parsers/propertyaccess";
+import { BSArrowFunction } from "../parsers/arrowfunction";
+import { assertNever } from "../util";
 
 // TODO should probably rename this as to not clash with Function the js type
 
@@ -23,6 +25,11 @@ export type WasmFunctionSignature = {
   name      : string;
 }
 
+type FunctionNode =
+  | BSFunctionDeclaration
+  | BSMethodDeclaration
+  | BSArrowFunction
+
 export type Function = {
   /**
    * Name of the function, e.g. indexOf
@@ -34,7 +41,7 @@ export type Function = {
    */
   fullyQualifiedName: string;
 
-  node              : BSFunctionDeclaration | BSMethodDeclaration;
+  node              : FunctionNode;
   className         : string | null;
   overload          : OperatorOverload | null;
   tableIndex        : number;
@@ -57,10 +64,14 @@ export class Functions {
     this.scope     = scope;
   }
 
-  static GetSignature(node: BSMethodDeclaration | BSFunctionDeclaration | BSCallExpression): WasmFunctionSignature {
+  static GetSignature(node: BSMethodDeclaration | BSFunctionDeclaration | BSCallExpression | BSArrowFunction): WasmFunctionSignature {
     let params: WasmType[];
 
-    if (node instanceof BSMethodDeclaration || node instanceof BSFunctionDeclaration) {
+    if (
+      node instanceof BSMethodDeclaration ||
+      node instanceof BSFunctionDeclaration ||
+      node instanceof BSArrowFunction
+    ) {
       params = node.parameters.map(param => TsTypeToWasmType(param.tsType));
 
       if (node instanceof BSMethodDeclaration) {
@@ -122,16 +133,22 @@ export class Functions {
     });
   }
 
-  // TODO These are some terrible variable names.
-  addFunction(node: BSFunctionDeclaration): Function {
-    let name: string;
+  addFunction(node: BSFunctionDeclaration | BSArrowFunction): Function {
+    const id     = Functions.TableIndex++;
+    let name     : string;
     let className: string | null = null;
 
-    if (!node.name) {
-      throw new Error("anonymous functions not supported yet!");
+    if (node instanceof BSFunctionDeclaration) {
+      if (node.name) {
+        name = node.name
+      } else {
+        name = `anon_${ id }`;
+      }
+    } else if (node instanceof BSArrowFunction) {
+      name = `arrow_${ id }`;
+    } else {
+      return assertNever(node);
     }
-
-    name = node.name;
 
     for (const fn of this.functions) {
       if (fn.name === name) {
@@ -144,7 +161,7 @@ export class Functions {
       name              : name,
       fullyQualifiedName: name,
       className         ,
-      tableIndex        : Functions.TableIndex++,
+      tableIndex        : id,
       overload          : null,
       signature         : Functions.GetSignature(node),
     }
@@ -199,7 +216,7 @@ export class Functions {
     );
   }
 
-  getFunctionByNode(node: BSFunctionDeclaration | BSMethodDeclaration): Function {
+  getFunctionByNode(node: FunctionNode): Function {
     let currScope: Scope | null = this.scope;
 
     while (currScope !== null) {

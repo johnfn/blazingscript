@@ -650,7 +650,6 @@ function test_array_assign_squarebrackets() {
   );
 }
 
-/*
 function test_simple_fat_arrow_fucntion() {
   const simpleFunction = (x: number): number => x + 1;
 
@@ -660,7 +659,60 @@ function test_simple_fat_arrow_fucntion() {
     simpleFunction(9) === 10
   )
 }
-*/
+
+function test_map_with_arrow_function() {
+  const myArray = [0, 1, 2, 3];
+  const mapped = myArray.map(x => x * 2);
+
+  return (
+    mapped[0] === 0 &&
+    mapped[1] === 2 &&
+    mapped[2] === 4 &&
+    mapped[3] === 6
+  );
+}
+
+function test_map_array_literal() {
+  const mappedLiteral = [0, 1, 2, 3].map(x => x * 2);
+
+  return (
+    mappedLiteral[0] === 0 &&
+    mappedLiteral[1] === 2 &&
+    mappedLiteral[2] === 4 &&
+    mappedLiteral[3] === 6
+  );
+}
+
+function test_multiline_arrow_function() {
+  const fn = (val: number) => {
+    let newVal = val;
+
+    newVal = newVal + 1;
+    newVal = newVal + 1;
+    newVal = newVal + 1;
+
+    return newVal;
+  };
+
+  return (
+    fn(0) === 3 &&
+    fn(3) === 6
+  );
+}
+
+function test_void_arrow_function() {
+  let x = 0;
+
+  const fn = (val: number) => {
+    val++;
+    val++;
+    val++;
+  };
+
+  fn(x);
+
+  return x === 0;
+}
 
 /*
 

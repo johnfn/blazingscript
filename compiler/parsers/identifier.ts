@@ -33,6 +33,7 @@ export class BSIdentifier extends BSNode {
     }
 
     console.log(this.fullText);
+    console.log(ctx.toString());
 
     throw new Error("Unhandled node type");
   }
