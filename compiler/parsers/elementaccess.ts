@@ -43,16 +43,32 @@ export class BSElementAccessExpression extends BSNode {
       }
     }
 
+    const expr = ctx.functions.callMethodByOperator({
+      type    : arrayType,
+      opName  : Operator.ArrayIndex,
+      thisExpr: this.array,
+      argExprs: [this.index],
+    });
+
     if (
-      this.array.tsType.flags & TypeFlags.StringLike ||
       isArrayType(ctx, this.array.tsType)
     ) {
-      return ctx.functions.callMethodByOperator({
-        type    : arrayType,
-        opName  : Operator.ArrayIndex,
-        thisExpr: this.array,
-        argExprs: [this.index],
-      });
+      if (this.isLhs) {
+        return expr;
+      } else {
+        return S.Load("i32", expr);
+      }
+    }
+
+    // you can't assign to a string by index, so they're never the lhs.
+
+    // Also, a string element access being an LHS wouldn't work in the
+    // conventional way because str[0] isn't a pointer - it actually creates a
+    // new string and returns it.
+    if (
+      this.array.tsType.flags & TypeFlags.StringLike
+    ) {
+      return expr;
     }
 
     throw new Error("Do not know how to access the element of that.");

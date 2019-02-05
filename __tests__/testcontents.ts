@@ -143,6 +143,10 @@ class ArrayInternal<T> {
 
   [key: number]: T;
   @operator("[]")
+  getAddress(i: number): number {
+    return this.contents + i * 4;
+  }
+
   get(i: number): number {
     return memread(this.contents + i * 4);
   }
@@ -385,15 +389,6 @@ function test_string_length() {
   return x.length === 5;
 }
 
-function test_string_squarebrackets() {
-  const squarebr = "abcde";
-
-  return (
-    squarebr[0] === "a" &&
-    squarebr[2] === "c"
-  );
-}
-
 function test_string_charCodeAt() {
   const x = "abcde";
 
@@ -406,9 +401,9 @@ function test_string_charCodeAt() {
 }
 
 function test_str_array_access() {
-  const x = "abcde";
-  const char1 = x[0];
-  const char2 = x[1];
+  const chx   = "abcde";
+  const char1 = chx[0];
+  const char2 = chx[1];
 
   return char1.charCodeAt(0) === 97 && char2.charCodeAt(0) === 98;
 }
@@ -648,6 +643,22 @@ function test_array_map() {
     result[1] === 4 &&
     result[2] === 6 &&
     result[3] === 8
+  );
+}
+
+function test_array_assign_squarebrackets() {
+  const myArray = [0, 0, 0, 0];
+
+  myArray[0] = 5;
+  myArray[1] = 3;
+  myArray[2] = 1;
+  myArray[3] = 0;
+
+  return (
+    myArray[0] === 5 &&
+    myArray[1] === 3 &&
+    myArray[2] === 1 &&
+    myArray[3] === 0
   );
 }
 /*
