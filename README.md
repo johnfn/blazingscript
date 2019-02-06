@@ -1,7 +1,7 @@
 # BlazingScript
 > A TypeScript to WASM compiler.
 
-BlazingScript compiles a subset of TypeScript to WebAssembly. 
+BlazingScript compiles idiomatic TypeScript to WebAssembly. 
 
 [See our roadmap!](/ROADMAP.md)
 
