@@ -54,6 +54,7 @@
 |----------|---------|-------|
 | :black_square_button: | Implementation | Got some basic stuff in place, but there's still a lot of details to be worked out.
 | :black_square_button: | Constructors | 
+| :black_square_button: | instanceof checks | 
 | :black_square_button: | Properties | 
 | :black_square_button: | Methods |
 | :black_square_button: | super | 
