@@ -68,7 +68,7 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
           }
         }
 
-        console.log("__tests__/testcontents.ts log:", ...res);
+        console.log("__tests__/bs/testcontents.ts log:", ...res);
       }
     },
     js: {
@@ -141,7 +141,7 @@ if (!("test" in global)) {
 
 test("all tests", async () => {
   const result = await runProgram(
-    fs.readFileSync("__tests__/testcontents.ts").toString()
+    fs.readFileSync("__tests__/bs/testcontents.ts").toString()
   );
   let failCount =
     Object.keys(result)

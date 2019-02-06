@@ -38,7 +38,7 @@ export class Program {
           if (fileName === "file.ts") {
             return ts.createSourceFile(
               fileName,
-              fs.readFileSync("__tests__/testcontents.ts").toString(),
+              fs.readFileSync("__tests__/bs/testcontents.ts").toString(),
               ts.ScriptTarget.Latest,
               true
             );
@@ -47,7 +47,7 @@ export class Program {
           if (fileName === "bs.d.ts") {
             return ts.createSourceFile(
               fileName,
-              fs.readFileSync("__tests__/bs.d.ts").toString(),
+              fs.readFileSync("__tests__/bs/bs.d.ts").toString(),
               ts.ScriptTarget.Latest,
               true
             );
