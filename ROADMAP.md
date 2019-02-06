@@ -97,41 +97,41 @@
 | :black_square_button: | Concatenate strings with `+` | 
 | :white_check_mark: | String.fromCharCode()
 | :wavy_dash:        | String.fromCodePoint()
-| :x: | String.prototype.anchor()
-| :x: | String.prototype.big()
-| :x: | String.prototype.blink()
-| :x: | String.prototype.bold()
+| :x: | String.prototype.anchor() | deprecated API
+| :x: | String.prototype.big() | deprecated API
+| :x: | String.prototype.blink() | deprecated API
+| :x: | String.prototype.bold() | deprecated API
 | :white_check_mark: | String.prototype.charAt()
 | :white_check_mark: | String.prototype.charCodeAt()
 | :wavy_dash: | String.prototype.codePointAt()
 | :white_check_mark: | String.prototype.concat() | need to handle varags
 | :white_check_mark: | String.prototype.endsWith()
-| :x: | String.prototype.fixed()
-| :x: | String.prototype.fontcolor()
-| :x: | String.prototype.fontsize()
+| :x: | String.prototype.fixed() | deprecated API
+| :x: | String.prototype.fontcolor() | deprecated API
+| :x: | String.prototype.fontsize() | deprecated API
 | :white_check_mark:| String.prototype.includes()
 | :white_check_mark: | String.prototype.indexOf()
-| :x: | String.prototype.italics()
+| :x: | String.prototype.italics() | deprecated API
 | :white_check_mark: | String.prototype.lastIndexOf()
-| :x: | String.prototype.link()
+| :x: | String.prototype.link() | deprecated API
 | :wavy_dash: | String.prototype.localeCompare()
 | :wavy_dash: | String.prototype.match()
 | :wavy_dash: | String.prototype.normalize()
 | :black_square_button: | String.prototype.padEnd()
 | :black_square_button: | String.prototype.padStart()
-| :x: | String.prototype.quote()
+| :x: | String.prototype.quote() | deprecated API
 | :white_check_mark: | String.prototype.repeat()
 | :black_square_button: | String.prototype.replace()
 | :black_square_button: | String.prototype.search()
 | :black_square_button: | String.prototype.slice()
-| :x: | String.prototype.small()
+| :x: | String.prototype.small() | deprecated API
 | :black_square_button: | String.prototype.split()
 | :black_square_button: | String.prototype.startsWith()
-| :x: | String.prototype.strike()
-| :x: | String.prototype.sub()
-| :x: | String.prototype.substr()
+| :x: | String.prototype.strike() | deprecated API
+| :x: | String.prototype.sub() | deprecated API
+| :x: | String.prototype.substr() | deprecated API
 | :black_square_button: | String.prototype.substring()
-| :x: | String.prototype.sup()
+| :x: | String.prototype.sup() | deprecated API
 | :wavy_dash: | String.prototype.toLocaleLowerCase()
 | :wavy_dash: | String.prototype.toLocaleUpperCase()
 | :black_square_button: | String.prototype.toLowerCase()
@@ -161,7 +161,7 @@ Methods
 |----------|---------|-------|
 | :black_square_button: | Array.from()
 | :black_square_button: | Array.isArray()
-| :x:                   | Array.observe()
+| :x:                   | Array.observe() | deprecated API
 | :black_square_button: | Array.of()
 | :white_check_mark:    | Array.prototype.concat() |  Needs var-arg support |
 | :black_square_button: | Array.prototype.copyWithin()
@@ -196,5 +196,5 @@ Methods
 | :black_square_button: | Array.prototype.unshift()
 | :black_square_button: | Array.prototype.values()
 | :black_square_button: | Array.prototype[@@iterator]()
-| :arrow_down:          | Array.unobserve()
+| :x:          | Array.unobserve() | deprecated API
 | :black_square_button: | get Array[@@species]
