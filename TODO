@@ -14,6 +14,8 @@ TODO:
    * They should also pass in the appropriate (wasm) return value
 * add strings with +
 * print arrays correctly (log pls)
+* i think there may be a large bug with strings where i always write mem in 4 byte chunks, meaning writing at the final char would overwrite the
+  next thing in memory.
 * cant have two for loops in scope with the same name lol. i think the i should be scoped INSIDE the for loop ??????
    * come to think of it, even if has its own scope.
 * merge the logic in callexpression to get the function type name with the logic in function to create a function type name.

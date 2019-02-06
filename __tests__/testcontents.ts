@@ -177,6 +177,19 @@ class StringInternal {
   includes(otherString: string): boolean {
     return this.indexOf(otherString) > -1;
   }
+
+  repeat(times: number): string {
+    const size   = times * this.length;
+    const result = malloc(4 + size);
+
+    memwrite(result as any as number, size);
+
+    for (let i = 0; i < size; i++) {
+      memwrite(result as any as number + i + 4, this.charCodeAt(i % this.length));
+    }
+
+    return result as any as string;
+  }
 }
 
 interface String extends StringInternal {
@@ -808,6 +821,14 @@ function test_string_lastIndexOf() {
     test.lastIndexOf("b c c") === 10 &&
     test.lastIndexOf("verylongggggggggggggggggggg") === -1 &&
     test.lastIndexOf("x")     === -1
+  );
+}
+
+function test_string_repeat() {
+  return (
+    "abc ".repeat(4) === "abc abc abc abc " &&
+    "AB".repeat(1)   === "AB" &&
+    "".repeat(5)     === ""
   );
 }
 /*
