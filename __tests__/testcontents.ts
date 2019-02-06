@@ -132,6 +132,10 @@ class StringInternal {
 
     return true;
   }
+
+  includes(otherString: string): boolean {
+    return this.indexOf(otherString) > -1;
+  }
 }
 
 interface String extends StringInternal {
@@ -736,6 +740,20 @@ function test_string_endsWith() {
     test.endsWith("de") &&
     test.endsWith("Abcde") &&
     !test.endsWith("j")
+  );
+}
+
+function test_string_includes() {
+  const test = "Abcde";
+
+  return (
+    test.includes("bc") &&
+    test.includes("Abc") &&
+    test.includes("de") &&
+    test.includes("b") &&
+    test.includes("") &&
+    !test.includes("f") &&
+    !test.includes("Abcdefg")
   );
 }
 /*
