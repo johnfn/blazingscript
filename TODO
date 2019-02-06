@@ -1,5 +1,8 @@
 TODO:
 * modules
+   * sourceFile will need to compile functions just in the current file. It currently compiles ALL functions
+     we've ever added.
+
    * function names etc, will have to be prefaced by their file name. actually, even file name
      isnt totally unique, so some sort of unique name will have to be generated.
    * for things like "import "fs"", will have to generate a wrapper output file

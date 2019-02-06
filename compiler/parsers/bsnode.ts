@@ -45,5 +45,5 @@ export abstract class BSNode {
 
   readableName(): string { return "unimplemented"; }
 
-  abstract compile(ctx: Scope): Sexpr | null;
+  abstract compile(ctx: Scope): Sexpr | Sexpr[] | null;
 }

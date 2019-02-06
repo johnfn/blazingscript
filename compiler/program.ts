@@ -3,6 +3,7 @@ import fs from "fs";
 import { sexprToString, Sexpr, S } from "./sexpr";
 import { Scope } from "./scope/scope";
 import { BSSourceFile } from "./parsers/sourcefile";
+import { Functions } from "./scope/functions";
 
 export const THIS_NAME = "__this";
 
@@ -111,11 +112,44 @@ export class Program {
     }
 
     const ctx = new Scope(this.typeChecker, source, null, null);
-    let compiledFiles: string[] = [];
+    const compiledFile = new BSSourceFile(ctx, source).compile(ctx);
+    const functions    = ctx.functions.getAll(ctx.topmostScope()).sort((a, b) => a.tableIndex - b.tableIndex);
 
-    const result = new BSSourceFile(ctx, source).compile(ctx);
+    const resultSexpr = S(
+      "[]", "module",
+      S("[]", "import", '"js"', '"mem"', S("[]", "memory", "1")),
+      S("[]", "import", '"js"', '"table"', S("[]", "table", String(functions.length), "anyfunc")),
+      S("[]", "import", '"c"', '"log"',
+        S("[]", "func", "$log", ...[...Array(9).keys()].map(_ => S("[]", "param", "i32")))
+      ),
+      ...Object.keys(Functions.AllSignatures).map(sigName => {
+        // Build all function wasm type signatures
 
-    return sexprToString(result);
+        const sig = Functions.AllSignatures[sigName];
+
+        return S(
+          "[]", "type",
+          sig.name,
+          S("[]", "func",
+            ...sig.parameters.map(param => S("[]", "param", param)),
+            S("[]", "result", "i32")
+          ),
+          ";; \n"
+        );
+      }),
+
+      ...compiledFile,
+
+      ...functions.map(fn => S.Export(fn.fullyQualifiedName)),
+      S("[]", "elem", S.Const(0),
+        ...functions.map(fn => {
+          return `$${ fn.fullyQualifiedName } ;; ${ fn.tableIndex }\n`;
+        })
+      )
+    );
+
+
+    return sexprToString(resultSexpr);
   }
 }
 
