@@ -21,15 +21,57 @@ var importObject = {
   },
   c: {
     log: (
-      s1: number, e1: number,
-      s2: number, e2: number,
-      s3: number, e3: number,
+      t1: number,
+      s1: number,
+      e1: number,
+      t2: number,
+      s2: number,
+      e2: number,
+      t3: number,
+      s3: number,
+      e3: number
     ) => {
-      // const data = new Int8Array(memory.buffer.slice(start, end));
+      const args: {
+        type: number;
+        start: number;
+        end: number;
+      }[] = [
+        { type: t1, start: s1, end: e1 },
+        { type: t2, start: s2, end: e2 },
+        { type: t3, start: s3, end: e3 }
+      ];
 
-      // console.log([...data].map(x => String.fromCharCode(x)).join(""));
-      console.log(s1, e1)
-    },
+      let res: string[] = [];
+
+      for (const { type, start, end } of args) {
+        if (type === 0 /* string */) {
+          const data = new Int8Array(memory.buffer.slice(start, end));
+          const str = [...data].map(x => String.fromCharCode(x)).join("");
+
+          res.push(str);
+        } else if (type === 1 /* i32 */) {
+          const data = new Int32Array(memory.buffer.slice(start, end))[0];
+
+          res.push(String(data));
+        } else if (type === 2 /* mem str */) {
+          const buffLen = new Int32Array(
+            memory.buffer.slice(start, start + 4)
+          )[0];
+          const strbuff = new Int8Array(
+            memory.buffer.slice(start + 4, start + 4 + buffLen)
+          );
+          const str = [...strbuff].map(x => String.fromCharCode(x)).join("");
+
+          res.push(str);
+        } else if (type === 9999 /* unsupported */) {
+          continue;
+        } else {
+          throw new Error("unsupported type passed to clog");
+        }
+      }
+
+      console.log("__tests__/testcontents.ts log:", ...res);
+    }
   },
   js: {
     mem: memory,
@@ -51,6 +93,5 @@ WebAssembly.instantiate(
   console.log("");
 
   console.log(result.instance.exports)
-  console.log(result.instance.exports.malloc())
-  console.log(result.instance.exports.test_string_squarebrackets())
+  console.log(result.instance.exports.test_string_lastIndexOf())
 }).catch(e => console.log(e))

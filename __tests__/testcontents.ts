@@ -99,6 +99,47 @@ class StringInternal {
     return -1;
   }
 
+  lastIndexOf(needle: string): number {
+    const needleLen = needle.length;
+    const haystackLen = this.length;
+
+    const startPos = this.length - needle.length;
+
+    if (startPos < 0) {
+      return -1;
+    }
+
+    for (
+      let haystackStartPos = startPos;
+      haystackStartPos >= 0;
+      haystackStartPos--
+    ) {
+      let curPos = 0;
+
+      for (
+        curPos = haystackStartPos;
+        curPos < haystackStartPos + needleLen;
+        curPos++
+      ) {
+        if (curPos > haystackLen) {
+          break;
+        }
+
+        if (this.charAt(curPos) === needle.charAt(curPos - haystackStartPos)) {
+          continue;
+        } else {
+          break;
+        }
+      }
+
+      if (curPos === haystackStartPos + needleLen) {
+        return haystackStartPos;
+      }
+    }
+
+    return -1;
+  }
+
   @operator("+")
   __concat(other: string): string {
     const myLen = this.length;
@@ -754,6 +795,19 @@ function test_string_includes() {
     test.includes("") &&
     !test.includes("f") &&
     !test.includes("Abcdefg")
+  );
+}
+
+function test_string_lastIndexOf() {
+  const test = "d d a a b b c c d d";
+
+  return (
+    test.lastIndexOf("d")     === 18 &&
+    test.lastIndexOf("d d")   === 16 &&
+    test.lastIndexOf("c")     === 14 &&
+    test.lastIndexOf("b c c") === 10 &&
+    test.lastIndexOf("verylongggggggggggggggggggg") === -1 &&
+    test.lastIndexOf("x")     === -1
   );
 }
 /*

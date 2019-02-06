@@ -1,9 +1,10 @@
-import { PostfixUnaryExpression } from "typescript";
+import { PostfixUnaryExpression, PostfixUnaryOperator, SyntaxKind } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode } from "./nodeutil";
-import { flatArray } from "../util";
+import { flatArray, assertNever } from "../util";
+import { BSExpression } from "./expression";
 
 /**
  * e.g. myFunction(x++)
@@ -11,11 +12,14 @@ import { flatArray } from "../util";
  */
 export class BSPostfixUnaryExpression extends BSNode {
   children   : BSNode[];
-  expression : BSNode;
+  expression : BSExpression;
   operandName: string;
+  operator   : PostfixUnaryOperator;
 
   constructor(ctx: Scope, node: PostfixUnaryExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
+
+    this.operator = node.operator;
 
     this.children = flatArray(
       this.expression = buildNode(ctx, node.operand),
@@ -36,6 +40,12 @@ export class BSPostfixUnaryExpression extends BSNode {
       throw new Error("lhs didnt compile???");
     }
 
-    return S.SetLocal(this.operandName, S.Add(exprCompiled, 1));
+    if (this.operator === SyntaxKind.PlusPlusToken) {
+      return S.SetLocal(this.operandName, S.Add(exprCompiled, 1));
+    } else if (this.operator === SyntaxKind.MinusMinusToken) {
+      return S.SetLocal(this.operandName, S.Sub(exprCompiled, 1));
+    } else {
+      return assertNever(this.operator);
+    }
   }
 }
