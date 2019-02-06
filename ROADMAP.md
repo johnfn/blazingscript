@@ -14,12 +14,54 @@
 |----------|---------|-------|
 | :wavy_dash: | arguments | I can do this, but does anyone want it? |
 | :black_square_button: | async | Oh boy
-| :white_check_mark: | boolean |
-| :white_check_mark: | break |
-| :wavy_dash: | byte | What is this?
+| :white_check_mark: | break | Still need to do labelled breaks |
+| :black_square_button: | case | Still need to do labelled breaks |
+|:wavy_dash: | catch | See exception handling section below
+| :black_square_button: | class | See class section below
+| :white_check_mark: | const |
+| :white_check_mark: | continue | Still need to do labelled continues
+| :wavy_dash: | debugger | Hah! One day... one day...
+| :black_square_button | default |
+| :wavy_dash: | delete | not sure if I want to support this for arrays
+| :black_square_button: | do |
+| :white_check_mark: | else |
+| :black_square_button: | export |
+| :black_square_button: | extends | See class section below
+| :black_square_button: | finally | See exception handling section below
+| :white_check_mark: | for |
+| :white_check_mark: | function | See function section below
+| :white_check_mark: | if |
+| :black_square_button: | import |
+| :wavy_dash: | in | will not support for...in, except *maybe* on objects.
+| :black_square_button: | instanceof |
+| :black_square_button: | new |
+| :white_check_mark: | return |
+| :black_square_button: | super |
+| :black_square_button: | switch |
+| :white_check_mark: | this |
+| :wavy_dash: | throw |
+| :wavy_dash: | try |
+| :black_square_button: | typeof |
+| :x: | var | Use let or const
+| :wavy_dash: | void | seems unnecessary, but not hard to add
+| :black_square_button: | while |
+| :x: | with | Will definitely never add this.
+| :black_square_button: | yield | Oh boy.
 
+### Classes
 
-
+| Progress | Feature | Notes |
+|----------|---------|-------|
+| :black_square_button: | Implementation | Got some basic stuff in place, but there's still a lot of details to be worked out.
+| :black_square_button: | Constructors | 
+| :black_square_button: | Properties | 
+| :black_square_button: | Methods |
+| :black_square_button: | super | 
+| :black_square_button: | Static Methods |
+| :black_square_button: | Static Properties |
+| :black_square_button: | Private modifier | There isn't much to do here since TS will enforce this.
+| :black_square_button: | Getters / Setters | 
+| :black_square_button: | Inheritance | Oh boy
 
 ### Functions
 
@@ -33,9 +75,9 @@
 | :black_square_button: | Closures |
 | :black_square_button: | Default arguments |
 | :black_square_button: | Optional arguments |
-| :arrow_down:          | Function.prototype.apply |  Might be possible, need to investigate [https://github.com/Microsoft/TypeScript/pull/27028](this PR)
-| :arrow_down:          | Function.prototype.bind | Might be possible, need to investigate [https://github.com/Microsoft/TypeScript/pull/27028](this PR)
-| :arrow_down:          | Function.prototype.call | Might be possible, need to investigate [https://github.com/Microsoft/TypeScript/pull/27028](this PR)
+| :arrow_down:          | Function.prototype.apply |  Might be possible, need to investigate (https://github.com/Microsoft/TypeScript/pull/27028)[this PR]
+| :arrow_down:          | Function.prototype.bind | Might be possible, need to investigate (https://github.com/Microsoft/TypeScript/pull/27028)[this PR]
+| :arrow_down:          | Function.prototype.call | Might be possible, need to investigate (https://github.com/Microsoft/TypeScript/pull/27028)[this PR]
 
 ### Modules
 
