@@ -14,10 +14,10 @@ const p = new Program(`
 `);
 
 const result = p.parse();
-const file = process.argv[2];
+const file   = process.argv[2];
 
 if (!file) {
-  console.log(`Usage: node ${process.argv[1]} OUTFILE`);
+  console.log(`Usage: node ${ process.argv[1] } OUTFILE`);
 } else {
   fs.writeFileSync(file, result);
 }

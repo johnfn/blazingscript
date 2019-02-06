@@ -77,7 +77,9 @@ export class BSSourceFile extends BSNode {
   compile(ctx: Scope): Sexpr {
     const functions         = ctx.functions.getAll(ctx.topmostScope()).sort((a, b) => a.tableIndex - b.tableIndex);
     const exportedFunctions = functions.filter(f => f.node instanceof BSFunctionDeclaration);
-    const jsTypes           = this.findAllJsTypes();
+
+    const jsTypes = this.findAllJsTypes();
+    ctx.addJsTypes(jsTypes);
 
     const uniqueFunctionTypes: { [key: string]: boolean } = {};
 
@@ -85,7 +87,6 @@ export class BSSourceFile extends BSNode {
       uniqueFunctionTypes[fn.signature.name] = true;
     }
 
-    ctx.addJsTypes(jsTypes);
 
     for (const statement of this.statements) {
       statement.compile(ctx);

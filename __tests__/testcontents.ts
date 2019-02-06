@@ -1,8 +1,12 @@
+/// <reference path="bs.d.ts" />
+
+import { mytest } from "./testother";
+
 // TODO
 // * test that you can put all sorts of weird stuff in an if condition
 //   * test that assignments return values
 
-// types specially handled by the BlazingScript compiler
+// types specially provided by the BlazingScript compiler
 
 declare type LogType = string | number;
 declare const log     : (a: LogType, b?: LogType, c?: LogType) => void;
@@ -19,7 +23,7 @@ interface BuiltInArray { [key: number]: number; }
 @jsType("String")
 class StringInternal {
   @property(0)
-  readonly length = 0;
+  readonly length: number = 0;
 
   charCodeAt(i: number): number {
     return memread(((this as any) as number) + 4 + i) & 0x000000ff;
@@ -27,7 +31,7 @@ class StringInternal {
 
   @operator("===")
   __equals(other: string): boolean {
-    const myLen = this.length;
+    const myLen    = this.length;
     const otherLen = other.length;
 
     if (myLen !== otherLen) {
@@ -192,13 +196,6 @@ class StringInternal {
   }
 }
 
-interface String extends StringInternal {
-  readonly length: number;
-  charAt(pos: number): string;
-  charCodeAt(index: number): number;
-  indexOf(searchString: string, position: number): number;
-}
-
 @jsType("Array")
 class ArrayInternal {
   @property(0)
@@ -255,14 +252,14 @@ class ArrayInternal {
   }
 
   private constructArrayWithSize(size: number): number[] {
-    const result: number[] = malloc(4 * 4) as any as number[];
+    const result: ArrayInternal = malloc(4 * 4) as any as ArrayInternal;
 
     result.contents        = malloc((size + 1) * 4);
     result.allocatedLength = (size + 1) * 4;
     result.length          = size;
     result.elemSize        = 4;
 
-    return result;
+    return result as any as number[];
   }
 
   concat(secondArray: number[]): number[] {
@@ -303,10 +300,6 @@ class ArrayInternal {
 
     return result;
   }
-}
-
-interface Array<T> extends ArrayInternal {
-  // [key: number]: T;
 }
 
 function getOffset(): number {

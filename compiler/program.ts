@@ -1,4 +1,5 @@
-import ts from "typescript";
+import ts, { ModuleKind, ScriptTarget } from "typescript";
+import fs from "fs";
 import { sexprToString, Sexpr, S } from "./sexpr";
 import { Scope } from "./scope/scope";
 import { BSSourceFile } from "./parsers/sourcefile";
@@ -17,19 +18,36 @@ export class Program {
     const outputs = [];
 
     this.program = ts.createProgram(
-      ["file.ts"],
+      [
+        "file.ts",
+        "bs.d.ts",
+      ],
       {
-        experimentalDecorators: true
+        experimentalDecorators: true,
+        target                : ScriptTarget.ES2016,
+        module                : ModuleKind.CommonJS,
+        esModuleInterop       : true,
       },
       {
         readFile: (fileName: string) => {
+          console.log("Read", fileName);
+
           return code;
         },
-        getSourceFile: function(filename, languageVersion) {
-          if (filename === "file.ts") {
+        getSourceFile: function(fileName, languageVersion) {
+          if (fileName === "file.ts") {
             return ts.createSourceFile(
-              filename,
-              code,
+              fileName,
+              fs.readFileSync("__tests__/testcontents.ts").toString(),
+              ts.ScriptTarget.Latest,
+              true
+            );
+          }
+
+          if (fileName === "bs.d.ts") {
+            return ts.createSourceFile(
+              fileName,
+              fs.readFileSync("__tests__/bs.d.ts").toString(),
               ts.ScriptTarget.Latest,
               true
             );
@@ -52,10 +70,14 @@ export class Program {
             return true;
           }
 
+          if (fileName === "bs.d.ts") {
+            return true;
+          }
+
           return false;
         },
         getDefaultLibFileName: function() {
-          return "lib.d.ts";
+          return "bs.d.ts";
         },
         useCaseSensitiveFileNames: function() {
           return false;
@@ -71,6 +93,12 @@ export class Program {
         }
       }
     );
+
+    const res = this.program.getGlobalDiagnostics();
+
+    for (const d of this.program.getGlobalDiagnostics()) {
+      console.log(d)
+    }
 
     this.typeChecker = this.program.getTypeChecker();
   }
