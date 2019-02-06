@@ -118,6 +118,20 @@ class StringInternal {
 
     return (newStr as any) as string;
   }
+
+  endsWith(innerString: string): boolean {
+    const start = this.length - innerString.length;
+
+    if (start < 0) { return false; }
+
+    for (let i = start; i < this.length; i++) {
+      if (this.charCodeAt(i) !== innerString.charCodeAt(i - start)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 }
 
 interface String extends StringInternal {
@@ -714,6 +728,16 @@ function test_void_arrow_function() {
   return x === 0;
 }
 
+function test_string_endsWith() {
+  const test = "Abcde";
+
+  return (
+    test.endsWith("e") &&
+    test.endsWith("de") &&
+    test.endsWith("Abcde") &&
+    !test.endsWith("j")
+  );
+}
 /*
 
 function test_for_loop_no_init() {
