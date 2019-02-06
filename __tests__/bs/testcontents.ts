@@ -1,5 +1,3 @@
-/// <reference path="bs.d.ts" />
-
 import { mytest } from "./testother";
 
 // TODO

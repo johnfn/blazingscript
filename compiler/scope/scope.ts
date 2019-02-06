@@ -12,6 +12,7 @@ import { Variables } from "./variables";
 import { Properties } from "./properties";
 import { Functions } from "./functions";
 import { Loops } from "./loops";
+import { Modules } from "./modules";
 import { BSArrowFunction } from "../parsers/arrowfunction";
 
 export enum InternalPropertyType {
@@ -50,6 +51,7 @@ export class Scope {
   variables : Variables;
   properties: Properties;
   functions : Functions;
+  modules   : Modules;
   loops     : Loops;
   node      : BSNode | null;
   type      : ScopeType;
@@ -74,6 +76,7 @@ export class Scope {
     this.properties = new Properties(this);
     this.functions  = new Functions(this);
     this.loops      = new Loops(this);
+    this.modules    = new Modules(this);
     this.children   = [];
 
     this.type       = this.getScopeType(node);

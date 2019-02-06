@@ -11,7 +11,6 @@ import { BSIdentifier } from "./identifier";
 import { flatArray, assertNever } from "../util";
 import { buildNodeArray } from "./nodeutil";
 import { Functions } from "../scope/functions";
-import { BSArrowFunction } from "./arrowfunction";
 
 type FunctionDecl = {
   node: BSFunctionDeclaration | BSMethodDeclaration;

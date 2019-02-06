@@ -1,3 +1,10 @@
+/**
+ * BlazingScript definitions for core library types.
+ * 
+ * I need to write this as a ".ts" rather than ".d.ts" file because typescript
+ * won't allow me to ignore .d.ts files (it may be a compiler bug?) and it
+ * mucks with the TS definitions in my compiler.
+ */
 interface Array<T> {
   [i: number]: T;
   length: number;

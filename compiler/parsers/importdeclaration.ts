@@ -23,8 +23,6 @@ export class BSImportDeclaration extends BSNode {
       throw new Error(`Trying to import from ${ node.moduleSpecifier.getText() } which is not a string.`)
     }
 
-    const x = buildNode(ctx, node.moduleSpecifier as StringLiteral);
-
     this.children = flatArray(
       this.moduleName = buildNode(ctx, node.moduleSpecifier as StringLiteral)
     );

@@ -20,7 +20,7 @@ export class Program {
     this.program = ts.createProgram(
       [
         "file.ts",
-        "bs.d.ts",
+        "defs.ts",
       ],
       {
         experimentalDecorators: true,
@@ -44,10 +44,10 @@ export class Program {
             );
           }
 
-          if (fileName === "bs.d.ts") {
+          if (fileName === "defs.ts") {
             return ts.createSourceFile(
               fileName,
-              fs.readFileSync("__tests__/bs/bs.d.ts").toString(),
+              fs.readFileSync("__tests__/bs/defs.ts").toString(),
               ts.ScriptTarget.Latest,
               true
             );
@@ -111,6 +111,7 @@ export class Program {
     }
 
     const ctx = new Scope(this.typeChecker, source, null, null);
+    let compiledFiles: string[] = [];
 
     const result = new BSSourceFile(ctx, source).compile(ctx);
 

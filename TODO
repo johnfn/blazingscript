@@ -4,6 +4,7 @@ TODO:
      isnt totally unique, so some sort of unique name will have to be generated.
    * for things like "import "fs"", will have to generate a wrapper output file
      which appropriately hooks stuff up.
+   * going to need to make relative and absolute paths the same and parse out any redundant paths.
 
 * Fat arrow / function / method declarations share a lot of common code.
 * Remove Sx
