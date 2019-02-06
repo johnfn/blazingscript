@@ -3,6 +3,8 @@
 
 BlazingScript compiles a subset of TypeScript to WebAssembly. 
 
+[See our roadmap!](/ROADMAP.md)
+
 ## Why?
 
 TypeScript is an awesome language. It's highly expressive, the tooling is amazing, and the way it lets you go from a prototype all the way to a production app is amazing. It's got access to the largest module ecosystem in all of programming. There's a reason it's one of the [most loved techologies on StackOverflow](https://insights.stackoverflow.com/survey/2018/). 
@@ -36,4 +38,8 @@ This is just another reason why coding in TypeScript is such a big advantage: yo
 
 ## What's the difference between BlazingScript and [AssemblyScript](https://github.com/AssemblyScript/assemblyscript)? 
 
-AssemblyScript is super cool! But the intention of AssemblyScript is to be a thin layer on top of WASM: they don't support things like union types, or optional primitive types, etc. The goal of BlazingScript is to *use all the good features of TypeScript*. We want flexible object literals, potentially nullable everything, discriminated union types - all that stuff that makes TypeScript such a joy to use.
+AssemblyScript is super cool! But we think the two projects are pretty different. 
+
+The goal of AssemblyScript appears to be to write code which is very close to WASM, which looks mostly similar to TypeScript. However, AssemblyScript's close-to-the-metal approach sacrifices some TypeScript ergonomics that we really like, since there is a very close mapping from AS to WASM.
+
+The goal of BlazingScript is to *use all the good features of TypeScript*. We want flexible object literals, potentially nullable everything, discriminated union types - all that stuff that makes TypeScript such a joy to use. Our goal is to type idiomatic TS and have fast code pop out.
