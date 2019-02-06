@@ -21,7 +21,7 @@
 | :white_check_mark: | const |
 | :white_check_mark: | continue | Still need to do labelled continues
 | :wavy_dash: | debugger | Hah! One day... one day...
-| :black_square_button | default |
+| :black_square_button: | default |
 | :wavy_dash: | delete | not sure if I want to support this for arrays
 | :black_square_button: | do |
 | :white_check_mark: | else |
