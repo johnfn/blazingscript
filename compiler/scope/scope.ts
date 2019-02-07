@@ -55,6 +55,7 @@ export class Scope {
   loops     : Loops;
   node      : BSNode | null;
   type      : ScopeType;
+  fileName  : string;
 
   typeChecker: TypeChecker;
   sourceFile : SourceFile;
@@ -64,13 +65,15 @@ export class Scope {
     tc: ts.TypeChecker,
     sourceFile: SourceFile,
     node: NodeWithScope | null,
-    parent: Scope | null
+    parent: Scope | null,
+    fileName: string
   ) {
     this.typeChecker = tc;
     this.sourceFile  = sourceFile;
 
-    this.node    = node;
-    this.parent  = parent;
+    this.node     = node;
+    this.parent   = parent;
+    this.fileName = fileName;
 
     this.variables  = new Variables(this);
     this.properties = new Properties(this);
@@ -103,7 +106,7 @@ export class Scope {
   }
 
   addScopeFor(node: NodeWithScope): void {
-    this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this));
+    this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this, this.fileName));
   }
 
   /**

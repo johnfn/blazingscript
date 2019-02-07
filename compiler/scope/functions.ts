@@ -12,6 +12,7 @@ import { BSCallExpression } from "../parsers/callexpression";
 import { BSPropertyAccessExpression } from "../parsers/propertyaccess";
 import { BSArrowFunction } from "../parsers/arrowfunction";
 import { assertNever } from "../util";
+import { BSImportSpecifier } from "../parsers/importspecifier";
 
 // TODO should probably rename this as to not clash with Function the js type
 
@@ -134,17 +135,21 @@ export class Functions {
   }
 
   addFunction(node: BSFunctionDeclaration | BSArrowFunction): Function {
-    const id     = Functions.TableIndex++;
+    let id       : number;
     let name     : string;
     let className: string | null = null;
 
     if (node instanceof BSFunctionDeclaration) {
+      id = Functions.TableIndex++;
+
       if (node.name) {
         name = node.name
       } else {
         name = `anon_${ id }`;
       }
     } else if (node instanceof BSArrowFunction) {
+      id = Functions.TableIndex++;
+
       name = `arrow_${ id }`;
     } else {
       return assertNever(node);
@@ -195,7 +200,7 @@ export class Functions {
   callMethodByOperator(props: {
     type     : Type;
     opName   : Operator;
-    thisExpr : BSNode;
+    thisExpr : BSExpression;
     argExprs : BSNode[];
   }): Sexpr {
     const { type, thisExpr: thisNode, opName, argExprs } = props;

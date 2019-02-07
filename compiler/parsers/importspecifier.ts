@@ -2,7 +2,6 @@ import { Scope } from "../scope/scope";
 import { Sexpr, S, Sx } from "../sexpr";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { NamedImports, ImportSpecifier } from "typescript";
-import { buildNodeArray } from "./nodeutil";
 
 export class BSImportSpecifier extends BSNode {
   children: BSNode[];
@@ -13,6 +12,8 @@ export class BSImportSpecifier extends BSNode {
     this.children = [];
 
     const type = ctx.typeChecker.getTypeAtLocation(node);
+
+    // ctx.functions.addFunction(this);
 
     /*
     ctx.variables.add({
