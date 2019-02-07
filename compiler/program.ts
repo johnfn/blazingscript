@@ -1,10 +1,15 @@
-import ts, { ModuleKind, ScriptTarget } from "typescript";
+import ts, { Node, ModuleKind, ScriptTarget } from "typescript";
 import fs from "fs";
 import { sexprToString, Sexpr, S } from "./sexpr";
 import { Scope } from "./scope/scope";
+import { Function } from "./scope/functions";
 import { BSSourceFile } from "./parsers/sourcefile";
 import { Functions } from "./scope/functions";
 import { flatten } from "./rewriter";
+import { BSNode } from "./parsers/bsnode";
+import { BSClassDeclaration } from "./parsers/class";
+import { BSCallExpression } from "./parsers/callexpression";
+import { BSIdentifier } from "./parsers/identifier";
 
 export const THIS_NAME = "__this";
 
@@ -126,7 +131,12 @@ export class Program {
     }
 
     const allFiles: Sexpr[][] = [];
-    const ctx = new Scope(this.typeChecker, source, null, null);
+    const ctx = new Scope(this.typeChecker, source, null, null, null);
+
+    ctx.addJsTypes({
+      "String": "StringInternal",
+      "Array" : "ArrayInternal",
+    });
 
     allFiles.push(new BSSourceFile(ctx, source).compile(ctx));
 
@@ -139,8 +149,6 @@ export class Program {
       if (!source) {
         throw new Error("source undefined, something has gone horribly wrong!!!");
       }
-
-      const ctx = new Scope(this.typeChecker, source, null, null);
 
       allFiles.push(new BSSourceFile(ctx, source).compile(ctx));
       functions = functions.concat(ctx.functions.getAll(ctx.topmostScope()))
@@ -180,7 +188,6 @@ export class Program {
         })
       )
     );
-
 
     return sexprToString(resultSexpr);
   }

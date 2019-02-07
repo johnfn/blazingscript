@@ -14,6 +14,7 @@ import { Functions } from "./functions";
 import { Loops } from "./loops";
 import { Modules } from "./modules";
 import { BSArrowFunction } from "../parsers/arrowfunction";
+import { BSSourceFile } from "../parsers/sourcefile";
 
 export enum InternalPropertyType {
   Value,
@@ -27,6 +28,7 @@ enum ScopeType {
   Global        = "global",
   For           = "for",
   ArrowFunction = "arrowfunction",
+  SourceFile    = "sourcefile",
 };
 
 export type Property = {
@@ -38,6 +40,7 @@ export type Property = {
 };
 
 type NodeWithScope =
+  | BSSourceFile
   | BSFunctionDeclaration
   | BSForStatement
   | BSMethodDeclaration
@@ -55,7 +58,7 @@ export class Scope {
   loops     : Loops;
   node      : BSNode | null;
   type      : ScopeType;
-  fileName  : string;
+  fileName  : string | null;
 
   typeChecker: TypeChecker;
   sourceFile : SourceFile;
@@ -66,7 +69,7 @@ export class Scope {
     sourceFile: SourceFile,
     node: NodeWithScope | null,
     parent: Scope | null,
-    fileName: string
+    fileName: string | null
   ) {
     this.typeChecker = tc;
     this.sourceFile  = sourceFile;
@@ -106,7 +109,11 @@ export class Scope {
   }
 
   addScopeFor(node: NodeWithScope): void {
-    this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this, this.fileName));
+    if (node instanceof BSSourceFile) {
+      this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this, node.fileName));
+    } else {
+      this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this, this.fileName));
+    }
   }
 
   /**
@@ -171,6 +178,10 @@ export class Scope {
       classNameToFind = this.getNativeTypeName("Array");
     }
 
+    if (!classNameToFind) {
+      throw new Error("Dont know the type of that class.");
+    }
+
     const allClasses = this.getAllClasses();
     const relevantClasses = allClasses.filter(cls => (cls.node as BSClassDeclaration).name === classNameToFind);
 
@@ -182,9 +193,7 @@ export class Scope {
       return null;
     }
 
-    const cls = relevantClasses[0];
-
-    return cls;
+    return relevantClasses[0];
   }
 
   toString(indent = ""): string {
@@ -217,6 +226,8 @@ export class Scope {
       return ScopeType.Class;
     } else if (node instanceof BSArrowFunction) {
       return ScopeType.ArrowFunction;
+    } else if (node instanceof BSSourceFile) {
+      return ScopeType.SourceFile;
     } else if (node === null) {
       return ScopeType.Global;
     } else {
