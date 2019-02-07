@@ -822,6 +822,10 @@ function test_string_repeat() {
     "".repeat(5)     === ""
   );
 }
+
+function test_module() {
+  return mytest() === 5;
+}
 /*
 
 function test_for_loop_no_init() {

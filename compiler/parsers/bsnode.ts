@@ -1,6 +1,6 @@
 import { Sexpr } from "../sexpr";
 import { Scope, Property } from "../scope/scope";
-import { Node, Type, Modifier } from "typescript";
+import { Node, Type, Modifier, SyntaxKind } from "typescript";
 
 export type NodeInfo = {
   isLhs: boolean;
@@ -16,7 +16,10 @@ export function getUid() { return ++uid; }
  */
 export abstract class BSNode {
   abstract children: BSNode[];
-  tsType           : Type;
+
+  // Arguably this can be undefined for one type of node, but the mess of if()
+  // is really not worth it.
+  tsType          !: Type; 
   fullText         : string;
   modifiers        : Modifier[];
   uid              : number;
@@ -28,7 +31,9 @@ export abstract class BSNode {
     this.property  = null;
 
     if (node.parent) {
-      this.tsType = ctx.typeChecker.getTypeAtLocation(node);
+      if (node.kind !== SyntaxKind.ImportClause) {
+        this.tsType = ctx.typeChecker.getTypeAtLocation(node);
+      }
     } else {
       // TODO: SHould handle this better.
       this.tsType = undefined as any;

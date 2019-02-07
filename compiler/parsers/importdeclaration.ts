@@ -1,4 +1,4 @@
-import { Block, isSwitchStatement, ImportDeclaration, SyntaxKind, StringLiteral } from "typescript";
+import { Block, isSwitchStatement, ImportDeclaration, SyntaxKind, StringLiteral, ImportClause } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { parseStatementListBS } from "./statementlist";
 import { Scope } from "../scope/scope";
@@ -7,14 +7,16 @@ import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
 import { flatArray } from "../util";
 import { buildNode, buildNodeArray } from "./nodeutil";
 import { BSStringLiteral } from "./stringliteral";
+import { BSImportClause } from "./importclause";
 
 /**
  * e.g. import { foo } from './bar'
  *      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
  */
 export class BSImportDeclaration extends BSNode {
-  children  : BSNode[];
-  moduleName: BSStringLiteral;
+  children    : BSNode[];
+  moduleName  : BSStringLiteral;
+  importClause: BSImportClause;
 
   constructor(ctx: Scope, node: ImportDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
@@ -24,8 +26,11 @@ export class BSImportDeclaration extends BSNode {
     }
 
     this.children = flatArray(
-      this.moduleName = buildNode(ctx, node.moduleSpecifier as StringLiteral)
+      this.moduleName = buildNode(ctx, node.moduleSpecifier as StringLiteral),
+      this.importClause = buildNode(ctx, node.importClause as ImportClause)
     );
+
+    ctx.modules.add(this.moduleName.text)
   }
 
   compile(ctx: Scope): Sexpr {

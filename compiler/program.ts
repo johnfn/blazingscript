@@ -4,6 +4,7 @@ import { sexprToString, Sexpr, S } from "./sexpr";
 import { Scope } from "./scope/scope";
 import { BSSourceFile } from "./parsers/sourcefile";
 import { Functions } from "./scope/functions";
+import { flatten } from "./rewriter";
 
 export const THIS_NAME = "__this";
 
@@ -22,6 +23,8 @@ export class Program {
       [
         "file.ts",
         "defs.ts",
+        "testother.ts",
+        "./testother.ts",
       ],
       {
         experimentalDecorators: true,
@@ -31,8 +34,6 @@ export class Program {
       },
       {
         readFile: (fileName: string) => {
-          console.log("Read", fileName);
-
           return code;
         },
         getSourceFile: function(fileName, languageVersion) {
@@ -49,6 +50,15 @@ export class Program {
             return ts.createSourceFile(
               fileName,
               fs.readFileSync("__tests__/bs/defs.ts").toString(),
+              ts.ScriptTarget.Latest,
+              true
+            );
+          }
+
+          if (fileName === "testother.ts") {
+            return ts.createSourceFile(
+              fileName,
+              fs.readFileSync("__tests__/bs/testother.ts").toString(),
               ts.ScriptTarget.Latest,
               true
             );
@@ -72,6 +82,10 @@ export class Program {
           }
 
           if (fileName === "bs.d.ts") {
+            return true;
+          }
+
+          if (fileName === "testother.ts") {
             return true;
           }
 
@@ -111,9 +125,28 @@ export class Program {
       throw new Error("source undefined, something has gone horribly wrong!!!");
     }
 
+    const allFiles: Sexpr[][] = [];
     const ctx = new Scope(this.typeChecker, source, null, null);
-    const compiledFile = new BSSourceFile(ctx, source).compile(ctx);
-    const functions    = ctx.functions.getAll(ctx.topmostScope()).sort((a, b) => a.tableIndex - b.tableIndex);
+
+    allFiles.push(new BSSourceFile(ctx, source).compile(ctx));
+
+    let functions = ctx.functions.getAll(ctx.topmostScope());
+    const modules = ctx.modules.getAll();
+
+    for (const module of modules) {
+      const source = this.program.getSourceFile("testother.ts");
+
+      if (!source) {
+        throw new Error("source undefined, something has gone horribly wrong!!!");
+      }
+
+      const ctx = new Scope(this.typeChecker, source, null, null);
+
+      allFiles.push(new BSSourceFile(ctx, source).compile(ctx));
+      functions = functions.concat(ctx.functions.getAll(ctx.topmostScope()))
+    }
+
+    functions = functions.sort((a, b) => a.tableIndex - b.tableIndex);
 
     const resultSexpr = S(
       "[]", "module",
@@ -138,7 +171,7 @@ export class Program {
         );
       }),
 
-      ...compiledFile,
+      ...flatten(allFiles),
 
       ...functions.map(fn => S.Export(fn.fullyQualifiedName)),
       S("[]", "elem", S.Const(0),

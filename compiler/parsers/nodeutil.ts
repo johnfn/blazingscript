@@ -1,5 +1,5 @@
 import { BSDecorator } from "./decorator";
-import { Decorator, Node, SyntaxKind, NodeArray, Block, ParameterDeclaration, Expression, Statement, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, ParenthesizedExpression, PropertyAccessExpression, ElementAccessExpression, ThisExpression, ArrayLiteralExpression, ReturnStatement, ExpressionStatement, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, TypeAliasDeclaration, InterfaceDeclaration, FunctionDeclaration, ClassDeclaration, BindingName, VariableDeclaration, PropertyName, ArrowFunction, ImportDeclaration } from "typescript";
+import { Decorator, Node, SyntaxKind, NodeArray, Block, ParameterDeclaration, Expression, Statement, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, ParenthesizedExpression, PropertyAccessExpression, ElementAccessExpression, ThisExpression, ArrayLiteralExpression, ReturnStatement, ExpressionStatement, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, TypeAliasDeclaration, InterfaceDeclaration, FunctionDeclaration, ClassDeclaration, BindingName, VariableDeclaration, PropertyName, ArrowFunction, ImportDeclaration, ImportClause, NamedImports, NamespaceImport, ImportSpecifier } from "typescript";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo } from "./bsnode";
 import { BSBlock } from "./block";
@@ -36,6 +36,10 @@ import { BSClassDeclaration } from "./class";
 import { BSVariableDeclaration } from "./variabledeclaration";
 import { BSArrowFunction } from "./arrowfunction";
 import { BSImportDeclaration } from "./importdeclaration";
+import { BSImportClause } from "./importclause";
+import { BSNamedImports } from "./namedimports";
+import { BSNamespaceImport } from "./namespaceimport";
+import { BSImportSpecifier } from "./importspecifier";
 
 /**
  * This is where the (typesafe) sausage is made. Avert your eyes!
@@ -50,8 +54,12 @@ import { BSImportDeclaration } from "./importdeclaration";
   * Given a TypeScript AST node, returns the BS AST node equivalent.
   */
 export function buildNode(ctx: Scope, obj: Identifier            , info?: NodeInfo): BSIdentifier;
+export function buildNode(ctx: Scope, obj: NamespaceImport       , info?: NodeInfo): BSNamespaceImport;
+export function buildNode(ctx: Scope, obj: NamedImports          , info?: NodeInfo): BSNamedImports;
 export function buildNode(ctx: Scope, obj: StringLiteral         , info?: NodeInfo): BSStringLiteral;
+export function buildNode(ctx: Scope, obj: ImportClause          , info?: NodeInfo): BSImportClause;
 export function buildNode(ctx: Scope, obj: PropertyName          , info?: NodeInfo): BSPropertyName;
+export function buildNode(ctx: Scope, obj: NamespaceImport | NamedImports | undefined, info?: NodeInfo): BSNamespaceImport | BSNamedImports | null;
 export function buildNode(ctx: Scope, obj: Decorator  | undefined, info?: NodeInfo): BSDecorator  | null;
 export function buildNode(ctx: Scope, obj: BindingName           , info?: NodeInfo): BSBindingName;
 export function buildNode(ctx: Scope, obj: BindingName| undefined, info?: NodeInfo): BSBindingName| null;
@@ -99,12 +107,16 @@ export function buildNode(ctx: Scope, obj: Node | undefined      , info?: NodeIn
     case SyntaxKind.VariableDeclaration     : return new BSVariableDeclaration     (ctx, obj as VariableDeclaration     , info);
     case SyntaxKind.ArrowFunction           : return new BSArrowFunction           (ctx, obj as ArrowFunction           , info);
     case SyntaxKind.ImportDeclaration       : return new BSImportDeclaration       (ctx, obj as ImportDeclaration       , info);
+    case SyntaxKind.ImportClause            : return new BSImportClause            (ctx, obj as ImportClause            , info);
+    case SyntaxKind.ImportSpecifier         : return new BSImportSpecifier         (ctx, obj as ImportSpecifier         , info);
+    case SyntaxKind.NamedImports            : return new BSNamedImports            (ctx, obj as NamedImports            , info);
   }
 
   throw new Error(`Unhandled node in buildNode! ${ SyntaxKind[obj.kind] }`)
 }
 
 export function buildNodeArray(ctx: Scope, obj: NodeArray<Decorator>            | undefined, info?: NodeInfo): BSDecorator[];
+export function buildNodeArray(ctx: Scope, obj: NodeArray<ImportSpecifier>      | undefined, info?: NodeInfo): BSImportSpecifier[];
 export function buildNodeArray(ctx: Scope, obj: NodeArray<VariableDeclaration>  | undefined, info?: NodeInfo): BSVariableDeclaration[];
 export function buildNodeArray(ctx: Scope, obj: NodeArray<Statement>            | undefined, info?: NodeInfo): BSStatement[];
 export function buildNodeArray(ctx: Scope, obj: NodeArray<Expression>           | undefined, info?: NodeInfo): BSExpression[];

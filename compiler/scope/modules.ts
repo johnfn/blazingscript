@@ -20,7 +20,7 @@ export class Modules {
 
     // Ensure we haven't already added this module.
     // TODO: Actually do proper directory filtering etc.
-    if (list.filter(x => x.path === path)) {
+    if (list.filter(x => x.path === path).length > 0) {
       return;
     }
 
