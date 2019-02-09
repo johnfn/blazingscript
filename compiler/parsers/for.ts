@@ -19,47 +19,25 @@ export class BSForStatement extends BSNode {
   children: BSNode[];
 
   initializer: BSVariableDeclarationList | BSExpression | null;
-  incrementor: BSNode | null;
-  condition: BSExpression | null;
-  body: BSStatement | null;
+  incrementor: BSExpression | null;
+  condition  : BSExpression | null;
+  body       : BSStatement | null;
 
   constructor(ctx: Scope, node: ForStatement, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
-    if (node.initializer === undefined) {
-      this.initializer = null;
-    } else if (node.initializer.kind === SyntaxKind.VariableDeclarationList) {
-      this.initializer = new BSVariableDeclarationList(
-        ctx,
-        node.initializer as VariableDeclarationList
-      );
-    } else {
-      this.initializer = buildNode(ctx, node.initializer);
-    }
-
-    if (node.incrementor === undefined) {
-      this.incrementor = null;
-    } else {
-      this.incrementor = buildNode(ctx, node.incrementor);
-    }
-
-    if (node.condition === undefined) {
-      this.condition = null;
-    } else {
-      this.condition = buildNode(ctx, node.condition);
-    }
-
-    this.body = new BSStatement(ctx, node.statement);
+    this.initializer = buildNode(ctx, node.initializer);
+    this.incrementor = buildNode(ctx, node.incrementor);
+    this.condition   = buildNode(ctx, node.condition);
+    this.body        = buildNode(ctx, node.statement);
 
     this.children = [
       ...(this.initializer ? [this.initializer] : []),
       ...(this.incrementor ? [this.incrementor] : []),
-      ...(this.condition ? [this.condition] : []),
-
-      this.body
+      ...(this.condition   ? [this.condition]   : []),
+      ...(this.body        ? [this.body]        : []),
     ];
   }
-
 
   compile(ctx: Scope): Sexpr {
     const initializerSexprs: Sexpr[] = [];
