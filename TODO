@@ -1,20 +1,12 @@
 * modules
    * is functions.getAll even necessary?
-   * add functions to appropriate scope level. function decls + methods to global, arrows to local...
    * S.Func should just take a Function.
    * we will have to generate some sort of unique identifier for each file, which we can use as a module name.
    * for things like "import "fs"", will have to generate a wrapper output file
      which appropriately hooks stuff up.
    * going to need to make relative and absolute paths the same and parse out any redundant paths.
 
-   * oof, imported functions are hard, because we need to build up function metadata purely from the imported
-     thing, which may be impossible. either:
-     * explicitly demark that the function metadata is imported in types or
-     * completely remove stub implementation if we can work the typechecker enough to not need the def.
-     * get rid of getFunctionByNode
-
-
-* calls to malloc should find the ACTUAL name of malloc. somehow
+* calls to malloc should find the ACTUAL name of malloc. somehow.
 
 * Fat arrow / function / method declarations share a lot of common code.
 * Remove Sx

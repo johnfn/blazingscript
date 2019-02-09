@@ -26,6 +26,16 @@ export abstract class BSNode {
   uid              : number;
   property         : Property | null;
 
+  /**
+   * Line this token appears in the source file.
+   */
+  line: number;
+
+  /**
+   * Character this token appears in the source file.
+   */
+  char: number;
+
   constructor(ctx: Scope, node: Node, info: NodeInfo = defaultNodeInfo) {
     this.uid       = getUid();
     this.modifiers = [...(node.modifiers || [])];
@@ -41,6 +51,15 @@ export abstract class BSNode {
     }
 
     this.fullText = node.getFullText();
+
+    if (!ctx.sourceFile) {
+      throw new Error("no source file!");
+    }
+
+    const pos = ctx.sourceFile.getLineAndCharacterOfPosition(node.pos);
+
+    this.line = pos.line;
+    this.char = pos.character;
   }
 
   forEachChild(callback: (node: BSNode) => void): void {

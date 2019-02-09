@@ -2,26 +2,17 @@ import ts, { Node, ModuleKind, ScriptTarget } from "typescript";
 import fs from "fs";
 import { sexprToString, Sexpr, S } from "./sexpr";
 import { Scope } from "./scope/scope";
-import { Function } from "./scope/functions";
 import { BSSourceFile } from "./parsers/sourcefile";
 import { Functions } from "./scope/functions";
 import { flatten } from "./rewriter";
-import { BSNode } from "./parsers/bsnode";
-import { BSClassDeclaration } from "./parsers/class";
-import { BSCallExpression } from "./parsers/callexpression";
-import { BSIdentifier } from "./parsers/identifier";
 
 export const THIS_NAME = "__this";
 
 export class Program {
-  code: string;
-
   typeChecker: ts.TypeChecker;
-  program: ts.Program;
+  program    : ts.Program;
 
-  constructor(code: string) {
-    this.code = code;
-
+  constructor() {
     const outputs = [];
 
     this.program = ts.createProgram(
@@ -38,7 +29,7 @@ export class Program {
       },
       {
         readFile: (fileName: string) => {
-          return code;
+          throw new Error("? dunno what this is ?")
         },
         getSourceFile: function(fileName, languageVersion) {
           if (fileName === "file.ts") {
@@ -159,7 +150,7 @@ export class Program {
       S("[]", "import", '"js"', '"mem"', S("[]", "memory", "1")),
       S("[]", "import", '"js"', '"table"', S("[]", "table", String(functions.length), "anyfunc")),
       S("[]", "import", '"c"', '"log"',
-        S("[]", "func", "$log", ...[...Array(9).keys()].map(_ => S("[]", "param", "i32")))
+        S("[]", "func", "$log", ...[...Array(12).keys()].map(_ => S("[]", "param", "i32")))
       ),
       ...Object.keys(Functions.AllSignatures).map(sigName => {
         // Build all function wasm type signatures

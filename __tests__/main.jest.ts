@@ -27,7 +27,11 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
         e2: number,
         t3: number,
         s3: number,
-        e3: number
+        e3: number,
+
+        line: number,
+        char: number,
+        whatev: number
       ) => {
         const args: {
           type: number;
@@ -68,7 +72,7 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
           }
         }
 
-        console.log("__tests__/bs/testcontents.ts log:", ...res);
+        console.log(`__tests__/bs/testcontents.ts:${ line } log:`, ...res);
       }
     },
     js: {
@@ -82,7 +86,7 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
     }
   };
 
-  const sexprs = new Program(str).parse();
+  const sexprs = new Program().parse();
 
   fs.writeFileSync("temp", sexprs);
 

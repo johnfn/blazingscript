@@ -21,9 +21,9 @@ type FunctionDecl = {
 };
 
 export class BSSourceFile extends BSNode {
-  children         : BSNode[];
-  statements       : BSStatement[];
-  moduleName         : string;
+  children   : BSNode[];
+  statements : BSStatement[];
+  moduleName : string;
 
   constructor(ctx: Scope, file: SourceFile, info: NodeInfo = defaultNodeInfo) {
     super(ctx, file);

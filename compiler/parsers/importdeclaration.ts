@@ -2,10 +2,9 @@ import { Block, isSwitchStatement, ImportDeclaration, SyntaxKind, StringLiteral,
 import { Sexpr, S } from "../sexpr";
 import { parseStatementListBS } from "./statementlist";
 import { Scope } from "../scope/scope";
-import { BSStatement } from "./statement";
 import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
 import { flatArray } from "../util";
-import { buildNode, buildNodeArray } from "./nodeutil";
+import { buildNode } from "./nodeutil";
 import { BSStringLiteral } from "./stringliteral";
 import { BSImportClause } from "./importclause";
 

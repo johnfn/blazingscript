@@ -95,6 +95,8 @@ export class BSCallExpression extends BSNode {
           )
         );
       } else if (this.expression.text === "log") {
+        console.log(this.expression.line, this.expression.char);
+
         const logArgs: {
           size: Sexpr;
           start: Sexpr;
@@ -184,7 +186,10 @@ export class BSCallExpression extends BSNode {
                 obj.start,
                 S.Add(obj.start, obj.size),
               ])
-            )
+            ),
+            S.Const(this.expression.line),
+            S.Const(this.expression.char),
+            S.Const(0),
           )
         ]);
       }
