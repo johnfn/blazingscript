@@ -91,8 +91,7 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
   const sexprs = new Program({
     paths: [
       "testcontents.ts",
-      "defs.ts",
-      "./testother.ts",
+      "testother.ts",
     ],
     root: path.join(__dirname, "bs"),
   }).parse();

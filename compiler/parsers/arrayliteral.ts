@@ -91,7 +91,7 @@ export class BSArrayLiteral extends BSNode {
 export function isArrayType(ctx: Scope, type: Type) {
   return (
     (type.symbol && type.symbol.name === "Array") ||
-    (type.symbol && type.symbol.name === "ArrayInternal") ||
+    (type.symbol && type.symbol.name === "ArrayImpl") ||
     (type.symbol && type.symbol.name === ctx.getNativeTypeName("Array"))
   );
 }

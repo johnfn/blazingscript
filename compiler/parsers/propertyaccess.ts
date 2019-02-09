@@ -28,7 +28,7 @@ export class BSPropertyAccessExpression extends BSNode {
   constructor(ctx: Scope, node: PropertyAccessExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
-    this.isLhs = info.isLhs;
+    this.isLhs = info.isLhs || false;
 
     this.children = flatArray(
       this.expression = buildNode(ctx, node.expression),

@@ -1,4 +1,3 @@
-* remove janky loading in program.ts, actually load based on paths
 
 * the fact that the global scope basically has NOTHING indicates to me that it should not in fact be a scope at all, and should
   probably just be an array or something.
@@ -10,6 +9,8 @@
    * for things like "import "fs"", will have to generate a wrapper output file
      which appropriately hooks stuff up.
    * going to need to make relative and absolute paths the same and parse out any redundant paths.
+
+* functions can return [] and it's pretty FREAKING annoying
 
 * calls to malloc should find the ACTUAL name of malloc. somehow.
 

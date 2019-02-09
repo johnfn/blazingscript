@@ -84,8 +84,8 @@ export class Program {
     const ctx = new Scope(this.typeChecker, null, null, null, null);
 
     ctx.addJsTypes({
-      "String": "StringInternal",
-      "Array" : "ArrayInternal",
+      "String": "StringImpl",
+      "Array" : "ArrayImpl",
     });
 
     // TODO: Choose a root somehow?

@@ -22,7 +22,7 @@ export class BSReturnStatement extends BSNode {
       const exprCompiled = this.expression.compile(ctx);
 
       if (exprCompiled) {
-        return S("[]", "return", exprCompiled);
+        return S("[]", "return", S.Block(exprCompiled));
       }
     }
 

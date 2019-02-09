@@ -22,7 +22,7 @@ export class BSElementAccessExpression extends BSNode {
   constructor(ctx: Scope, node: ElementAccessExpression, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
-    this.isLhs = info.isLhs;
+    this.isLhs = info.isLhs || false;
 
     this.children = flatArray(
       this.array = buildNode(ctx, node.expression, { isLhs: true }),

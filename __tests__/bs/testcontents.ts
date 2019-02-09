@@ -6,20 +6,8 @@ import { mytest } from "./testother";
 
 // types specially provided by the BlazingScript compiler
 
-declare type LogType = string | number;
-declare const log     : (a: LogType, b?: LogType, c?: LogType) => void;
-declare const memwrite: (pos: number, val: number) => void;
-declare const memread : (pos: number) => number;
-declare const divfloor: (a: number, b: number) => number;
-declare const operator: (type: "+" | "===" | "!==" | "[]") => ((target: any, propertyKey: string, descriptor: PropertyDescriptor) => void);
-declare const property: (offset: number) => any;
-declare const arrayProperty: (offset: number) => any;
-declare const elemSize: <T> (array: Array<T> | ArrayInternal) => number;
-
-interface BuiltInArray { [key: number]: number; }
-
 @jsType("String")
-class StringInternal {
+class StringImpl {
   @property(0)
   readonly length: number = 0;
 
@@ -195,7 +183,7 @@ class StringInternal {
 }
 
 @jsType("Array")
-class ArrayInternal {
+class ArrayImpl {
   @property(0)
   private allocatedLength = 0;
 
@@ -250,7 +238,7 @@ class ArrayInternal {
   }
 
   private constructArrayWithSize(size: number): number[] {
-    const result: ArrayInternal = malloc(4 * 4) as any as ArrayInternal;
+    const result: ArrayImpl = malloc(4 * 4) as any as ArrayImpl;
 
     result.contents        = malloc((size + 1) * 4);
     result.allocatedLength = (size + 1) * 4;

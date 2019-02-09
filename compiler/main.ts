@@ -3,11 +3,13 @@ import { Program } from "./program";
 
 // utility
 
-const p = new Program([
-  "file.ts",
-  "defs.ts",
-  "./testother.ts",
-]);
+const p = new Program({
+  paths: [
+    "testcontents.ts",
+    "./testother.ts",
+  ],
+  root: "testcontents.ts"
+});
 
 const result = p.parse();
 const file   = process.argv[2];

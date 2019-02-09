@@ -56,7 +56,11 @@
     "experimentalDecorators": true,        /* Enables experimental support for ES7 decorators. */
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
   },
+  "files": [
+    "./main.jest.ts",
+  ],
   "exclude": [
-    "/Users/johnfn/code/wasm/__tests__/bs/defs.ts",
+    "./bs/defs.ts",
+    "./bs/bs.d.ts",
   ]
 }

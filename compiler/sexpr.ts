@@ -26,8 +26,13 @@ export function S(
   };
 }
 
-S.Block = (body: Sexpr[]): Sexpr =>
-  body.length === 1 ? body[0] : S("[]", "block", ...body);
+S.Block = (body: Sexpr[] | Sexpr): Sexpr => {
+  if (Array.isArray(body)) {
+    return body.length === 1 ? body[0] : S("[]", "block", ...body);
+  } else {
+    return body;
+  }
+}
 
 S.Const = (value: number, type: WasmType = "i32"): Sexpr => S(type, "i32.const", String(value));
 

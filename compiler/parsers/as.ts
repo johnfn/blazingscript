@@ -1,5 +1,5 @@
 import { BSExpression } from "./expression";
-import { AsExpression } from "typescript";
+import { AsExpression, Expression } from "typescript";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { Scope } from "../scope/scope";
 import { Sexpr } from "../sexpr";

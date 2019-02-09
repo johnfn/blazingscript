@@ -54,22 +54,22 @@ import { BSVariableDeclarationList } from "./variabledeclarationlist";
  /**
   * Given a TypeScript AST node, returns the BS AST node equivalent.
   */
-export function buildNode(ctx: Scope, obj: ImportClause | undefined                  , info?: NodeInfo): BSImportClause | null;
-export function buildNode(ctx: Scope, obj: VariableDeclarationList | Expression | undefined
-                                                                                     , info?: NodeInfo): BSVariableDeclarationList | BSExpression | null;
 export function buildNode(ctx: Scope, obj: Identifier                                , info?: NodeInfo): BSIdentifier;
 export function buildNode(ctx: Scope, obj: NamespaceImport                           , info?: NodeInfo): BSNamespaceImport;
 export function buildNode(ctx: Scope, obj: NamedImports                              , info?: NodeInfo): BSNamedImports;
 export function buildNode(ctx: Scope, obj: StringLiteral                             , info?: NodeInfo): BSStringLiteral;
 export function buildNode(ctx: Scope, obj: PropertyName                              , info?: NodeInfo): BSPropertyName;
-export function buildNode(ctx: Scope, obj: NamespaceImport | NamedImports | undefined, info?: NodeInfo): BSNamespaceImport | BSNamedImports | null;
-export function buildNode(ctx: Scope, obj: Decorator  | undefined                    , info?: NodeInfo): BSDecorator  | null;
 export function buildNode(ctx: Scope, obj: BindingName                               , info?: NodeInfo): BSBindingName;
+export function buildNode(ctx: Scope, obj: Expression                                , info?: NodeInfo): BSExpression;
+export function buildNode(ctx: Scope, obj: Decorator  | undefined                    , info?: NodeInfo): BSDecorator  | null;
 export function buildNode(ctx: Scope, obj: BindingName| undefined                    , info?: NodeInfo): BSBindingName| null;
 export function buildNode(ctx: Scope, obj: Block      | undefined                    , info?: NodeInfo): BSBlock      | null;
 export function buildNode(ctx: Scope, obj: Statement  | undefined                    , info?: NodeInfo): BSStatement  | null;
 export function buildNode(ctx: Scope, obj: Expression | undefined                    , info?: NodeInfo): BSExpression;
-export function buildNode(ctx: Scope, obj: Expression                                , info?: NodeInfo): BSExpression;
+export function buildNode(ctx: Scope, obj: ImportClause | undefined                  , info?: NodeInfo): BSImportClause | null;
+export function buildNode(ctx: Scope, obj: NamespaceImport | NamedImports | undefined, info?: NodeInfo): BSNamespaceImport | BSNamedImports | null;
+export function buildNode(ctx: Scope, obj: VariableDeclarationList | Expression | undefined
+                                                                                     , info?: NodeInfo): BSVariableDeclarationList | BSExpression | null;
 
 export function buildNode(ctx: Scope, obj: Node | undefined      , info?: NodeInfo): BSNode | null {
   if (obj === undefined) { return null; }

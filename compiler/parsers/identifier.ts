@@ -16,7 +16,7 @@ export class BSIdentifier extends BSNode {
     super(ctx, node);
 
     this.text  = node.text;
-    this.isLhs = info.isLhs;
+    this.isLhs = info.isLhs || false;
   }
 
   compile(ctx: Scope): Sexpr {
