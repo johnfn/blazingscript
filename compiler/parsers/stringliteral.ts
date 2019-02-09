@@ -20,7 +20,7 @@ export class BSStringLiteral extends BSNode {
       S("[]", "result", "i32"),
       S.SetLocal(
         "string_temp",
-        S("i32", "call", "$file__malloc", S.Const(this.text.length + 4))
+        S("i32", "call", "$testcontents__malloc", S.Const(this.text.length + 4))
       ),
       // store length first
       S.Store(ctx.variables.get("string_temp"), this.text.length),

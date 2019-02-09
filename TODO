@@ -1,3 +1,5 @@
+* remove janky loading in program.ts, actually load based on paths
+
 * the fact that the global scope basically has NOTHING indicates to me that it should not in fact be a scope at all, and should
   probably just be an array or something.
   

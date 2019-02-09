@@ -1,6 +1,8 @@
 import fs from "fs";
+import path from "path";
 import { Program } from "../compiler/program";
 import { exec } from "child_process";
+import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 
 async function runProgram(str: string): Promise<{ [test: string]: number }> {
   const results: { [test: string]: number } = {};
@@ -86,11 +88,14 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
     }
   };
 
-  const sexprs = new Program([
-    "file.ts",
-    "defs.ts",
-    "./testother.ts",
-  ]).parse();
+  const sexprs = new Program({
+    paths: [
+      "testcontents.ts",
+      "defs.ts",
+      "./testother.ts",
+    ],
+    root: path.join(__dirname, "bs"),
+  }).parse();
 
   fs.writeFileSync("temp", sexprs);
 

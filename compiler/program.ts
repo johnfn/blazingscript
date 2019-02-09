@@ -1,5 +1,6 @@
 import ts, { Node, ModuleKind, ScriptTarget } from "typescript";
 import fs from "fs";
+import path from "path";
 import { sexprToString, Sexpr, S } from "./sexpr";
 import { Scope } from "./scope/scope";
 import { BSSourceFile } from "./parsers/sourcefile";
@@ -12,81 +13,63 @@ export class Program {
   typeChecker: ts.TypeChecker;
   program    : ts.Program;
 
-  constructor(paths: string[]) {
-    const outputs = [];
+  constructor(props: {
+    paths: string[];
+    root : string;
+  }) {
+    const { paths, root } = props;
 
     this.program = ts.createProgram(paths, {
-        experimentalDecorators: true,
-        target                : ScriptTarget.ES2016,
-        module                : ModuleKind.CommonJS,
-        esModuleInterop       : true,
+      experimentalDecorators: true,
+      target                : ScriptTarget.ES2016,
+      module                : ModuleKind.CommonJS,
+      esModuleInterop       : true,
+    },
+    {
+      readFile: (fileName: string) => {
+        throw new Error("? dunno what this is ?")
       },
-      {
-        readFile: (fileName: string) => {
-          throw new Error("? dunno what this is ?")
-        },
-        getSourceFile: function(fileName, languageVersion) {
-          if (fileName === "file.ts") {
-            return ts.createSourceFile(
-              fileName,
-              fs.readFileSync("__tests__/bs/testcontents.ts").toString(),
-              ts.ScriptTarget.Latest,
-              true
-            );
-          }
+      getSourceFile: (fileName, languageVersion) => {
+        const filePath = path.join(root, fileName);
 
-          if (fileName === "defs.ts") {
-            return ts.createSourceFile(
-              fileName,
-              fs.readFileSync("__tests__/bs/defs.ts").toString(),
-              ts.ScriptTarget.Latest,
-              true
-            );
-          }
-
-          if (fileName === "testother.ts") {
-            return ts.createSourceFile(
-              fileName,
-              fs.readFileSync("__tests__/bs/testother.ts").toString(),
-              ts.ScriptTarget.Latest,
-              true
-            );
-          }
-
-          return undefined;
-        },
-        writeFile: function(name, text, writeByteOrderMark) {
-          outputs.push({
-            name: name,
-            text: text,
-            writeByteOrderMark: writeByteOrderMark
-          });
-        },
-        getDirectories: () => {
-          return [];
-        },
-        fileExists: (fileName: string) => {
-          const name = fileName.toLowerCase();
-
-          return paths.map(path => path.toLowerCase()).filter(path => path.indexOf(name) > -1).length > 0
-        },
-        getDefaultLibFileName: function() {
-          return "bs.d.ts";
-        },
-        useCaseSensitiveFileNames: function() {
-          return false;
-        },
-        getCanonicalFileName: function(filename) {
-          return filename;
-        },
-        getCurrentDirectory: function() {
-          return "";
-        },
-        getNewLine: function() {
-          return "\n";
+        if (!fs.existsSync(filePath)) {
+          throw new Error(`Can't find file: ${ filePath }`);
         }
+
+        return ts.createSourceFile(
+          fileName,
+          fs.readFileSync(filePath).toString(),
+          ts.ScriptTarget.Latest,
+          /* setParentNodes */ true
+        );
+      },
+      writeFile: (name, text, writeByteOrderMark) => {
+
+      },
+      getDirectories: () => {
+        return [];
+      },
+      fileExists: (fileName: string) => {
+        const name = fileName.toLowerCase();
+
+        return paths.map(path => path.toLowerCase()).filter(path => path.indexOf(name) > -1).length > 0
+      },
+      getDefaultLibFileName: function() {
+        return "bs.d.ts";
+      },
+      useCaseSensitiveFileNames: function() {
+        return false;
+      },
+      getCanonicalFileName: (filename) => {
+        return filename;
+      },
+      getCurrentDirectory: function() {
+        return "";
+      },
+      getNewLine: function() {
+        return "\n";
       }
-    );
+    });
 
     const res = this.program.getGlobalDiagnostics();
 
@@ -105,7 +88,8 @@ export class Program {
       "Array" : "ArrayInternal",
     });
 
-    const source = this.program.getSourceFile("file.ts");
+    // TODO: Choose a root somehow?
+    const source = this.program.getSourceFile("testcontents.ts");
 
     if (!source) {
       throw new Error("source undefined, something has gone horribly wrong!!!");
