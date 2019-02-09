@@ -3,15 +3,11 @@ import { Program } from "./program";
 
 // utility
 
-const p = new Program(`
-  function foo() {
-    if (true) {
-      memwrite(0, 1);
-    }
-
-    return memread(0) === 1;
-  }
-`);
+const p = new Program([
+  "file.ts",
+  "defs.ts",
+  "./testother.ts",
+]);
 
 const result = p.parse();
 const file   = process.argv[2];

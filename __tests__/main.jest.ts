@@ -86,7 +86,11 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
     }
   };
 
-  const sexprs = new Program().parse();
+  const sexprs = new Program([
+    "file.ts",
+    "defs.ts",
+    "./testother.ts",
+  ]).parse();
 
   fs.writeFileSync("temp", sexprs);
 

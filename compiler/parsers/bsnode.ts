@@ -53,13 +53,18 @@ export abstract class BSNode {
     this.fullText = node.getFullText();
 
     if (!ctx.sourceFile) {
-      throw new Error("no source file!");
+      if (node.kind !== SyntaxKind.SourceFile) {
+        throw new Error("no source file!");
+      }
+
+      this.line = 0;
+      this.char = 0;
+    } else {
+      const pos = ctx.sourceFile.getLineAndCharacterOfPosition(node.pos);
+
+      this.line = pos.line;
+      this.char = pos.character;
     }
-
-    const pos = ctx.sourceFile.getLineAndCharacterOfPosition(node.pos);
-
-    this.line = pos.line;
-    this.char = pos.character;
   }
 
   forEachChild(callback: (node: BSNode) => void): void {

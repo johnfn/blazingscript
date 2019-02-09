@@ -1,3 +1,6 @@
+* the fact that the global scope basically has NOTHING indicates to me that it should not in fact be a scope at all, and should
+  probably just be an array or something.
+  
 * modules
    * is functions.getAll even necessary?
    * S.Func should just take a Function.

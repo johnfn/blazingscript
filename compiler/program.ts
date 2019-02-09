@@ -12,16 +12,10 @@ export class Program {
   typeChecker: ts.TypeChecker;
   program    : ts.Program;
 
-  constructor() {
+  constructor(paths: string[]) {
     const outputs = [];
 
-    this.program = ts.createProgram(
-      [
-        "file.ts",
-        "defs.ts",
-        "./testother.ts",
-      ],
-      {
+    this.program = ts.createProgram(paths, {
         experimentalDecorators: true,
         target                : ScriptTarget.ES2016,
         module                : ModuleKind.CommonJS,
@@ -72,19 +66,9 @@ export class Program {
           return [];
         },
         fileExists: (fileName: string) => {
-          if (fileName === "file.ts") {
-            return true;
-          }
+          const name = fileName.toLowerCase();
 
-          if (fileName === "bs.d.ts") {
-            return true;
-          }
-
-          if (fileName === "testother.ts") {
-            return true;
-          }
-
-          return false;
+          return paths.map(path => path.toLowerCase()).filter(path => path.indexOf(name) > -1).length > 0
         },
         getDefaultLibFileName: function() {
           return "bs.d.ts";
@@ -106,7 +90,7 @@ export class Program {
 
     const res = this.program.getGlobalDiagnostics();
 
-    for (const d of this.program.getGlobalDiagnostics()) {
+    for (const d of res) {
       console.log(d)
     }
 
@@ -114,6 +98,13 @@ export class Program {
   }
 
   parse(): string {
+    const ctx = new Scope(this.typeChecker, null, null, null, null);
+
+    ctx.addJsTypes({
+      "String": "StringInternal",
+      "Array" : "ArrayInternal",
+    });
+
     const source = this.program.getSourceFile("file.ts");
 
     if (!source) {
@@ -121,12 +112,6 @@ export class Program {
     }
 
     const allFiles: Sexpr[][] = [];
-    const ctx = new Scope(this.typeChecker, source, null, null, null);
-
-    ctx.addJsTypes({
-      "String": "StringInternal",
-      "Array" : "ArrayInternal",
-    });
 
     allFiles.push(new BSSourceFile(ctx, source).compile(ctx));
 

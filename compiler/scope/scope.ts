@@ -61,15 +61,15 @@ export class Scope {
   moduleName  : string | null;
 
   typeChecker: TypeChecker;
-  sourceFile : SourceFile;
+  sourceFile : BSSourceFile | null;
   jsTypes    : { [jsType: string]: string } = {};
 
   constructor(
-    tc: ts.TypeChecker,
-    sourceFile: SourceFile,
-    node: NodeWithScope | null,
-    parent: Scope | null,
-    fileName: string | null
+    tc        : ts.TypeChecker,
+    sourceFile: BSSourceFile | null,
+    node      : NodeWithScope | null,
+    parent    : Scope | null,
+    fileName  : string | null
   ) {
     this.typeChecker = tc;
     this.sourceFile  = sourceFile;
@@ -110,7 +110,7 @@ export class Scope {
 
   addScopeFor(node: NodeWithScope): void {
     if (node instanceof BSSourceFile) {
-      this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this, node.moduleName));
+      this.children.push(new Scope(this.typeChecker, node, node, this, node.moduleName));
     } else {
       this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this, this.moduleName));
     }
