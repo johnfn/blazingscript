@@ -4,10 +4,10 @@ import { Node, Type, Modifier, SyntaxKind } from "typescript";
 
 export type NodeInfo = {
   isLhs     ?: boolean;
-  importFrom?: string;
+  moduleName?: string;
 };
 
-export const defaultNodeInfo = Object.freeze({ isLhs: false, importFrom: "" });
+export const defaultNodeInfo = Object.freeze({ isLhs: false, moduleName: "" });
 
 let uid = 0;
 export function getUid() { return ++uid; }

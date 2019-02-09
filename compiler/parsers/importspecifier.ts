@@ -21,11 +21,11 @@ export class BSImportSpecifier extends BSNode {
   constructor(ctx: Scope, node: ImportSpecifier, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
-    if (!info.importFrom) {
+    if (!info.moduleName) {
       throw new Error("BSImportSpecifier without module name.");
     }
 
-    this.moduleName = info.importFrom;
+    this.moduleName = info.moduleName;
 
     this.children = [
       this.name  = buildNode(ctx, node.name),

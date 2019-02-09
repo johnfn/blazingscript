@@ -29,7 +29,7 @@ export class BSImportDeclaration extends BSNode {
 
     this.children = flatArray(
       this.moduleName = moduleName,
-      this.importClause = buildNode(ctx, node.importClause, { importFrom: moduleName.text })
+      this.importClause = buildNode(ctx, node.importClause, { moduleName: moduleName.text })
     );
 
     ctx.modules.add(this.moduleName.text)
