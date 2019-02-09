@@ -85,6 +85,11 @@
 | Progress | Feature | Notes |
 |----------|---------|-------|
 | :black_square_button: | Rudimentary module loading and bundling | 
+| :white_check_mark: | Import function declarations | 
+| :black_square_button:  | Import class declarations | 
+| :black_square_button: | Absolute paths | 
+| :black_square_button: | Relative paths | 
+
 
 ## Standard Library
 
