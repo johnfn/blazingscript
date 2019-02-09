@@ -39,8 +39,8 @@ export class BSArrayLiteral extends BSNode {
     const elemSize = BSArrayLiteral.GetArrayElemSize(ctx, this.tsType);
 
     return S("i32", "block", S("[]", "result", "i32"),
-      S.SetLocal("array_temp"        , S("i32", "call", "$malloc", S.Const(4               * 4))),
-      S.SetLocal("array_content_temp", S("i32", "call", "$malloc", S.Const(allocatedLength * 4))),
+      S.SetLocal("array_temp"        , S("i32", "call", "$file__malloc", S.Const(4               * 4))),
+      S.SetLocal("array_content_temp", S("i32", "call", "$file__malloc", S.Const(allocatedLength * 4))),
 
       // store allocated length
       S.Store(ctx.variables.get("array_temp"), allocatedLength),
@@ -99,6 +99,6 @@ export function isArrayType(ctx: Scope, type: Type) {
 export function isFunctionType(ctx: Scope, type: Type) {
   const stringType = ctx.typeChecker.typeToString(type);
 
-  // TODO: I'm pretty sure there's a better way here.
+  // TODO: I'm PRETTY sure there's a better way here.
   return stringType.startsWith("(") && stringType.includes("=>");
 }

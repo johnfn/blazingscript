@@ -1,6 +1,7 @@
 import { FunctionDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
+import { Function } from "../scope/functions";
 import { parseStatementListBS } from "./statementlist";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
@@ -16,14 +17,21 @@ export class BSFunctionDeclaration extends BSNode {
   children   : BSNode[];
   parameters : BSParameter[];
   body       : BSBlock | null;
-
   name       : string | null;
-  private declaration: Sexpr  | null = null;
+  fn         : Function;
+  moduleName : string;
+
+  private declaration: Sexpr | null = null;
 
   constructor(ctx: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
-    this.name = node.name ? node.name.text : null;
+    if (!ctx.moduleName) {
+      throw new Error("no module name when creating function.");
+    }
+
+    this.name       = node.name ? node.name.text : null;
+    this.moduleName = ctx.moduleName;
 
     ctx.addScopeFor(this);
     const childCtx = ctx.getChildScope(this); {
@@ -33,7 +41,7 @@ export class BSFunctionDeclaration extends BSNode {
       );
     }
 
-    ctx.functions.addFunction(this);
+    this.fn = ctx.functions.addFunction(this);
   }
 
   compile(parentCtx: Scope): Sexpr {
@@ -49,7 +57,7 @@ export class BSFunctionDeclaration extends BSNode {
     const wasmReturn = lastStatement && lastStatement.type === "i32" ? undefined : S.Const(0);
 
     this.declaration = S.Func({
-      name  : ctx.functions.getFunctionByNode(this).fullyQualifiedName,
+      name  : this.fn.fullyQualifiedName,
       params: params,
       body  : [
         ...ctx.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),

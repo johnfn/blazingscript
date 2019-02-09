@@ -58,7 +58,7 @@ export class Scope {
   loops     : Loops;
   node      : BSNode | null;
   type      : ScopeType;
-  fileName  : string | null;
+  moduleName  : string | null;
 
   typeChecker: TypeChecker;
   sourceFile : SourceFile;
@@ -76,7 +76,7 @@ export class Scope {
 
     this.node     = node;
     this.parent   = parent;
-    this.fileName = fileName;
+    this.moduleName = fileName;
 
     this.variables  = new Variables(this);
     this.properties = new Properties(this);
@@ -110,9 +110,9 @@ export class Scope {
 
   addScopeFor(node: NodeWithScope): void {
     if (node instanceof BSSourceFile) {
-      this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this, node.fileName));
+      this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this, node.moduleName));
     } else {
-      this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this, this.fileName));
+      this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this, this.moduleName));
     }
   }
 

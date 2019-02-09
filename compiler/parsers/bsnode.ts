@@ -3,10 +3,11 @@ import { Scope, Property } from "../scope/scope";
 import { Node, Type, Modifier, SyntaxKind } from "typescript";
 
 export type NodeInfo = {
-  isLhs: boolean;
+  isLhs     ?: boolean;
+  importFrom?: string;
 };
 
-export const defaultNodeInfo = Object.freeze({ isLhs: false });
+export const defaultNodeInfo = Object.freeze({ isLhs: false, importFrom: "" });
 
 let uid = 0;
 export function getUid() { return ++uid; }

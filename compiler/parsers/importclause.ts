@@ -6,6 +6,12 @@ import { buildNode } from "./nodeutil";
 import { BSNamedImports } from "./namedimports";
 import { BSNamespaceImport } from "./namespaceimport";
 
+/**
+ * e.g.
+ * 
+ * import foo, { a, b, c } from "./foo"
+ *        ^^^^^^^^^^^^^^^^
+ */
 export class BSImportClause extends BSNode {
   children: BSNode[];
   namedBindings: BSNamedImports | BSNamespaceImport | null;
@@ -13,7 +19,7 @@ export class BSImportClause extends BSNode {
   constructor(ctx: Scope, node: ImportClause, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
-    this.namedBindings = buildNode(ctx, node.namedBindings);
+    this.namedBindings = buildNode(ctx, node.namedBindings, info);
 
     this.children = this.namedBindings ? [
       this.namedBindings,

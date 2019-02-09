@@ -1,4 +1,4 @@
-// import { mytest } from "./testother";
+import { mytest } from "./testother";
 
 // TODO
 // * test that you can put all sorts of weird stuff in an if condition
@@ -823,11 +823,9 @@ function test_string_repeat() {
   );
 }
 
-/*
 function test_module() {
   return mytest() === 5;
 }
-*/
 
 
 /*

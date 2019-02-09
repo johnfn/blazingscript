@@ -39,3 +39,29 @@ export function flatArray(...args: (null | BSNode | BSNode[])[]): BSNode[] {
 
   return result;
 }
+
+export function normalizeString(str: string): string {
+  if (str.startsWith("./")) {
+    str = str.slice(2);
+  }
+
+  if (str.endsWith(".ts")) {
+    str = str.slice(0, -3);
+  }
+
+  if (str.endsWith(".tsx")) {
+    str = str.slice(0, -4);
+  }
+
+  let result = "";
+
+  for (const char of str) {
+    if (char.match(/[a-z_]/i)) {
+      result += char;
+    } else {
+      result += "_";
+    }
+  }
+
+  return result;
+}

@@ -83,7 +83,7 @@ export class BSArrowFunction extends BSNode {
     }
 
     this.declaration = S.Func({
-      name  : ctx.functions.getFunctionByNode(this).fullyQualifiedName,
+      name  : this.fn.fullyQualifiedName,
       params: params,
       body  : [
         ...ctx.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),

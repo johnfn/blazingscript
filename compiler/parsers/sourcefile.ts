@@ -6,9 +6,7 @@ import { BSMethodDeclaration } from "./method";
 import { BSStatement } from "./statement";
 import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
 import { BSClassDeclaration } from "./class";
-import { BSCallExpression } from "./callexpression";
-import { BSIdentifier } from "./identifier";
-import { flatArray, assertNever } from "../util";
+import { flatArray, assertNever, normalizeString as normalizeModuleName } from "../util";
 import { buildNodeArray } from "./nodeutil";
 
 type FunctionDecl = {
@@ -25,12 +23,12 @@ type FunctionDecl = {
 export class BSSourceFile extends BSNode {
   children         : BSNode[];
   statements       : BSStatement[];
-  fileName         : string;
+  moduleName         : string;
 
   constructor(ctx: Scope, file: SourceFile, info: NodeInfo = defaultNodeInfo) {
     super(ctx, file);
 
-    this.fileName = file.fileName;
+    this.moduleName = file.fileName;
 
     ctx.addScopeFor(this);
     const sourceCtx = ctx.getChildScope(this);
@@ -41,19 +39,19 @@ export class BSSourceFile extends BSNode {
   }
 
   compile(parentCtx: Scope): Sexpr[] {
-    const ctx = parentCtx.getChildScope(this);
-    const functions = ctx.functions.getAll(ctx.topmostScope()).sort((a, b) => a.tableIndex - b.tableIndex);
+    const ctx       = parentCtx.getChildScope(this);
+    const functions = ctx.functions.getAllNodes(ctx);
 
     for (const statement of this.statements) {
       statement.compile(ctx);
     }
 
     return functions.map(fn => {
-      return fn.node.getDeclaration();
+      return fn.getDeclaration(); 
     });
   }
 
   readableName() {
-    return `Source file ${ this.fileName }`;
+    return `Source file ${ this.moduleName }`;
   }
 }

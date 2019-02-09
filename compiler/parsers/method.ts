@@ -1,6 +1,7 @@
 import { ClassDeclaration, MethodDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
+import { Function } from "../scope/functions";
 import { THIS_NAME } from "../program";
 import { parseStatementListBS } from "./statementlist";
 import { assertNever, flatArray } from "../util";
@@ -41,6 +42,7 @@ export class BSMethodDeclaration extends BSNode {
 
   decorators : BSDecorator[];
   parent     : BSClassDeclaration;
+  fn         : Function;
   declaration: Sexpr  | null = null;
 
   constructor(
@@ -64,7 +66,7 @@ export class BSMethodDeclaration extends BSNode {
       this.name = node.name ? node.name.getText() : null;
     }
 
-    ctx.functions.addMethod({
+    this.fn = ctx.functions.addMethod({
       node    : this,
       parent  : this.parent,
       overload: this.getOverloadType(this.decorators),
@@ -124,7 +126,7 @@ export class BSMethodDeclaration extends BSNode {
     const ret = last && last.type === "i32" ? undefined : S.Const(0);
 
     this.declaration = S.Func({
-      name: ctx.functions.getFunctionByNode(this).fullyQualifiedName,
+      name: this.fn.fullyQualifiedName,
       params: [
         {
           name: THIS_NAME,

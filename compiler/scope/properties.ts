@@ -50,12 +50,15 @@ export class Properties {
       return res;
     }
 
-    const relevantFunctions = cls.functions.getAll().filter(fn => fn.name === name);
+    const relevantFunctions = cls.functions.list.filter(fn => fn.name === name);
     const relevantFunction  = relevantFunctions[0];
 
     if (relevantFunction) {
       return S.Const(relevantFunction.tableIndex);
     }
+
+    console.log(cls.toString());
+    console.log(cls.functions.list.map(x => x.fullyQualifiedName));
 
     throw new Error(`cant find property ${ name } in class ${ expr.fullText }`);
   }

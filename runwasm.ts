@@ -93,5 +93,5 @@ WebAssembly.instantiate(
   console.log("");
 
   console.log(result.instance.exports)
-  console.log(result.instance.exports.test_string_lastIndexOf())
+  console.log(result.instance.exports.test_simple_fat_arrow_fucntion())
 }).catch(e => console.log(e))

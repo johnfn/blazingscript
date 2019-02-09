@@ -28,7 +28,6 @@ export class Program {
       [
         "file.ts",
         "defs.ts",
-        "testother.ts",
         "./testother.ts",
       ],
       {
@@ -140,7 +139,6 @@ export class Program {
 
     allFiles.push(new BSSourceFile(ctx, source).compile(ctx));
 
-    let functions = ctx.functions.getAll(ctx.topmostScope());
     const modules = ctx.modules.getAll();
 
     for (const module of modules) {
@@ -151,9 +149,9 @@ export class Program {
       }
 
       allFiles.push(new BSSourceFile(ctx, source).compile(ctx));
-      functions = functions.concat(ctx.functions.getAll(ctx.topmostScope()))
     }
 
+    let functions = ctx.functions.getAll();
     functions = functions.sort((a, b) => a.tableIndex - b.tableIndex);
 
     const resultSexpr = S(
@@ -180,9 +178,10 @@ export class Program {
       }),
 
       ...flatten(allFiles),
-
       ...functions.map(fn => S.Export(fn.fullyQualifiedName)),
-      S("[]", "elem", S.Const(0),
+
+      // build our function table
+      S("[]", "elem\n", S.Const(0),
         ...functions.map(fn => {
           return `$${ fn.fullyQualifiedName } ;; ${ fn.tableIndex }\n`;
         })

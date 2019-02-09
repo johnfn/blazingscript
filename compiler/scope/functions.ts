@@ -1,7 +1,7 @@
 import { BSMethodDeclaration, OperatorOverload, Operator } from "../parsers/method";
 import { BSClassDeclaration } from "../parsers/class";
 import { BSFunctionDeclaration } from "../parsers/function";
-import { Type } from "typescript";
+import { Type, idText, TypeFlags, SignatureKind, Signature, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration } from "typescript";
 import { BSExpression } from "../parsers/expression";
 import { Sexpr, S, WasmType } from "../sexpr";
 import { parseStatementListBS } from "../parsers/statementlist";
@@ -11,7 +11,7 @@ import { BSIdentifier } from "../parsers/identifier";
 import { BSCallExpression } from "../parsers/callexpression";
 import { BSPropertyAccessExpression } from "../parsers/propertyaccess";
 import { BSArrowFunction } from "../parsers/arrowfunction";
-import { assertNever } from "../util";
+import { assertNever, normalizeString } from "../util";
 import { BSImportSpecifier } from "../parsers/importspecifier";
 
 // TODO should probably rename this as to not clash with Function the js type
@@ -26,28 +26,29 @@ export type WasmFunctionSignature = {
   name      : string;
 }
 
-type FunctionNode =
-  | BSFunctionDeclaration
-  | BSMethodDeclaration
-  | BSArrowFunction
-
 export type Function = {
   /**
    * Name of the function, e.g. indexOf
    */
   name              : string;
 
+  moduleName        : string | null;
+
   /**
    * Fully qualified name of the function, e.g. Array__indexOf
    */
   fullyQualifiedName: string;
 
-  node              : FunctionNode;
   className         : string | null;
   overload          : OperatorOverload | null;
   tableIndex        : number;
-  signature         : WasmFunctionSignature;
+  signature         : WasmFunctionSignature | null;
 };
+
+export type CompileableFunctionNode =
+  | BSMethodDeclaration
+  | BSFunctionDeclaration
+  | BSArrowFunction
 
 export class Functions {
   private static TableIndex = 0;
@@ -57,40 +58,86 @@ export class Functions {
    */
   public static AllSignatures: { [key: string]: WasmFunctionSignature } = {};
 
-  functions: Function[];
+  list: Function[];
+  functionNodes: (BSMethodDeclaration | BSFunctionDeclaration | BSArrowFunction)[];
   scope    : Scope;
 
   constructor(scope: Scope) {
-    this.functions = [];
-    this.scope     = scope;
+    this.list     = [];
+    this.functionNodes = [];
+    this.scope         = scope;
   }
 
-  static GetSignature(node: BSMethodDeclaration | BSFunctionDeclaration | BSCallExpression | BSArrowFunction): WasmFunctionSignature {
+  static GetCallExpressionSignature(node: BSCallExpression): WasmFunctionSignature {
     let params: WasmType[];
 
-    if (
-      node instanceof BSMethodDeclaration ||
-      node instanceof BSFunctionDeclaration ||
-      node instanceof BSArrowFunction
-    ) {
-      params = node.parameters.map(param => TsTypeToWasmType(param.tsType));
+    params = node.arguments.map(arg => TsTypeToWasmType(arg.tsType));
 
-      if (node instanceof BSMethodDeclaration) {
-        // Need to add implicit this argument!
+    if (node.expression instanceof BSPropertyAccessExpression) {
+      // Need to add implicit this argument!
 
-        params = ["i32", ...params];
-      }
-    } else {
-      params = node.arguments.map(arg => TsTypeToWasmType(arg.tsType));
-
-      if (node.expression instanceof BSPropertyAccessExpression) {
-        // Need to add implicit this argument!
-
-        params = ["i32", ...params];
-      }
+      params = ["i32", ...params];
     }
 
     const ret    = TsTypeToWasmType(node.tsType);
+    const name   = "$" + params.join("_") + "__ret_" + ret;
+
+    if (!Functions.AllSignatures[name]) {
+      const sig    : WasmFunctionSignature = {
+        parameters: params,
+        return    : ret,
+        name      : name,
+      };
+
+      Functions.AllSignatures[name] = sig;
+    }
+
+    return Functions.AllSignatures[name];
+  }
+
+  static GetSignature(scope: Scope, node: BSMethodDeclaration | BSFunctionDeclaration | BSArrowFunction | BSImportSpecifier): WasmFunctionSignature {
+    const type = node.tsType;
+    const sigs = scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
+    const sig  = sigs[0];
+    let params: WasmType[] = [];
+
+    if (sigs.length > 1) {
+      throw new Error("Do not handle functions with > 1 signature yet!");
+    }
+
+    if (sig.declaration && sig.declaration.kind === SyntaxKind.FunctionDeclaration) {
+      const decl = sig.declaration as FunctionDeclaration;
+      for (const p of decl.parameters) {
+        const type = scope.typeChecker.getTypeAtLocation(p);
+
+        params.push(TsTypeToWasmType(type));
+      }
+    }
+
+    if (sig.declaration && sig.declaration.kind === SyntaxKind.ArrowFunction) {
+      const decl = sig.declaration as ArrowFunction;
+      for (const p of decl.parameters) {
+        const type = scope.typeChecker.getTypeAtLocation(p);
+
+        params.push(TsTypeToWasmType(type));
+      }
+    }
+
+
+    if (sig.declaration && sig.declaration.kind === SyntaxKind.MethodDeclaration) {
+      const decl = sig.declaration as MethodDeclaration;
+
+      // Need to add implicit this argument!
+      params.push("i32");
+
+      for (const p of decl.parameters) {
+        const type = scope.typeChecker.getTypeAtLocation(p);
+
+        params.push(TsTypeToWasmType(type));
+      }
+    }
+
+    const ret    = TsTypeToWasmType(sig.getReturnType());
     const name   = "$" + params.join("_") + "__ret_" + ret;
 
     if (!Functions.AllSignatures[name]) {
@@ -110,89 +157,129 @@ export class Functions {
     node    : BSMethodDeclaration;
     parent  : BSClassDeclaration;
     overload: OperatorOverload | null;
-  }): void {
+  }): Function {
     const { node, parent, overload } = props;
-
-    let fullyQualifiedName: string;
-    let className: string;
 
     if (!node.name) { throw new Error("anonymous methods not supported yet!"); }
     if (!parent) { throw new Error("no parent provided to addFunction for method."); }
     if (!parent.name) { throw new Error("dont support anonymous classes yet!"); }
 
-    fullyQualifiedName    = "$" + parent.name + "__" + node.name;
-    className = parent.name;
+    const fullyQualifiedName = parent.name + "__" + node.name;
+    const className = parent.name;
 
-    this.functions.push({
+    if (!this.scope.moduleName) {
+      throw new Error("This scope does not have a module name? in addMethod");
+    }
+
+    const fn: Function = {
       name              : node.name,
       fullyQualifiedName,
-      node              ,
+      moduleName        : normalizeString(this.scope.moduleName),
       className         ,
       overload          ,
       tableIndex        : Functions.TableIndex++,
-      signature         : Functions.GetSignature(node),
-    });
+      signature         : Functions.GetSignature(this.scope, node),
+    };
+
+    this.functionNodes.push(node);
+    this.scope.functions.list.push(fn);
+
+    return fn;
   }
 
-  addFunction(node: BSFunctionDeclaration | BSArrowFunction): Function {
-    let id       : number;
-    let name     : string;
+  addFunction(node: BSFunctionDeclaration | BSArrowFunction | BSImportSpecifier): Function {
     let className: string | null = null;
+    let fn: Function;
+
+    if (!this.scope.moduleName) {
+      throw new Error("no moduleName in addFunction");
+    }
+
+    if (node instanceof BSFunctionDeclaration && !node.name) {
+      throw new Error("Dont support anon functions yet.");
+    }
+
+    /** 
+     * If we've already seen this function in a different file, don't add it
+     * again, but do keep track of the node so we can compile it in this file.
+     */
+    if (node instanceof BSFunctionDeclaration) {
+      for (const fn of this.getAll(this.scope.topmostScope())) {
+        if (
+          fn.name === node.name && 
+          fn.moduleName && 
+          normalizeString(fn.moduleName) === normalizeString(node.moduleName)
+        ) {
+          this.functionNodes.push(node);
+
+          return fn;
+        }
+      }
+    }
+
+    const id         = Functions.TableIndex++;
+    const signature  = Functions.GetSignature(this.scope, node);
+    let name              : string;
+    let fullyQualifiedName: string;
+    let moduleName        : string;
 
     if (node instanceof BSFunctionDeclaration) {
-      id = Functions.TableIndex++;
-
-      if (node.name) {
-        name = node.name
-      } else {
-        name = `anon_${ id }`;
-      }
+      name               = node.name!; // i checked this above.
+      fullyQualifiedName = normalizeString(this.scope.moduleName) + "__" + node.name;
+      moduleName         = normalizeString(this.scope.moduleName);
     } else if (node instanceof BSArrowFunction) {
-      id = Functions.TableIndex++;
-
-      name = `arrow_${ id }`;
+      name               = `arrow_${ id }`;
+      fullyQualifiedName = name;
+      moduleName         = normalizeString(this.scope.moduleName);
+    } else if (node instanceof BSImportSpecifier) {
+      name               = node.name.text;
+      moduleName         = normalizeString(node.moduleName);
+      fullyQualifiedName = normalizeString(moduleName) + "__" + name;
     } else {
       return assertNever(node);
     }
 
-    for (const fn of this.functions) {
-      if (fn.name === name) {
-        throw new Error(`Redeclaring function named ${name}.`);
-      }
-    }
-
-    const fn: Function = {
-      node              : node,
+    fn = {
+      signature         ,
+      moduleName        ,
       name              : name,
-      fullyQualifiedName: name,
+      fullyQualifiedName,
       className         ,
       tableIndex        : id,
       overload          : null,
-      signature         : Functions.GetSignature(node),
+    };
+
+    if (!(node instanceof BSImportSpecifier)) {
+      this.functionNodes.push(node);
     }
 
-    this.functions.push(fn);
+    this.list.push(fn);
 
     return fn;
   }
 
   count(): number {
-    return this.functions.length;
+    return this.list.length;
   }
 
   toString(): string {
-    return this.functions.map(x => x.name).join(", ");
+    return this.list.map(x => x.name).join(", ");
   }
 
-  /**
-   * By default (with no scope argument) this finds all declared functions across
-   * everything.
-   */
   getAll(scope: Scope | null = null): Function[] {
     if (scope === null) { scope = this.scope; }
 
     const scopes = this.scope.getAllScopes(scope);
-    const functions = ([] as Function[]).concat(...scopes.map(x => x.functions.functions));
+    const functions = ([] as Function[]).concat(...scopes.map(x => x.functions.list));
+
+    return functions;
+  }
+
+  getAllNodes(scope: Scope | null = null): CompileableFunctionNode[] {
+    if (scope === null) { scope = this.scope; }
+
+    const scopes = this.scope.getAllScopes(scope);
+    const functions = ([] as CompileableFunctionNode[]).concat(...scopes.map(x => x.functions.functionNodes));
 
     return functions;
   }
@@ -221,27 +308,11 @@ export class Functions {
     );
   }
 
-  getFunctionByNode(node: FunctionNode): Function {
-    let currScope: Scope | null = this.scope;
-
-    while (currScope !== null) {
-      for (const fn of currScope.functions.functions) {
-        if (fn.node === node) {
-          return fn;
-        }
-      }
-
-      currScope = currScope.parent;
-    }
-
-    throw new Error("Failed to find function by node");
-  }
-
   getFunctionByName(name: string): Function | null {
     let currScope: Scope | null = this.scope;
 
     while (currScope !== null) {
-      for (const fn of currScope.functions.functions) {
+      for (const fn of currScope.functions.list) {
         if (fn.name === name) {
           return fn;
         }
@@ -257,7 +328,7 @@ export class Functions {
     let currScope: Scope | null = this.scope;
 
     while (currScope !== null) {
-      for (const fn of currScope.functions.functions) {
+      for (const fn of currScope.functions.list) {
         if (fn.name === identifier.text) {
           return fn;
         }
@@ -276,7 +347,7 @@ export class Functions {
       throw new Error(`Cant find appropriate method`);
     }
 
-    for (const fn of cls.functions.functions) {
+    for (const fn of cls.functions.list) {
       if (fn.name === methodName) {
         return fn;
       }
@@ -294,7 +365,7 @@ export class Functions {
       throw new Error(`Cant find appropriate method by operator`);
     }
 
-    const functions = cls.functions.functions;
+    const functions = cls.functions.list;
 
     for (const fn of functions) {
       if (

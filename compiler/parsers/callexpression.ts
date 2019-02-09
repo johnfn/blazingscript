@@ -38,7 +38,7 @@ export class BSCallExpression extends BSNode {
       return special;
     }
 
-    const sig = Functions.GetSignature(this);
+    const sig = Functions.GetCallExpressionSignature(this);
 
     if (this.expression instanceof BSPropertyAccessExpression) {
       // pass in "this" argument

@@ -16,7 +16,7 @@ import { BSImportClause } from "./importclause";
 export class BSImportDeclaration extends BSNode {
   children    : BSNode[];
   moduleName  : BSStringLiteral;
-  importClause: BSImportClause;
+  importClause: BSImportClause | null;
 
   constructor(ctx: Scope, node: ImportDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
@@ -25,9 +25,11 @@ export class BSImportDeclaration extends BSNode {
       throw new Error(`Trying to import from ${ node.moduleSpecifier.getText() } which is not a string.`)
     }
 
+    const moduleName = buildNode(ctx, node.moduleSpecifier as StringLiteral);
+
     this.children = flatArray(
-      this.moduleName = buildNode(ctx, node.moduleSpecifier as StringLiteral),
-      this.importClause = buildNode(ctx, node.importClause as ImportClause)
+      this.moduleName = moduleName,
+      this.importClause = buildNode(ctx, node.importClause, { importFrom: moduleName.text })
     );
 
     ctx.modules.add(this.moduleName.text)
