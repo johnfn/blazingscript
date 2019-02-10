@@ -45,10 +45,10 @@ export class BSFunctionDeclaration extends BSNode {
   }
 
   compile(parentCtx: Scope): Sexpr {
-    const ctx         = parentCtx.getChildScope(this)
-    const params      = ctx.getParameters(this.parameters);
-    const statements  = parseStatementListBS(ctx, this.body!.children);
-    let lastStatement : Sexpr | null = null;
+    const ctx        = parentCtx.getChildScope(this)
+    const params     = ctx.getParameters(this.parameters);
+    const statements = parseStatementListBS(ctx, this.body!.children);
+    let lastStatement: Sexpr | null = null;
 
     if (statements.length > 0) {
       lastStatement = statements[statements.length - 1];

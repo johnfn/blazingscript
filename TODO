@@ -3,8 +3,13 @@
   should not in fact be a scope at all, and should probably just be an array or
   something.
 
-* It actually doesn't make sense that we hold on to function and method decls for later compiling.
-  Why cant we just emit them immediately?
+* now that i can pull fqname off types, do i really need name in the function struct?
+
+* dont handle the case where two classes with the same name are defined in two separate modules.
+
+* I'm beginning to think that even constructing and sharing a TableId is a bad idea because we probably have 
+  enough information from the typechecker to get something unique. i mean, we could get line and character number. that 
+  itself is more than enough...
 
 * modules
    * class loading

@@ -31,7 +31,7 @@ export type Function = {
    */
   name              : string;
 
-  moduleName        : string | null;
+  moduleName        : string;
 
   /**
    * Fully qualified name of the function, e.g. Array__indexOf
@@ -41,7 +41,7 @@ export type Function = {
   className         : string | null;
   overload          : OperatorOverload | null;
   tableIndex        : number;
-  signature         : WasmFunctionSignature | null;
+  signature         : WasmFunctionSignature;
 };
 
 export type CompileableFunctionNode =
@@ -121,7 +121,6 @@ export class Functions {
       }
     }
 
-
     if (sig.declaration && sig.declaration.kind === SyntaxKind.MethodDeclaration) {
       const decl = sig.declaration as MethodDeclaration;
 
@@ -135,8 +134,8 @@ export class Functions {
       }
     }
 
-    const ret    = TsTypeToWasmType(sig.getReturnType());
-    const name   = "$" + params.join("_") + "__ret_" + ret;
+    const ret  = TsTypeToWasmType(sig.getReturnType());
+    const name = "$" + params.join("_") + "__ret_" + ret;
 
     if (!Functions.AllSignatures[name]) {
       const sig    : WasmFunctionSignature = {
@@ -151,10 +150,43 @@ export class Functions {
     return Functions.AllSignatures[name];
   }
 
+  addMethodsForClass(props: { type: Type }): void {
+    const { type } = props;
+    const checker = this.scope.typeChecker;
+
+    if (!(type.flags & TypeFlags.Object)) {
+      throw new Error("Functions#addClass called on something which is not a class.")
+    }
+
+    const sigs = checker.getSignaturesOfType(type, SignatureKind.Construct);
+
+    if (sigs.length > 1) {
+      throw new Error("Cant handle multiple class signatures (idk how this could even happen!)")
+    }
+
+    if (sigs.length === 0) {
+      console.log(checker.typeToString(type));
+      throw new Error("Exported an object with no call signatures?")
+    }
+
+    const instanceType = sigs[0].getReturnType();
+    const properties = checker.getPropertiesOfType(instanceType);
+
+    for (const prop of properties) {
+      const methodType = checker.getTypeOfSymbolAtLocation(prop, this.scope.sourceFile!.node);
+
+      this.addMethod({
+        type    : methodType,
+        node    : null,
+        overload: null,
+      });
+    }
+  }
+
   addMethod(props: {
     type    : Type;
-    node    : BSMethodDeclaration;
-    overload: OperatorOverload | null;
+    node    : BSMethodDeclaration | null;
+    overload: OperatorOverload    | null;
   }): Function {
     const { node, type, overload } = props;
 
@@ -177,6 +209,21 @@ export class Functions {
       throw new Error("This scope does not have a module name? in addMethod");
     }
 
+    /** 
+     * If we've already seen this function in a different file, don't add it
+     * again, but do keep track of the node so we can compile it in this file.
+     */
+    if (node) { // we only have the node if we're actually looking at a declaration.
+      for (const fn of this.getAll(this.scope.topmostScope())) {
+
+        if (fn.name === methodName && fn.className === className) { // TODO: Check module name too.
+          this.functionNodes.push(node);
+
+          return fn;
+        }
+      }
+    }
+
     const fn: Function = {
       name              : methodName,
       fullyQualifiedName,
@@ -187,7 +234,10 @@ export class Functions {
       signature         : Functions.GetSignature(this.scope, type),
     };
 
-    this.functionNodes.push(node);
+    if (node) {
+      this.functionNodes.push(node);
+    }
+
     this.scope.functions.list.push(fn);
 
     return fn;
@@ -197,13 +247,8 @@ export class Functions {
     let className: string | null = null;
     let fn: Function;
 
-    if (!this.scope.moduleName) {
-      throw new Error("no moduleName in addFunction");
-    }
-
-    if (node instanceof BSFunctionDeclaration && !node.name) {
-      throw new Error("Dont support anon functions yet.");
-    }
+    if (!this.scope.moduleName) { throw new Error("no moduleName in addFunction"); }
+    if (node instanceof BSFunctionDeclaration && !node.name) { throw new Error("Dont support anon functions yet."); }
 
     /** 
      * If we've already seen this function in a different file, don't add it
@@ -213,7 +258,6 @@ export class Functions {
       for (const fn of this.getAll(this.scope.topmostScope())) {
         if (
           fn.name === node.name && 
-          fn.moduleName && 
           normalizePath(fn.moduleName) === normalizePath(node.moduleName)
         ) {
           this.functionNodes.push(node);
