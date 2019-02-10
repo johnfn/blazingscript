@@ -1,7 +1,7 @@
 import { ClassDeclaration, MethodDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
-import { Function } from "../scope/functions";
+import { Function, Functions } from "../scope/functions";
 import { THIS_NAME } from "../program";
 import { parseStatementListBS } from "./statementlist";
 import { assertNever, flatArray } from "../util";
@@ -14,17 +14,6 @@ import { BSIdentifier } from "./identifier";
 import { BSStringLiteral } from "./stringliteral";
 import { buildNode, buildNodeArray } from "./nodeutil";
 import { BSClassDeclaration } from "./class";
-
-export enum Operator {
-  TripleEquals = "===",
-  NotEquals    = "!==",
-  Add          = "+",
-  ArrayIndex   = "[]",
-};
-
-export type OperatorOverload = {
-  operator: Operator;
-};
 
 /**
  * e.g. class Foo { method() { } }
@@ -41,8 +30,12 @@ export class BSMethodDeclaration extends BSNode {
   name       : string | null;
 
   decorators : BSDecorator[];
-  fn         : Function;
   declaration: Sexpr  | null = null;
+  methodInfo : {
+    className         : string;
+    methodName        : string;
+    fullyQualifiedName: string;
+  };
 
   constructor(
     ctx       : Scope,
@@ -50,6 +43,8 @@ export class BSMethodDeclaration extends BSNode {
     info      : NodeInfo = defaultNodeInfo
   ) {
     super(ctx, node);
+
+    this.methodInfo = Functions.GetMethodTypeInfo(ctx, this.tsType);
 
     ctx.addScopeFor(this);
     const childCtx = ctx.getChildScope(this); {
@@ -61,51 +56,7 @@ export class BSMethodDeclaration extends BSNode {
 
       this.name = node.name ? node.name.getText() : null;
     }
-
-    this.fn = ctx.functions.addMethod({
-      type    : this.tsType,
-      node    : this,
-      overload: this.getOverloadType(this.decorators),
-    });
  }
-
-  getOverloadType(decorators: BSDecorator[]): OperatorOverload | null {
-    for (const deco of decorators) {
-      if (!(deco.expression instanceof BSCallExpression)) {
-        continue;
-      }
-
-      if (!(deco.expression.expression instanceof BSIdentifier)) {
-        continue;
-      }
-
-      const calledFunction = deco.expression.expression.text;
-
-      if (calledFunction === "operator") {
-        const firstArgument = deco.expression.arguments[0];
-
-        if (!(firstArgument instanceof BSStringLiteral)) {
-          continue;
-        }
-
-        const opName = firstArgument.text as Operator;
-
-        if (opName === Operator.NotEquals) {
-          return { operator: Operator.NotEquals };
-        } else if (opName === Operator.Add) {
-          return { operator: Operator.Add };
-        } else if (opName === Operator.TripleEquals) {
-          return { operator: Operator.TripleEquals };
-        } else if (opName === Operator.ArrayIndex) {
-          return { operator: Operator.ArrayIndex };
-        } else {
-          assertNever(opName);
-        }
-      }
-    }
-
-    return null;
-  }
 
   compile(parentCtx: Scope): Sexpr {
     const ctx = parentCtx.getChildScope(this);
@@ -122,7 +73,7 @@ export class BSMethodDeclaration extends BSNode {
     const ret = last && last.type === "i32" ? undefined : S.Const(0);
 
     this.declaration = S.Func({
-      name: this.fn.fullyQualifiedName,
+      name: this.methodInfo.fullyQualifiedName,
       params: [
         {
           name: THIS_NAME,
@@ -136,6 +87,8 @@ export class BSMethodDeclaration extends BSNode {
         ...(ret ? [ret] : [])
       ]
     });
+
+    parentCtx.functions.addCompiledFunctionNode(this);
 
     return S.Const(0);
   }

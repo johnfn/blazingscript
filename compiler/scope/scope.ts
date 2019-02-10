@@ -58,7 +58,7 @@ export class Scope {
   loops     : Loops;
   node      : BSNode | null;
   type      : ScopeType;
-  moduleName  : string | null;
+  moduleName: string | null;
 
   typeChecker: TypeChecker;
   sourceFile : BSSourceFile | null;

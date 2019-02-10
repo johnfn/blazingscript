@@ -32,11 +32,13 @@ export class BSSourceFile extends BSNode {
 
   compile(parentCtx: Scope): Sexpr[] {
     const ctx       = parentCtx.getChildScope(this);
-    const functions = ctx.functions.getAllNodes(ctx);
 
     for (const statement of this.statements) {
       statement.compile(ctx);
     }
+
+    const functions = ctx.topmostScope().functions.getAllNodes();
+    ctx.topmostScope().functions.clearAllNodes();
 
     return functions.map(fn => {
       return fn.getDeclaration(); 

@@ -7,7 +7,7 @@ import { mytest } from "./testother";
 // implementations specially provided by the BlazingScript compiler
 
 @jsType("String")
-class StringImpl {
+export class StringImpl {
   @property(0)
   readonly length: number = 0;
 

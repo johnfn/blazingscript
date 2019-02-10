@@ -7,13 +7,13 @@ import {
   Token
 } from "typescript";
 import { Sexpr, S, sexprToString } from "../sexpr";
-import { Operator } from "./method";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSIdentifier } from "./identifier";
 import { flatArray } from "../util";
 import { buildNode } from "./nodeutil";
 import { BSExpression } from "./expression";
+import { Operator } from "../scope/functions";
 
 /**
  * e.g. const x = 1 + 3
@@ -122,6 +122,7 @@ export class BSBinaryExpression extends BSNode {
         case SyntaxKind.BarEqualsToken:
         case SyntaxKind.CaretEqualsToken:
         case SyntaxKind.InKeyword:
+          console.log("?");
           throw new Error(`unsupported binary expression ${this.fullText}`);
         default:
           throw new Error(`unknown binary expression ${this.fullText}`);

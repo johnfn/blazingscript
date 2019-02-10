@@ -5,6 +5,7 @@ import { ImportSpecifier, TypeFlags, SignatureKind, SyntaxKind, SymbolFlags } fr
 import { isFunctionType } from "./arrayliteral";
 import { BSIdentifier } from "./identifier";
 import { buildNode } from "./nodeutil";
+import { BSClassDeclaration } from "./class";
 
 /**
  * e.g.
@@ -36,7 +37,8 @@ export class BSImportSpecifier extends BSNode {
     if (isFunctionType(ctx, type)) {
       ctx.functions.addFunction(this);
     } else {
-      ctx.functions.addMethodsForClass({ type: this.tsType });
+      // BSClassDeclaration.AddClassToScope({ scope: ctx, type: this.tsType });
+      // ctx.functions.add ({ type: this.tsType });
     }
 
 

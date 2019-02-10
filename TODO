@@ -1,8 +1,20 @@
+I'm currently putting function nodes on the topmost scope, which is not
+exactly where they belong. They belong on the file scope, but there's no
+elegant way to do this. I should fix this when I clean up the topmost scope
+issues.
+
+* I need to stop making BSNodes as the primary key for scopes. This is mainly because we could
+  introduce scopes from imports that don't have associated BSNodes. I need to come up with another way -
+  probably by generating some sort of unique id from symbols.
+  Then when I do this, I can do AddClassToScope on arbitrary imports, which is nice.
 
 * the fact that the global scope basically has NOTHING indicates to me that it
   should not in fact be a scope at all, and should probably just be an array or
   something.
 
+* i've been doing everything wrong - should be checking type with symbol.flags
+
+* rename ctx to scope everywhere.
 * now that i can pull fqname off types, do i really need name in the function struct?
 
 * dont handle the case where two classes with the same name are defined in two separate modules.

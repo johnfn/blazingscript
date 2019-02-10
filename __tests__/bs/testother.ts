@@ -3,7 +3,10 @@ export function mytest(): number {
 }
 
 export class Foo {
+  @property(0)
   a!: number;
+
+  @property(4)
   b!: string;
 
   one(): void {

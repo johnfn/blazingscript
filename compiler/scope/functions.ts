@@ -1,5 +1,4 @@
-import { BSMethodDeclaration, OperatorOverload, Operator } from "../parsers/method";
-import { BSClassDeclaration } from "../parsers/class";
+import { BSMethodDeclaration } from "../parsers/method";
 import { BSFunctionDeclaration } from "../parsers/function";
 import { Type, idText, TypeFlags, SignatureKind, Signature, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration } from "typescript";
 import { BSExpression } from "../parsers/expression";
@@ -13,6 +12,17 @@ import { BSPropertyAccessExpression } from "../parsers/propertyaccess";
 import { BSArrowFunction } from "../parsers/arrowfunction";
 import { assertNever, normalizeString as normalizePath } from "../util";
 import { BSImportSpecifier } from "../parsers/importspecifier";
+
+export enum Operator {
+  TripleEquals = "===",
+  NotEquals    = "!==",
+  Add          = "+",
+  ArrayIndex   = "[]",
+};
+
+export type OperatorOverload = {
+  operator: Operator;
+};
 
 export const TsTypeToWasmType = (type: Type): WasmType => {
   return "i32";
@@ -59,10 +69,10 @@ export class Functions {
 
   list: Function[];
   functionNodes: (BSMethodDeclaration | BSFunctionDeclaration | BSArrowFunction)[];
-  scope    : Scope;
+  scope: Scope;
 
   constructor(scope: Scope) {
-    this.list     = [];
+    this.list          = [];
     this.functionNodes = [];
     this.scope         = scope;
   }
@@ -150,37 +160,33 @@ export class Functions {
     return Functions.AllSignatures[name];
   }
 
-  addMethodsForClass(props: { type: Type }): void {
-    const { type } = props;
-    const checker = this.scope.typeChecker;
+  public static GetMethodTypeInfo(scope: Scope, type: Type): {
+    className         : string;
+    methodName        : string;
+    fullyQualifiedName: string;
+  } {
+    const methodName = scope.typeChecker.symbolToString(type.symbol);
+    const sig = scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
 
-    if (!(type.flags & TypeFlags.Object)) {
-      throw new Error("Functions#addClass called on something which is not a class.")
-    }
+    if (sig.length > 1) { throw new Error("Dont handle methods with multiple signatures!"); }
+    if (sig.length === 0) { throw new Error("Method declaration could not find signature."); }
 
-    const sigs = checker.getSignaturesOfType(type, SignatureKind.Construct);
+    const classDecl = (sig[0].declaration as MethodDeclaration).parent;
+    const classType = scope.typeChecker.getTypeAtLocation(classDecl);
+    const className = scope.typeChecker.symbolToString(classType.symbol);
 
-    if (sigs.length > 1) {
-      throw new Error("Cant handle multiple class signatures (idk how this could even happen!)")
-    }
+    if (!methodName) { throw new Error("anonymous methods not supported yet!"); }
+    if (!className) { throw new Error("anonymous classes not supported yet!"); }
 
-    if (sigs.length === 0) {
-      console.log(checker.typeToString(type));
-      throw new Error("Exported an object with no call signatures?")
-    }
+    return {
+      className,
+      methodName,
+      fullyQualifiedName: `${ className }__${ methodName }`,
+    };
+  }
 
-    const instanceType = sigs[0].getReturnType();
-    const properties = checker.getPropertiesOfType(instanceType);
-
-    for (const prop of properties) {
-      const methodType = checker.getTypeOfSymbolAtLocation(prop, this.scope.sourceFile!.node);
-
-      this.addMethod({
-        type    : methodType,
-        node    : null,
-        overload: null,
-      });
-    }
+  addCompiledFunctionNode(node: BSMethodDeclaration | BSFunctionDeclaration | BSArrowFunction): void {
+    this.scope.topmostScope().functions.functionNodes.push(node);
   }
 
   addMethod(props: {
@@ -189,21 +195,11 @@ export class Functions {
     overload: OperatorOverload    | null;
   }): Function {
     const { node, type, overload } = props;
-
-    const methodName = this.scope.typeChecker.symbolToString(type.symbol);
-    const sig = this.scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
-
-    if (sig.length > 1) { throw new Error("Dont handle methods with multiple signatures!"); }
-    if (sig.length === 0) { throw new Error("Method declaration could not find signature."); }
-
-    const classDecl = (sig[0].declaration as MethodDeclaration).parent;
-    const classType = this.scope.typeChecker.getTypeAtLocation(classDecl);
-    const className = this.scope.typeChecker.symbolToString(classType.symbol);
-
-    if (!methodName) { throw new Error("anonymous methods not supported yet!"); }
-    if (!className) { throw new Error("anonymous classes not supported yet!"); }
-
-    const fullyQualifiedName = className + "__" + methodName;
+    const {
+      className,
+      methodName,
+      fullyQualifiedName,
+    } = Functions.GetMethodTypeInfo(this.scope, type);
 
     if (!this.scope.moduleName) {
       throw new Error("This scope does not have a module name? in addMethod");
@@ -217,8 +213,6 @@ export class Functions {
       for (const fn of this.getAll(this.scope.topmostScope())) {
 
         if (fn.name === methodName && fn.className === className) { // TODO: Check module name too.
-          this.functionNodes.push(node);
-
           return fn;
         }
       }
@@ -233,10 +227,6 @@ export class Functions {
       tableIndex        : Functions.TableIndex++,
       signature         : Functions.GetSignature(this.scope, type),
     };
-
-    if (node) {
-      this.functionNodes.push(node);
-    }
 
     this.scope.functions.list.push(fn);
 
@@ -260,8 +250,6 @@ export class Functions {
           fn.name === node.name && 
           normalizePath(fn.moduleName) === normalizePath(node.moduleName)
         ) {
-          this.functionNodes.push(node);
-
           return fn;
         }
       }
@@ -299,10 +287,6 @@ export class Functions {
       overload          : null,
     };
 
-    if (!(node instanceof BSImportSpecifier)) {
-      this.functionNodes.push(node);
-    }
-
     this.list.push(fn);
 
     return fn;
@@ -325,13 +309,12 @@ export class Functions {
     return functions;
   }
 
-  getAllNodes(scope: Scope | null = null): CompileableFunctionNode[] {
-    if (scope === null) { scope = this.scope; }
+  getAllNodes(): CompileableFunctionNode[] {
+    return this.functionNodes;
+  }
 
-    const scopes = this.scope.getAllScopes(scope);
-    const functions = ([] as CompileableFunctionNode[]).concat(...scopes.map(x => x.functions.functionNodes));
-
-    return functions;
+  clearAllNodes(): void {
+    this.functionNodes = [];
   }
 
   callMethodByOperator(props: {
@@ -427,7 +410,7 @@ export class Functions {
     }
 
     throw new Error(
-      `Failed to find function ref by class name ${this.scope.typeChecker.typeToString(type)} and operator name ${operator}`
+      `Failed to find function ref by class name ${ this.scope.typeChecker.typeToString(type) } and operator name ${operator}`
     );
   }
 }

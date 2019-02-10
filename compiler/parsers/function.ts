@@ -65,6 +65,8 @@ export class BSFunctionDeclaration extends BSNode {
         ...(wasmReturn ? [wasmReturn] : [])
       ]
     });
+    
+    parentCtx.functions.addCompiledFunctionNode(this);
 
     return S.Const(0);
   }

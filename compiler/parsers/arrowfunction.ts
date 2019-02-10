@@ -41,7 +41,11 @@ export class BSArrowFunction extends BSNode {
   }
 
   compile(ctx: Scope): Sexpr {
+    // TODO - wait, why is this a separate function?
+
     this.compileDeclaration(ctx);
+
+    ctx.functions.addCompiledFunctionNode(this);
 
     return S.Const(this.fn.tableIndex);
   }

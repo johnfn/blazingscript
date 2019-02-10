@@ -6,7 +6,7 @@ import { BSExpression } from "./expression";
 import { flatArray } from "../util";
 import { buildNode } from "./nodeutil";
 import { isArrayType } from "./arrayliteral";
-import { Operator } from "./method";
+import { Operator } from "../scope/functions";
 
 /**
  * e.g. const x = myArray[5];
