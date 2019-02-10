@@ -41,19 +41,15 @@ export class BSMethodDeclaration extends BSNode {
   name       : string | null;
 
   decorators : BSDecorator[];
-  parent     : BSClassDeclaration;
   fn         : Function;
   declaration: Sexpr  | null = null;
 
   constructor(
     ctx       : Scope,
     node      : MethodDeclaration,
-    parentNode: BSClassDeclaration,
     info      : NodeInfo = defaultNodeInfo
   ) {
     super(ctx, node);
-
-    this.parent = parentNode;
 
     ctx.addScopeFor(this);
     const childCtx = ctx.getChildScope(this); {
@@ -67,8 +63,8 @@ export class BSMethodDeclaration extends BSNode {
     }
 
     this.fn = ctx.functions.addMethod({
+      type    : this.tsType,
       node    : this,
-      parent  : this.parent,
       overload: this.getOverloadType(this.decorators),
     });
  }
@@ -154,7 +150,7 @@ export class BSMethodDeclaration extends BSNode {
 
   readableName(): string {
     if (this.name) {
-      return `Method: ${ this.parent.name }#${ this.name }`;
+      return `Method: ${ this.name }`;
     } else {
       return "anonymous function";
     }

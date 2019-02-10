@@ -11,10 +11,8 @@ import { BSIdentifier } from "../parsers/identifier";
 import { BSCallExpression } from "../parsers/callexpression";
 import { BSPropertyAccessExpression } from "../parsers/propertyaccess";
 import { BSArrowFunction } from "../parsers/arrowfunction";
-import { assertNever, normalizeString } from "../util";
+import { assertNever, normalizeString as normalizePath } from "../util";
 import { BSImportSpecifier } from "../parsers/importspecifier";
-
-// TODO should probably rename this as to not clash with Function the js type
 
 export const TsTypeToWasmType = (type: Type): WasmType => {
   return "i32";
@@ -26,6 +24,7 @@ export type WasmFunctionSignature = {
   name      : string;
 }
 
+// TODO should probably rename this as to not clash with Function the js type
 export type Function = {
   /**
    * Name of the function, e.g. indexOf
@@ -95,8 +94,7 @@ export class Functions {
     return Functions.AllSignatures[name];
   }
 
-  static GetSignature(scope: Scope, node: BSMethodDeclaration | BSFunctionDeclaration | BSArrowFunction | BSImportSpecifier): WasmFunctionSignature {
-    const type = node.tsType;
+  static GetSignature(scope: Scope, type: Type): WasmFunctionSignature {
     const sigs = scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
     const sig  = sigs[0];
     let params: WasmType[] = [];
@@ -154,31 +152,39 @@ export class Functions {
   }
 
   addMethod(props: {
+    type    : Type;
     node    : BSMethodDeclaration;
-    parent  : BSClassDeclaration;
     overload: OperatorOverload | null;
   }): Function {
-    const { node, parent, overload } = props;
+    const { node, type, overload } = props;
 
-    if (!node.name) { throw new Error("anonymous methods not supported yet!"); }
-    if (!parent) { throw new Error("no parent provided to addFunction for method."); }
-    if (!parent.name) { throw new Error("dont support anonymous classes yet!"); }
+    const methodName = this.scope.typeChecker.symbolToString(type.symbol);
+    const sig = this.scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
 
-    const fullyQualifiedName = parent.name + "__" + node.name;
-    const className = parent.name;
+    if (sig.length > 1) { throw new Error("Dont handle methods with multiple signatures!"); }
+    if (sig.length === 0) { throw new Error("Method declaration could not find signature."); }
+
+    const classDecl = (sig[0].declaration as MethodDeclaration).parent;
+    const classType = this.scope.typeChecker.getTypeAtLocation(classDecl);
+    const className = this.scope.typeChecker.symbolToString(classType.symbol);
+
+    if (!methodName) { throw new Error("anonymous methods not supported yet!"); }
+    if (!className) { throw new Error("anonymous classes not supported yet!"); }
+
+    const fullyQualifiedName = className + "__" + methodName;
 
     if (!this.scope.moduleName) {
       throw new Error("This scope does not have a module name? in addMethod");
     }
 
     const fn: Function = {
-      name              : node.name,
+      name              : methodName,
       fullyQualifiedName,
-      moduleName        : normalizeString(this.scope.moduleName),
+      moduleName        : normalizePath(this.scope.moduleName),
       className         ,
       overload          ,
       tableIndex        : Functions.TableIndex++,
-      signature         : Functions.GetSignature(this.scope, node),
+      signature         : Functions.GetSignature(this.scope, type),
     };
 
     this.functionNodes.push(node);
@@ -208,7 +214,7 @@ export class Functions {
         if (
           fn.name === node.name && 
           fn.moduleName && 
-          normalizeString(fn.moduleName) === normalizeString(node.moduleName)
+          normalizePath(fn.moduleName) === normalizePath(node.moduleName)
         ) {
           this.functionNodes.push(node);
 
@@ -218,23 +224,23 @@ export class Functions {
     }
 
     const id         = Functions.TableIndex++;
-    const signature  = Functions.GetSignature(this.scope, node);
+    const signature  = Functions.GetSignature(this.scope, node.tsType);
     let name              : string;
     let fullyQualifiedName: string;
     let moduleName        : string;
 
     if (node instanceof BSFunctionDeclaration) {
       name               = node.name!; // i checked this above.
-      fullyQualifiedName = normalizeString(this.scope.moduleName) + "__" + node.name;
-      moduleName         = normalizeString(this.scope.moduleName);
+      fullyQualifiedName = normalizePath(this.scope.moduleName) + "__" + node.name;
+      moduleName         = normalizePath(this.scope.moduleName);
     } else if (node instanceof BSArrowFunction) {
       name               = `arrow_${ id }`;
       fullyQualifiedName = name;
-      moduleName         = normalizeString(this.scope.moduleName);
+      moduleName         = normalizePath(this.scope.moduleName);
     } else if (node instanceof BSImportSpecifier) {
       name               = node.name.text;
-      moduleName         = normalizeString(node.moduleName);
-      fullyQualifiedName = normalizeString(moduleName) + "__" + name;
+      moduleName         = normalizePath(node.moduleName);
+      fullyQualifiedName = normalizePath(moduleName) + "__" + name;
     } else {
       return assertNever(node);
     }

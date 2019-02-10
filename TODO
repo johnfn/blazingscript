@@ -1,15 +1,25 @@
 
-* the fact that the global scope basically has NOTHING indicates to me that it should not in fact be a scope at all, and should
-  probably just be an array or something.
-  
+* the fact that the global scope basically has NOTHING indicates to me that it
+  should not in fact be a scope at all, and should probably just be an array or
+  something.
+
+* It actually doesn't make sense that we hold on to function and method decls for later compiling.
+  Why cant we just emit them immediately?
+
 * modules
+   * class loading
+      * load the whole class at once, rather than each method one by one.
+         * actually maybe not since we'll still visit them one by one
+      * can i finally remove the parent from BSMethod?
+
    * is functions.getAll even necessary?
    * S.Func should just take a Function.
    * we will have to generate some sort of unique identifier for each file, which we can use as a module name.
    * for things like "import "fs"", will have to generate a wrapper output file
      which appropriately hooks stuff up.
    * going to need to make relative and absolute paths the same and parse out any redundant paths.
-
+   * shuold be doing path normalization higher up
+   
 * functions can return [] and it's pretty FREAKING annoying
 
 * calls to malloc should find the ACTUAL name of malloc. somehow.

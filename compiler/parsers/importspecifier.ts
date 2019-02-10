@@ -1,7 +1,7 @@
 import { Scope } from "../scope/scope";
 import { Sexpr, S, Sx } from "../sexpr";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
-import { ImportSpecifier } from "typescript";
+import { ImportSpecifier, TypeFlags, SignatureKind, SyntaxKind, SymbolFlags } from "typescript";
 import { isFunctionType } from "./arrayliteral";
 import { BSIdentifier } from "./identifier";
 import { buildNode } from "./nodeutil";
@@ -36,6 +36,33 @@ export class BSImportSpecifier extends BSNode {
     if (isFunctionType(ctx, type)) {
       ctx.functions.addFunction(this);
     } else {
+      /*
+      if (type.flags & TypeFlags.Object) {
+        const sigs = ctx.typeChecker.getSignaturesOfType(type, SignatureKind.Construct);
+
+        if (sigs.length > 1) {
+          throw new Error("Cant handle multiple class signatures (idk how this could even happen!)")
+        }
+
+        if (sigs.length === 0) {
+          console.log(ctx.typeChecker.typeToString(type));
+          throw new Error("Exported an object with no call signatures?")
+        }
+
+        const instanceType = sigs[0].getReturnType();
+        const props = ctx.typeChecker.getPropertiesOfType(instanceType);
+
+        for (const prop of props) {
+          const ty = ctx.typeChecker.getTypeOfSymbolAtLocation(prop, ctx.sourceFile!.node);
+
+          console.log("sig len", ctx.typeChecker.getSignaturesOfType(ty, SignatureKind.Call).length);
+
+          console.log(ty.flags);
+          console.log(prop.name, ctx.typeChecker.typeToString(ty));
+        }
+      }
+      */
+
       throw new Error("Unhandled import type.")
     }
 

@@ -4,7 +4,7 @@ import { mytest } from "./testother";
 // * test that you can put all sorts of weird stuff in an if condition
 //   * test that assignments return values
 
-// types specially provided by the BlazingScript compiler
+// implementations specially provided by the BlazingScript compiler
 
 @jsType("String")
 class StringImpl {
@@ -867,5 +867,3 @@ function test_ifCall() {
 */
 
 // I'm putting this at the bottom because it screws with my syntax highlighting!
-
-declare const jsType: (x: string) => (<T extends { new (...args: any[]): {} }>(constructor: T) => T);

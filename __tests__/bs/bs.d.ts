@@ -16,6 +16,10 @@ interface Boolean {
 
 }
 
+interface CallableFunction {
+
+}
+
 interface Function {
 
 }
@@ -56,3 +60,4 @@ declare const divfloor: (a: number, b: number) => number;
 declare const operator: (type: "+" | "===" | "!==" | "[]") => ((target: any, propertyKey: string, descriptor: any) => void);
 declare const property: (offset: number) => any;
 declare const arrayProperty: (offset: number) => any;
+declare const jsType: (x: string) => (<T extends { new (...args: any[]): {} }>(constructor: T) => T);

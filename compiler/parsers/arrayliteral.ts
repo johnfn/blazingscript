@@ -97,8 +97,7 @@ export function isArrayType(ctx: Scope, type: Type) {
 }
 
 export function isFunctionType(ctx: Scope, type: Type) {
-  const stringType = ctx.typeChecker.typeToString(type);
+  const sigs = ctx.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
 
-  // TODO: I'm PRETTY sure there's a better way here.
-  return stringType.startsWith("(") && stringType.includes("=>");
+  return sigs.length > 0;
 }
