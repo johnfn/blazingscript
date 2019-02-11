@@ -1,12 +1,7 @@
-import ts, { TypeFlags, Type, SourceFile, TypeChecker } from "typescript";
+import ts, { Symbol, TypeFlags, Type, SourceFile, TypeChecker, SymbolFlags } from "typescript";
 import { Param, WasmType } from "../sexpr";
-import { BSMethodDeclaration } from "../parsers/method";
-import { BSNode } from "../parsers/bsnode";
-import { BSFunctionDeclaration } from "../parsers/function";
 import { BSParameter } from "../parsers/parameter";
-import { BSClassDeclaration } from "../parsers/class";
 import { BSForStatement } from "../parsers/for";
-import { assertNever } from "../util";
 import { isArrayType, isFunctionType } from "../parsers/arrayliteral";
 import { Variables } from "./variables";
 import { Properties } from "./properties";
@@ -15,21 +10,13 @@ import { Loops } from "./loops";
 import { Modules } from "./modules";
 import { BSArrowFunction } from "../parsers/arrowfunction";
 import { BSSourceFile } from "../parsers/sourcefile";
+import { BSClassDeclaration } from "../parsers/class";
+import { assertNever } from "../util";
 
 export enum InternalPropertyType {
   Value,
   Array,
 }
-
-enum ScopeType {
-  Function      = "function",
-  Method        = "method",
-  Class         = "class",
-  Global        = "global",
-  For           = "for",
-  ArrowFunction = "arrowfunction",
-  SourceFile    = "sourcefile",
-};
 
 export type Property = {
   tsType   : ts.Type | undefined;
@@ -39,14 +26,24 @@ export type Property = {
   type     : InternalPropertyType;
 };
 
-type NodeWithScope =
-  | BSSourceFile
-  | BSFunctionDeclaration
-  | BSForStatement
-  | BSMethodDeclaration
-  | BSClassDeclaration
-  | BSArrowFunction
-  ;
+export enum ScopeName {
+  Global,
+  SourceFile,
+  Function,
+  Method,
+  Class,
+  ArrowFunction,
+  For
+};
+
+export type ScopeType = 
+  | { type : ScopeName.Global       }
+  | { type : ScopeName.SourceFile   ; sourceFile: BSSourceFile;    }
+  | { type : ScopeName.Function     ; symbol    : Symbol;          }
+  | { type : ScopeName.Method       ; symbol    : Symbol;          }
+  | { type : ScopeName.Class        ; symbol    : Symbol;          }
+  | { type : ScopeName.ArrowFunction; node      : BSArrowFunction; }
+  | { type : ScopeName.For          ; node      : BSForStatement;  }
 
 export class Scope {
   parent    : Scope | null;
@@ -56,36 +53,35 @@ export class Scope {
   functions : Functions;
   modules   : Modules;
   loops     : Loops;
-  node      : BSNode | null;
-  type      : ScopeType;
+  scopeType : ScopeType;
   moduleName: string | null;
 
   typeChecker: TypeChecker;
   sourceFile : BSSourceFile | null;
   jsTypes    : { [jsType: string]: string } = {};
 
-  constructor(
+  constructor(props: {
     tc        : ts.TypeChecker,
     sourceFile: BSSourceFile | null,
-    node      : NodeWithScope | null,
+    scopeType : ScopeType,
     parent    : Scope | null,
-    fileName  : string | null
-  ) {
+    fileName  : string | null,
+  }) {
+    const { tc, sourceFile, scopeType, parent, fileName } = props;
+
     this.typeChecker = tc;
     this.sourceFile  = sourceFile;
 
-    this.node     = node;
-    this.parent   = parent;
-    this.moduleName = fileName;
+    this.scopeType   = scopeType;
+    this.parent      = parent;
+    this.moduleName  = fileName;
 
-    this.variables  = new Variables(this);
-    this.properties = new Properties(this);
-    this.functions  = new Functions(this);
-    this.loops      = new Loops(this);
-    this.modules    = new Modules(this);
-    this.children   = [];
-
-    this.type       = this.getScopeType(node);
+    this.variables   = new Variables(this);
+    this.properties  = new Properties(this);
+    this.functions   = new Functions(this);
+    this.loops       = new Loops(this);
+    this.modules     = new Modules(this);
+    this.children    = [];
   }
 
   // TODO: Somehow i want to ensure that this is actually targetting js
@@ -98,21 +94,53 @@ export class Scope {
     return this.topmostScope().jsTypes[jsTypeName];
   }
 
-  getChildScope(node: BSNode): Scope {
-    const childContext = this.children.filter(context => context.node!.uid === node.uid)[0];
-
-    if (childContext) {
-      return childContext;
-    } else {
-      throw new Error(`Cant find scope for ${ node.readableName() }`);
+  scopesEqual(one: ScopeType, two: ScopeType): boolean {
+    switch (two.type) {
+      case ScopeName.ArrowFunction:
+        return one.type === ScopeName.ArrowFunction && one.node === two.node;
+      case ScopeName.For:
+        return one.type === ScopeName.For && one.node === two.node;
+      case ScopeName.Global:
+        return one.type === ScopeName.Global;
+      case ScopeName.SourceFile:
+        return one.type === two.type && one.sourceFile.moduleName === two.sourceFile.moduleName;
+      case ScopeName.Method:
+      case ScopeName.Class:
+      case ScopeName.Function:
+        return one.type === two.type && one.symbol.name === two.symbol.name;
+      default:
+        return assertNever(two);
     }
   }
 
-  addScopeFor(node: NodeWithScope): void {
-    if (node instanceof BSSourceFile) {
-      this.children.push(new Scope(this.typeChecker, node, node, this, node.moduleName));
+  getChildScope(scopeType: ScopeType): Scope {
+    const children = this.children.filter(child => {
+      return this.scopesEqual(child.scopeType, scopeType);
+    });
+
+    if (children.length > 1) { throw new Error(`Too many scopes for ${ name }`); }
+    if (children.length === 0) { throw new Error(`No scopes for ${ name }`); }
+
+    return children[0];
+  }
+
+  addScopeFor(scopeType: ScopeType): void {
+    if (scopeType.type === ScopeName.SourceFile) {
+      this.children.push(new Scope({ 
+        tc        : this.typeChecker, 
+        sourceFile: scopeType.sourceFile, 
+        scopeType : scopeType, 
+        parent    : this, 
+        fileName  : scopeType.sourceFile.moduleName,
+      }));
     } else {
-      this.children.push(new Scope(this.typeChecker, this.sourceFile, node, this, this.moduleName));
+      this.children.push(new Scope({ 
+        tc        : this.typeChecker, 
+        sourceFile: this.sourceFile, 
+        scopeType : scopeType, 
+        parent    : this, 
+        fileName  : this.moduleName,
+      }));
     }
   }
 
@@ -139,7 +167,7 @@ export class Scope {
   getAllClasses(scope: Scope | null = null): Scope[] {
     if (scope === null) { scope = this.topmostScope(); }
 
-    return this.getAllScopes(scope).filter(s => s.type === ScopeType.Class);
+    return this.getAllScopes(scope).filter(s => s.scopeType.type === ScopeName.Class);
   }
 
   getParameters(nodes: BSParameter[]): Param[] {
@@ -183,7 +211,10 @@ export class Scope {
     }
 
     const allClasses = this.getAllClasses();
-    const relevantClasses = allClasses.filter(cls => (cls.node as BSClassDeclaration).name === classNameToFind);
+    const relevantClasses = allClasses.filter(cls => 
+      cls.scopeType.type === ScopeName.Class && 
+      cls.scopeType.symbol.name === classNameToFind
+    );
 
     if (relevantClasses.length === 0) {
       return null;
@@ -197,7 +228,7 @@ export class Scope {
   }
 
   toString(indent = ""): string {
-    let string = `${ indent }Scope for ${ this.node ? this.node.readableName() : "[top level]" }: `;
+    let string = `${ indent }Scope for ${ this.scopeType.type }: `;
 
     if (this.variables.count() === 0 && this.functions.count() === 0) {
       string += "(Empty)\n";
@@ -213,26 +244,6 @@ export class Scope {
     }
 
     return string;
-  }
-
-  getScopeType(node: NodeWithScope | null) {
-    if (node instanceof BSFunctionDeclaration) {
-      return ScopeType.Function;
-    } else if (node instanceof BSForStatement) {
-      return ScopeType.For;
-    } else if (node instanceof BSMethodDeclaration) {
-      return ScopeType.Method;
-    } else if (node instanceof BSClassDeclaration) {
-      return ScopeType.Class;
-    } else if (node instanceof BSArrowFunction) {
-      return ScopeType.ArrowFunction;
-    } else if (node instanceof BSSourceFile) {
-      return ScopeType.SourceFile;
-    } else if (node === null) {
-      return ScopeType.Global;
-    } else {
-      return assertNever(node);
-    }
   }
 
   topmostScope(): Scope {

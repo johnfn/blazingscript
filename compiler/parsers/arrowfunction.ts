@@ -1,6 +1,6 @@
 import { Block, BreakStatement, ArrowFunction, SyntaxKind, Expression } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Scope } from "../scope/scope";
+import { Scope, ScopeName } from "../scope/scope";
 import { Function } from "../scope/functions";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode, buildNodeArray } from "./nodeutil";
@@ -24,8 +24,8 @@ export class BSArrowFunction extends BSNode {
   constructor(ctx: Scope, node: ArrowFunction, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
-    ctx.addScopeFor(this);
-    const childCtx = ctx.getChildScope(this); {
+    ctx.addScopeFor({ type: ScopeName.ArrowFunction, node: this });
+    const childCtx = ctx.getChildScope({ type: ScopeName.ArrowFunction, node: this }); {
       this.body       = node.body.kind === SyntaxKind.Block
         ? buildNode(childCtx, node.body as Block)
         : buildNode(childCtx, node.body as Expression);
@@ -61,7 +61,7 @@ export class BSArrowFunction extends BSNode {
   compileDeclaration(parentCtx: Scope): void {
     // TODO - this is copied from function
 
-    const ctx    = parentCtx.getChildScope(this)
+    const ctx    = parentCtx.getChildScope({ type: ScopeName.ArrowFunction, node: this })
     const params = ctx.getParameters(this.parameters);
     let content  : Sexpr[];
 

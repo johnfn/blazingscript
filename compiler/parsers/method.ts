@@ -1,6 +1,6 @@
 import { ClassDeclaration, MethodDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Scope } from "../scope/scope";
+import { Scope, ScopeName } from "../scope/scope";
 import { Function, Functions } from "../scope/functions";
 import { THIS_NAME } from "../program";
 import { parseStatementListBS } from "./statementlist";
@@ -46,8 +46,8 @@ export class BSMethodDeclaration extends BSNode {
 
     this.methodInfo = Functions.GetMethodTypeInfo(ctx, this.tsType);
 
-    ctx.addScopeFor(this);
-    const childCtx = ctx.getChildScope(this); {
+    ctx.addScopeFor({ type: ScopeName.Method, symbol: this.tsType.symbol });
+    const childCtx = ctx.getChildScope({ type: ScopeName.Method, symbol: this.tsType.symbol }); {
       this.children = flatArray(
         this.decorators = buildNodeArray(childCtx, node.decorators),
         this.parameters = buildNodeArray(childCtx, node.parameters),
@@ -59,7 +59,7 @@ export class BSMethodDeclaration extends BSNode {
  }
 
   compile(parentCtx: Scope): Sexpr {
-    const ctx = parentCtx.getChildScope(this);
+    const ctx = parentCtx.getChildScope({ type: ScopeName.Method, symbol: this.tsType.symbol });
 
     const params = ctx.getParameters(this.parameters);
     const sb     = parseStatementListBS(ctx, this.body!.children);

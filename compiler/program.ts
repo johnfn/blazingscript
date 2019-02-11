@@ -2,7 +2,7 @@ import ts, { Node, ModuleKind, ScriptTarget } from "typescript";
 import fs from "fs";
 import path from "path";
 import { sexprToString, Sexpr, S } from "./sexpr";
-import { Scope } from "./scope/scope";
+import { Scope, ScopeName } from "./scope/scope";
 import { BSSourceFile } from "./parsers/sourcefile";
 import { Functions } from "./scope/functions";
 import { flatten } from "./rewriter";
@@ -81,7 +81,13 @@ export class Program {
   }
 
   parse(): string {
-    const ctx = new Scope(this.typeChecker, null, null, null, null);
+    const ctx = new Scope({
+      tc        : this.typeChecker, 
+      sourceFile: null, 
+      parent    : null, 
+      scopeType : { type: ScopeName.Global },
+      fileName  : null,
+    });
 
     ctx.addJsTypes({
       "String": "StringImpl",

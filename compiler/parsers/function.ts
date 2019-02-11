@@ -1,6 +1,6 @@
 import { FunctionDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Scope } from "../scope/scope";
+import { Scope, ScopeName } from "../scope/scope";
 import { Function } from "../scope/functions";
 import { parseStatementListBS } from "./statementlist";
 import { BSParameter } from "./parameter";
@@ -33,8 +33,8 @@ export class BSFunctionDeclaration extends BSNode {
     this.name       = node.name ? node.name.text : null;
     this.moduleName = ctx.moduleName;
 
-    ctx.addScopeFor(this);
-    const childCtx = ctx.getChildScope(this); {
+    ctx.addScopeFor({ type: ScopeName.Function, symbol: this.tsType.symbol });
+    const childCtx = ctx.getChildScope({ type: ScopeName.Function, symbol: this.tsType.symbol }); {
       this.children = flatArray(
         this.body       = buildNode(childCtx, node.body),
         this.parameters = buildNodeArray(childCtx, node.parameters),
@@ -45,7 +45,7 @@ export class BSFunctionDeclaration extends BSNode {
   }
 
   compile(parentCtx: Scope): Sexpr {
-    const ctx        = parentCtx.getChildScope(this)
+    const ctx        = parentCtx.getChildScope({ type: ScopeName.Function, symbol: this.tsType.symbol });
     const params     = ctx.getParameters(this.parameters);
     const statements = parseStatementListBS(ctx, this.body!.children);
     let lastStatement: Sexpr | null = null;

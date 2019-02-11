@@ -181,7 +181,6 @@ export class StringImpl {
     return result as any as string;
   }
 }
-
 @jsType("Array")
 class ArrayImpl {
   @property(0)

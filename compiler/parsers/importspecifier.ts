@@ -39,6 +39,8 @@ export class BSImportSpecifier extends BSNode {
     } else {
       // BSClassDeclaration.AddClassToScope({ scope: ctx, type: this.tsType });
       // ctx.functions.add ({ type: this.tsType });
+
+      throw new Error("nope not yet!");
     }
 
 

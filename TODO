@@ -1,12 +1,15 @@
-I'm currently putting function nodes on the topmost scope, which is not
-exactly where they belong. They belong on the file scope, but there's no
-elegant way to do this. I should fix this when I clean up the topmost scope
-issues.
-
 * I need to stop making BSNodes as the primary key for scopes. This is mainly because we could
   introduce scopes from imports that don't have associated BSNodes. I need to come up with another way -
   probably by generating some sort of unique id from symbols.
-  Then when I do this, I can do AddClassToScope on arbitrary imports, which is nice.
+  Then when I do this, I can do AddClassToScope on arbitrary imports, which will mean i can FINALLY IMPORT CLASSES.
+
+* addScopeFor should return the scope.
+
+I'm currently putting function nodes on the topmost scope, which is not
+exactly where they belong. They belong on the file scope, but there's no
+elegant way to do this. I should fix this when I clean up the topmost scope
+issues. I also need to fix up sourcefile, and how it clears out the topmost
+scope list of nodes every time it compiles.
 
 * the fact that the global scope basically has NOTHING indicates to me that it
   should not in fact be a scope at all, and should probably just be an array or

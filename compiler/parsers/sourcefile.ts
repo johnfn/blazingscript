@@ -1,6 +1,6 @@
 import { SourceFile } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Scope } from "../scope/scope";
+import { Scope, ScopeName } from "../scope/scope";
 import { BSStatement } from "./statement";
 import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
 import { flatArray, assertNever, normalizeString as normalizeModuleName } from "../util";
@@ -18,8 +18,8 @@ export class BSSourceFile extends BSNode {
     this.moduleName = file.fileName;
     this.node       = file;
 
-    ctx.addScopeFor(this);
-    const sourceCtx = ctx.getChildScope(this);
+    ctx.addScopeFor({ type: ScopeName.SourceFile, sourceFile: this });
+    const sourceCtx = ctx.getChildScope({ type: ScopeName.SourceFile, sourceFile: this });
 
     this.children = flatArray(
       this.statements = buildNodeArray(sourceCtx, file.statements)
@@ -31,7 +31,7 @@ export class BSSourceFile extends BSNode {
   }
 
   compile(parentCtx: Scope): Sexpr[] {
-    const ctx       = parentCtx.getChildScope(this);
+    const ctx = parentCtx.getChildScope({ type: ScopeName.SourceFile, sourceFile: this });
 
     for (const statement of this.statements) {
       statement.compile(ctx);

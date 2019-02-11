@@ -191,10 +191,9 @@ export class Functions {
 
   addMethod(props: {
     type    : Type;
-    node    : BSMethodDeclaration | null;
-    overload: OperatorOverload    | null;
+    overload: OperatorOverload | null;
   }): Function {
-    const { node, type, overload } = props;
+    const { type, overload } = props;
     const {
       className,
       methodName,
@@ -209,12 +208,10 @@ export class Functions {
      * If we've already seen this function in a different file, don't add it
      * again, but do keep track of the node so we can compile it in this file.
      */
-    if (node) { // we only have the node if we're actually looking at a declaration.
-      for (const fn of this.getAll(this.scope.topmostScope())) {
+    for (const fn of this.getAll(this.scope.topmostScope())) {
 
-        if (fn.name === methodName && fn.className === className) { // TODO: Check module name too.
-          return fn;
-        }
+      if (fn.name === methodName && fn.className === className) { // TODO: Check module name too.
+        return fn;
       }
     }
 

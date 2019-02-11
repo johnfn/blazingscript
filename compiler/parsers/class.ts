@@ -5,7 +5,6 @@ import {
   PropertyDeclaration,
   Type,
   TypeFlags,
-  SignatureKind,
   Declaration,
   CallExpression,
   Identifier,
@@ -13,7 +12,7 @@ import {
   SymbolFlags,
   NumericLiteral
 } from "typescript";
-import { Scope, InternalPropertyType } from "../scope/scope";
+import { Scope, InternalPropertyType, ScopeName } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSMethodDeclaration } from "./method";
 import { BSPropertyDeclaration, PropertyType } from "./propertydeclaration";
@@ -42,8 +41,8 @@ export class BSClassDeclaration extends BSNode {
       throw new Error("Dont currently handle anonymous functions.");
     }
 
-    ctx.addScopeFor(this);
-    const childCtx = ctx.getChildScope(this); {
+    ctx.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
+    const childCtx = ctx.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol }); {
       BSClassDeclaration.AddClassToScope({
         scope: childCtx,
         type : this.tsType,
@@ -76,7 +75,7 @@ export class BSClassDeclaration extends BSNode {
   }
 
   compile(ctx: Scope): null {
-    const childCtx = ctx.getChildScope(this); {
+    const childCtx = ctx.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol }); {
       for (const member of this.members) {
         member.compile(childCtx);
       }
@@ -106,7 +105,6 @@ export class BSClassDeclaration extends BSNode {
       if (prop.flags & SymbolFlags.Method) {
         scope.functions.addMethod({
           type    : propType,
-          node    : null,
           overload: BSClassDeclaration.GetOverloadType(decl),
         });
       } else if (prop.flags & SymbolFlags.Property) {
