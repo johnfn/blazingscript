@@ -19,33 +19,31 @@ export class BSFunctionDeclaration extends BSNode {
   body       : BSBlock | null;
   name       : string | null;
   fn         : Function;
-  fileName : string;
+  fileName   : string;
+  scope      : Scope;
 
   private declaration: Sexpr | null = null;
 
-  constructor(scope: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
-    super(scope, node);
+  constructor(parentScope: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
+    super(parentScope, node);
 
-    if (!scope.sourceFile.fileName) { throw new Error("module name undefined"); } // TODO - shuold be able to get rid of this error (by pushing it up)
+    if (!parentScope.sourceFile.fileName) { throw new Error("module name undefined"); } // TODO - shuold be able to get rid of this error (by pushing it up)
 
     this.name     = node.name ? node.name.text : null;
-    this.fileName = scope.sourceFile.fileName;
+    this.fileName = parentScope.sourceFile.fileName;
 
-    scope.addScopeFor({ type: ScopeName.Function, symbol: this.tsType.symbol });
-    const childScope = scope.getChildScope({ type: ScopeName.Function, symbol: this.tsType.symbol }); {
-      this.children  = flatArray(
-        this.body       = buildNode(childScope, node.body),
-        this.parameters = buildNodeArray(childScope, node.parameters),
-      );
-    }
+    this.scope = parentScope.addScopeFor({ type: ScopeName.Function, symbol: this.tsType.symbol });
+    this.children  = flatArray(
+      this.body       = buildNode(this.scope, node.body),
+      this.parameters = buildNodeArray(this.scope, node.parameters),
+    );
 
-    this.fn = scope.functions.addFunction(this);
+    this.fn = parentScope.functions.addFunction(this);
   }
 
   compile(parentScope: Scope): Sexpr {
-    const scope      = parentScope.getChildScope({ type: ScopeName.Function, symbol: this.tsType.symbol });
-    const params     = scope.getParameters(this.parameters);
-    const statements = parseStatementListBS(scope, this.body!.children);
+    const params     = this.scope.getParameters(this.parameters);
+    const statements = parseStatementListBS(this.scope, this.body!.children);
     let lastStatement: Sexpr | null = null;
 
     if (statements.length > 0) {
@@ -58,7 +56,7 @@ export class BSFunctionDeclaration extends BSNode {
       name  : this.fn.fullyQualifiedName,
       params: params,
       body  : [
-        ...scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
+        ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
         ...statements,
         ...(wasmReturn ? [wasmReturn] : [])
       ]

@@ -37,10 +37,9 @@ export class BSImportSpecifier extends BSNode {
     if (isFunctionType(scope, type)) {
       scope.functions.addFunction(this);
     } else {
-      scope.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
-      const classScope = scope.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol });
+      const importedClassScope = scope.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
 
-      BSClassDeclaration.AddClassToScope({ scope: classScope, symbol: this.tsType.symbol });
+      BSClassDeclaration.AddClassToScope({ scope: importedClassScope, symbol: this.tsType.symbol });
       // throw new Error("nope not yet!");
     }
 

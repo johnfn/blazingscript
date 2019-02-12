@@ -29,11 +29,11 @@ export class BSClassDeclaration extends BSNode {
   children  : BSNode[];
   members   : BSNode[];
   decorators: BSDecorator[];
+  name      : string;
+  scope     : Scope;
 
-  name: string;
-
-  constructor(scope: Scope, node: ClassDeclaration, info: NodeInfo = defaultNodeInfo) {
-    super(scope, node);
+  constructor(parentScope: Scope, node: ClassDeclaration, info: NodeInfo = defaultNodeInfo) {
+    super(parentScope, node);
 
     if (node.name) {
       this.name = node.name.text;
@@ -41,44 +41,40 @@ export class BSClassDeclaration extends BSNode {
       throw new Error("Dont currently handle anonymous functions.");
     }
 
-    scope.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
-    const childScope = scope.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol }); {
-      BSClassDeclaration.AddClassToScope({
-        scope : childScope,
-        symbol: this.tsType.symbol,
-      });
+    this.scope = parentScope.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
+    BSClassDeclaration.AddClassToScope({
+      scope : this.scope,
+      symbol: this.tsType.symbol,
+    });
 
-      this.decorators = buildNodeArray(childScope, node.decorators);
-      this.members = [...node.members].map(mem => {
-        if (mem.kind === SyntaxKind.MethodDeclaration) {
-          return new BSMethodDeclaration(childScope, mem as MethodDeclaration);
-        } else if (mem.kind === SyntaxKind.PropertyDeclaration) {
-          return new BSPropertyDeclaration(childScope, mem as PropertyDeclaration);
-        } else if (mem.kind === SyntaxKind.IndexSignature) {
-          return null;
-        } else {
-          console.log(mem.kind);
+    this.decorators = buildNodeArray(this.scope, node.decorators);
+    this.members = [...node.members].map(mem => {
+      if (mem.kind === SyntaxKind.MethodDeclaration) {
+        return new BSMethodDeclaration(this.scope, mem as MethodDeclaration);
+      } else if (mem.kind === SyntaxKind.PropertyDeclaration) {
+        return new BSPropertyDeclaration(this.scope, mem as PropertyDeclaration);
+      } else if (mem.kind === SyntaxKind.IndexSignature) {
+        return null;
+      } else {
+        console.log(mem.kind);
 
-          throw new Error("Dont handle other things in classes yet.");
-        }
-      }).filter(x => x) as BSNode[];
+        throw new Error("Dont handle other things in classes yet.");
+      }
+    }).filter(x => x) as BSNode[];
 
-      this.children = flatArray(
-        this.decorators,
-        this.members,
-      );
-    }
+    this.children = flatArray(
+      this.decorators,
+      this.members,
+    );
   }
 
   readableName() {
     return `Class ${ this.name }`;
   }
 
-  compile(scope: Scope): null {
-    const childScope = scope.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol }); {
-      for (const member of this.members) {
-        member.compile(childScope);
-      }
+  compile(parentScope: Scope): null {
+    for (const member of this.members) {
+      member.compile(this.scope);
     }
 
     return null;

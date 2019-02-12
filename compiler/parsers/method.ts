@@ -31,6 +31,7 @@ export class BSMethodDeclaration extends BSNode {
 
   decorators : BSDecorator[];
   declaration: Sexpr  | null = null;
+  scope      : Scope;
   methodInfo : {
     className         : string;
     methodName        : string;
@@ -46,23 +47,19 @@ export class BSMethodDeclaration extends BSNode {
 
     this.methodInfo = Functions.GetMethodTypeInfo(scope, this.tsType);
 
-    scope.addScopeFor({ type: ScopeName.Method, symbol: this.tsType.symbol });
-    const childScope = scope.getChildScope({ type: ScopeName.Method, symbol: this.tsType.symbol }); {
-      this.children = flatArray(
-        this.decorators = buildNodeArray(childScope, node.decorators),
-        this.parameters = buildNodeArray(childScope, node.parameters),
-        this.body       = buildNode(childScope, node.body),
-      );
+    this.scope = scope.addScopeFor({ type: ScopeName.Method, symbol: this.tsType.symbol });
+    this.children = flatArray(
+      this.decorators = buildNodeArray(this.scope, node.decorators),
+      this.parameters = buildNodeArray(this.scope, node.parameters),
+      this.body       = buildNode(this.scope, node.body),
+    );
 
-      this.name = node.name ? node.name.getText() : null;
-    }
+    this.name = node.name ? node.name.getText() : null;
  }
 
   compile(parentScope: Scope): Sexpr {
-    const scope = parentScope.getChildScope({ type: ScopeName.Method, symbol: this.tsType.symbol });
-
-    const params = scope.getParameters(this.parameters);
-    const sb     = parseStatementListBS(scope, this.body!.children);
+    const params = this.scope.getParameters(this.parameters);
+    const sb     = parseStatementListBS(this.scope, this.body!.children);
 
     let last: Sexpr | null = null;
 
@@ -82,7 +79,7 @@ export class BSMethodDeclaration extends BSNode {
         ...params
       ],
       body: [
-        ...scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
+        ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
         ...sb,
         ...(ret ? [ret] : [])
       ]

@@ -109,35 +109,17 @@ export class Scope {
     }
   }
 
-  getChildScope(scopeType: ScopeType): Scope {
-    const children = this.children.filter(child => {
-      return this.scopesEqual(child.scopeType, scopeType);
+  addScopeFor(scopeType: ScopeType): Scope {
+    const scope = new Scope({ 
+      tc        : this.typeChecker, 
+      sourceFile: scopeType.type === ScopeName.SourceFile ? scopeType.sourceFile : this.sourceFile, 
+      scopeType : scopeType, 
+      parent    : this, 
     });
 
-    // console.log(children.map(x => x.scopeType.type === ScopeName.SourceFile && x.scopeType.sourceFile.fileName));
+    this.children.push(scope);
 
-    if (children.length > 1) { throw new Error(`Too many scopes for ${ ScopeName[scopeType.type] }`); }
-    if (children.length === 0) { throw new Error(`No scopes for ${ ScopeName[scopeType.type] }`); }
-
-    return children[0];
-  }
-
-  addScopeFor(scopeType: ScopeType): void {
-    if (scopeType.type === ScopeName.SourceFile) {
-      this.children.push(new Scope({ 
-        tc        : this.typeChecker, 
-        sourceFile: scopeType.sourceFile, 
-        scopeType : scopeType, 
-        parent    : this, 
-      }));
-    } else {
-      this.children.push(new Scope({ 
-        tc        : this.typeChecker, 
-        sourceFile: this.sourceFile, 
-        scopeType : scopeType, 
-        parent    : this, 
-      }));
-    }
+    return scope;
   }
 
   /**

@@ -1,21 +1,5 @@
-* How come "Scope for class StringImpl" shows up twice? Is it once for the import, once for the actual decl?
-
-* i dont think sourcefile needs to make its own scope.
-
-* addScopeFor should return the scope.
-
 * doesn't ImportSpecifiers if statement cascade look weird? Its because there shuold be a generic handler guy who 
   puts stuff into scopes - it shouldn't be scattered all around the code.
-
-I'm currently putting function nodes on the topmost scope, which is not
-exactly where they belong. They belong on the file scope, but there's no
-elegant way to do this. I should fix this when I clean up the topmost scope
-issues. I also need to fix up sourcefile, and how it clears out the topmost
-scope list of nodes every time it compiles.
-
-* the fact that the global scope basically has NOTHING indicates to me that it
-  should not in fact be a scope at all, and should probably just be an array or
-  something.
 
 * i've been doing everything wrong - should be checking type with symbol.flags
 
@@ -28,11 +12,6 @@ scope list of nodes every time it compiles.
   itself is more than enough...
 
 * modules
-   * class loading
-      * load the whole class at once, rather than each method one by one.
-         * actually maybe not since we'll still visit them one by one
-      * can i finally remove the parent from BSMethod?
-
    * is functions.getAll even necessary?
    * S.Func should just take a Function.
    * we will have to generate some sort of unique identifier for each file, which we can use as a module name.
