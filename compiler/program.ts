@@ -77,6 +77,13 @@ export class Program {
       console.log(d)
     }
 
+    const res2 = this.program.getSemanticDiagnostics();
+
+    for (const d of res2) {
+      console.log(d.messageText)
+    }
+
+
     this.typeChecker = this.program.getTypeChecker();
   }
 
@@ -95,7 +102,7 @@ export class Program {
     });
 
     // TODO: Choose a root somehow?
-    const source = this.program.getSourceFile("testcontents.ts");
+    const source = this.program.getSourceFile("./testcontents.ts");
 
     if (!source) {
       throw new Error("source undefined, something has gone horribly wrong!!!");
@@ -108,7 +115,9 @@ export class Program {
     const modules = ctx.modules.getAll();
 
     for (const module of modules) {
-      const source = this.program.getSourceFile("testother.ts");
+      const source = this.program.getSourceFile(module.path);
+
+      if (module.path === "./testcontents.ts") { continue; } // lol TODO
 
       if (!source) {
         throw new Error("source undefined, something has gone horribly wrong!!!");
@@ -119,6 +128,8 @@ export class Program {
 
     let functions = ctx.functions.getAll();
     functions = functions.sort((a, b) => a.tableIndex - b.tableIndex);
+
+    const namesToExport = [...new Set(functions.map(f => f.fullyQualifiedName)).values()];
 
     const resultSexpr = S(
       "[]", "module",
@@ -144,7 +155,7 @@ export class Program {
       }),
 
       ...flatten(allFiles),
-      ...functions.map(fn => S.Export(fn.fullyQualifiedName)),
+      ...namesToExport.map(fqname => S.Export(fqname)),
 
       // build our function table
       S("[]", "elem\n", S.Const(0),

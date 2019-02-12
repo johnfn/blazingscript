@@ -37,7 +37,11 @@ export class BSPropertyAccessExpression extends BSNode {
   }
 
   compile(ctx: Scope): Sexpr {
-    const prop = ctx.properties.get({ expr: this.expression, exprCtx: ctx, name: this.name.text });
+    const prop = ctx.properties.get({ 
+      expr   : this.expression, 
+      exprCtx: ctx, 
+      name   : this.name.text,
+    });
 
     if (this.isLhs) {
       return prop;

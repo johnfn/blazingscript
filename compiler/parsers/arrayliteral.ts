@@ -39,8 +39,8 @@ export class BSArrayLiteral extends BSNode {
     const elemSize = BSArrayLiteral.GetArrayElemSize(ctx, this.tsType);
 
     return S("i32", "block", S("[]", "result", "i32"),
-      S.SetLocal("array_temp"        , S("i32", "call", "$testcontents__malloc", S.Const(4               * 4))),
-      S.SetLocal("array_content_temp", S("i32", "call", "$testcontents__malloc", S.Const(allocatedLength * 4))),
+      S.SetLocal("array_temp"        , S("i32", "call", "$malloc__malloc", S.Const(4               * 4))),
+      S.SetLocal("array_content_temp", S("i32", "call", "$malloc__malloc", S.Const(allocatedLength * 4))),
 
       // store allocated length
       S.Store(ctx.variables.get("array_temp"), allocatedLength),

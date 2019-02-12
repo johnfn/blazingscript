@@ -10,7 +10,6 @@ import { Loops } from "./loops";
 import { Modules } from "./modules";
 import { BSArrowFunction } from "../parsers/arrowfunction";
 import { BSSourceFile } from "../parsers/sourcefile";
-import { BSClassDeclaration } from "../parsers/class";
 import { assertNever } from "../util";
 
 export enum InternalPropertyType {
@@ -118,8 +117,10 @@ export class Scope {
       return this.scopesEqual(child.scopeType, scopeType);
     });
 
-    if (children.length > 1) { throw new Error(`Too many scopes for ${ name }`); }
-    if (children.length === 0) { throw new Error(`No scopes for ${ name }`); }
+    // console.log(children.map(x => x.scopeType.type === ScopeName.SourceFile && x.scopeType.sourceFile.moduleName));
+
+    if (children.length > 1) { throw new Error(`Too many scopes for ${ ScopeName[scopeType.type] }`); }
+    if (children.length === 0) { throw new Error(`No scopes for ${ ScopeName[scopeType.type] }`); }
 
     return children[0];
   }
@@ -193,6 +194,8 @@ export class Scope {
   getScopeForClass(type: Type): Scope | null {
     let classNameToFind = "";
 
+    // console.log("Looking for scope for", type.symbol);
+
     if (
       type.flags & TypeFlags.StringLike ||
       type.symbol.name === this.getNativeTypeName("String") // for this types
@@ -211,24 +214,27 @@ export class Scope {
     }
 
     const allClasses = this.getAllClasses();
+
     const relevantClasses = allClasses.filter(cls => 
       cls.scopeType.type === ScopeName.Class && 
       cls.scopeType.symbol.name === classNameToFind
     );
 
     if (relevantClasses.length === 0) {
-      return null;
+      console.log("class name to find is", classNameToFind)
+
+      throw new Error("Couldnt find that class");
     }
 
     if (relevantClasses.length > 1) {
-      return null;
+      console.log("Found too many classes! Not really a problem but i should fix this at some point.");
     }
 
     return relevantClasses[0];
   }
 
   toString(indent = ""): string {
-    let string = `${ indent }Scope for ${ this.scopeType.type }: `;
+    let string = this.localToString();
 
     if (this.variables.count() === 0 && this.functions.count() === 0) {
       string += "(Empty)\n";
@@ -241,6 +247,31 @@ export class Scope {
 
     for (const scope of Object.keys(this.children).map(k => this.children[Number(k)])) {
       string += scope.toString(indent + "  ");
+    }
+
+    return string;
+  }
+
+  localToString(): string {
+    let string = `Scope for ${ ScopeName[this.scopeType.type] } `;
+
+    switch (this.scopeType.type) {
+      case ScopeName.ArrowFunction:
+        string += "anoymous";
+        break;
+      case ScopeName.For:
+      case ScopeName.Global:
+        break;
+      case ScopeName.SourceFile:
+        string += this.scopeType.sourceFile.moduleName;
+        break;
+      case ScopeName.Class:
+      case ScopeName.Function:
+      case ScopeName.Method:
+        string += this.scopeType.symbol.name;
+        break;
+      default:
+        assertNever(this.scopeType);
     }
 
     return string;

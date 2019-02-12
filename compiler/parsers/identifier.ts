@@ -32,8 +32,8 @@ export class BSIdentifier extends BSNode {
       return S.Const(fn.tableIndex);
     }
 
-    console.log(this.fullText);
-    console.log(ctx.toString());
+    console.log(this.text);
+    // console.log(ctx.topmostScope().toString());
 
     throw new Error("Unhandled node type");
   }

@@ -31,7 +31,7 @@ export class BSImportDeclaration extends BSNode {
       this.importClause = buildNode(ctx, node.importClause, { moduleName: moduleName.text })
     );
 
-    ctx.modules.add(this.moduleName.text)
+    ctx.modules.add(this.moduleName.text + ".ts");
   }
 
   compile(ctx: Scope): Sexpr {

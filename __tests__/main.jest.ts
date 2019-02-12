@@ -90,8 +90,11 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
 
   const sexprs = new Program({
     paths: [
-      "testcontents.ts",
-      "testother.ts",
+      "./testcontents.ts",
+      "./testother.ts",
+      "./malloc.ts",
+      "./array.ts",
+      "./string.ts",
     ],
     root: path.join(__dirname, "bs"),
   }).parse();

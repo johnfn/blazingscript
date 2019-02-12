@@ -5,10 +5,13 @@ import { Program } from "./program";
 
 const p = new Program({
   paths: [
-    "testcontents.ts",
-    "./testother.ts",
+    "./testcontents",
+    "./testother",
+    "./malloc",
+    "./array",
+    "./string",
   ],
-  root: "testcontents.ts"
+  root: "./testcontents.ts"
 });
 
 const result = p.parse();

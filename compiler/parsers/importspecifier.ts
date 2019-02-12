@@ -1,4 +1,4 @@
-import { Scope } from "../scope/scope";
+import { Scope, ScopeName } from "../scope/scope";
 import { Sexpr, S, Sx } from "../sexpr";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { ImportSpecifier, TypeFlags, SignatureKind, SyntaxKind, SymbolFlags } from "typescript";
@@ -37,10 +37,11 @@ export class BSImportSpecifier extends BSNode {
     if (isFunctionType(ctx, type)) {
       ctx.functions.addFunction(this);
     } else {
-      // BSClassDeclaration.AddClassToScope({ scope: ctx, type: this.tsType });
-      // ctx.functions.add ({ type: this.tsType });
+      ctx.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
+      const classScope = ctx.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol });
 
-      throw new Error("nope not yet!");
+      BSClassDeclaration.AddClassToScope({ scope: classScope, symbol: this.tsType.symbol });
+      // throw new Error("nope not yet!");
     }
 
 

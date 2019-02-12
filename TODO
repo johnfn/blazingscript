@@ -3,7 +3,13 @@
   probably by generating some sort of unique id from symbols.
   Then when I do this, I can do AddClassToScope on arbitrary imports, which will mean i can FINALLY IMPORT CLASSES.
 
+
+* How come "Scope for class StringImpl" shows up twice? Is it once for the import, once for the actual decl?
+
 * addScopeFor should return the scope.
+
+* doesn't ImportSpecifiers if statement cascade look weird? Its because there shuold be a generic handler guy who 
+  puts stuff into scopes - it shouldn't be scattered all around the code.
 
 I'm currently putting function nodes on the topmost scope, which is not
 exactly where they belong. They belong on the file scope, but there's no

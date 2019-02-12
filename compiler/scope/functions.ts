@@ -237,21 +237,6 @@ export class Functions {
     if (!this.scope.moduleName) { throw new Error("no moduleName in addFunction"); }
     if (node instanceof BSFunctionDeclaration && !node.name) { throw new Error("Dont support anon functions yet."); }
 
-    /** 
-     * If we've already seen this function in a different file, don't add it
-     * again, but do keep track of the node so we can compile it in this file.
-     */
-    if (node instanceof BSFunctionDeclaration) {
-      for (const fn of this.getAll(this.scope.topmostScope())) {
-        if (
-          fn.name === node.name && 
-          normalizePath(fn.moduleName) === normalizePath(node.moduleName)
-        ) {
-          return fn;
-        }
-      }
-    }
-
     const id         = Functions.TableIndex++;
     const signature  = Functions.GetSignature(this.scope, node.tsType);
     let name              : string;
@@ -277,7 +262,7 @@ export class Functions {
     fn = {
       signature         ,
       moduleName        ,
-      name              : name,
+      name              ,
       fullyQualifiedName,
       className         ,
       tableIndex        : id,

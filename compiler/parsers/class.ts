@@ -3,7 +3,7 @@ import {
   SyntaxKind,
   MethodDeclaration,
   PropertyDeclaration,
-  Type,
+  Symbol,
   TypeFlags,
   Declaration,
   CallExpression,
@@ -44,8 +44,8 @@ export class BSClassDeclaration extends BSNode {
     ctx.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
     const childCtx = ctx.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol }); {
       BSClassDeclaration.AddClassToScope({
-        scope: childCtx,
-        type : this.tsType,
+        scope : childCtx,
+        symbol: this.tsType.symbol,
       });
 
       this.decorators = buildNodeArray(childCtx, node.decorators);
@@ -86,15 +86,15 @@ export class BSClassDeclaration extends BSNode {
 
   // TODO: interfaces - https://stackoverflow.com/questions/50526710/typescript-compiler-api-get-type-of-imported-names
 
-  public static AddClassToScope(props: { scope: Scope; type: Type }): void {
-    const { type, scope } = props;
+  public static AddClassToScope(props: { scope: Scope; symbol: Symbol }): void {
+    const { symbol, scope } = props;
     const checker = scope.typeChecker;
 
-    if (!(type.flags & TypeFlags.Object)) {
+    if (!(symbol.flags & SymbolFlags.Class)) {
       throw new Error("Functions#addClass called on something which is not a class.")
     }
 
-    const decls        = type.symbol.getDeclarations() || [];
+    const decls        = symbol.getDeclarations() || [];
     const instanceType = checker.getTypeAtLocation(decls[0]);
     const properties   = checker.getPropertiesOfType(instanceType);
 
