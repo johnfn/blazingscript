@@ -1,5 +1,5 @@
-* rename ctx to scope everywhere.
 * How come "Scope for class StringImpl" shows up twice? Is it once for the import, once for the actual decl?
+*i dont think sourcefile needs to make its own scope.
 
 * addScopeFor should return the scope.
 
@@ -79,7 +79,6 @@ scope list of nodes every time it compiles.
 * Remove the string-specific array handling in elementaccess.ts
 * BuiltInArrays need to be generic.
   * elementAccess needs to calculate the element size offset propertly rather than defaulting to 4.
-* rename ctx to environment (or env i guess.)
 * better error handling
 * offset() could also indicate arrays.
 * the initial pass to add functions to the file is now entirely unnecessary

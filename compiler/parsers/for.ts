@@ -23,13 +23,13 @@ export class BSForStatement extends BSNode {
   condition  : BSExpression | null;
   body       : BSStatement | null;
 
-  constructor(ctx: Scope, node: ForStatement, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ForStatement, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
-    this.initializer = buildNode(ctx, node.initializer);
-    this.incrementor = buildNode(ctx, node.incrementor);
-    this.condition   = buildNode(ctx, node.condition);
-    this.body        = buildNode(ctx, node.statement);
+    this.initializer = buildNode(scope, node.initializer);
+    this.incrementor = buildNode(scope, node.incrementor);
+    this.condition   = buildNode(scope, node.condition);
+    this.body        = buildNode(scope, node.statement);
 
     this.children = [
       ...(this.initializer ? [this.initializer] : []),
@@ -39,7 +39,7 @@ export class BSForStatement extends BSNode {
     ];
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     const initializerSexprs: Sexpr[] = [];
 
     if (this.initializer) {
@@ -47,44 +47,44 @@ export class BSForStatement extends BSNode {
         for (const v of this.initializer.declarations) {
           if (v.initializer) {
             initializerSexprs.push(
-              S.SetLocal(v.nameNode.text, v.initializer.compile(ctx))
+              S.SetLocal(v.nameNode.text, v.initializer.compile(scope))
             );
           }
         }
       } else {
-        initializerSexprs.push(this.initializer.compile(ctx));
+        initializerSexprs.push(this.initializer.compile(scope));
       }
     }
 
-    const inc = this.incrementor ? this.incrementor.compile(ctx) : null;
+    const inc = this.incrementor ? this.incrementor.compile(scope) : null;
 
     // TODO - we generate an increment with every continue statement. im sure
     // there's a better way!
 
-    ctx.loops.add(inc);
+    scope.loops.add(inc);
 
-    const bodyComp = this.body ? this.body.compile(ctx) : null;
-    const cond = this.condition ? this.condition.compile(ctx) : null;
+    const bodyComp = this.body ? this.body.compile(scope) : null;
+    const cond = this.condition ? this.condition.compile(scope) : null;
 
     const result = S(
       "i32",
       "block",
-      ctx.loops.getBreakLabel(),
+      scope.loops.getBreakLabel(),
       ...initializerSexprs,
       S(
         "[]",
         "loop",
-        ctx.loops.getContinueLabel(),
+        scope.loops.getContinueLabel(),
         ...(cond
-          ? [S("[]", "br_if", ctx.loops.getBreakLabel(), S("i32", "i32.eqz", cond))]
+          ? [S("[]", "br_if", scope.loops.getBreakLabel(), S("i32", "i32.eqz", cond))]
           : []),
         ...(bodyComp ? [bodyComp] : []),
         ...(inc ? [inc] : []),
-        S("[]", "br", ctx.loops.getContinueLabel())
+        S("[]", "br", scope.loops.getContinueLabel())
       )
     );
 
-    ctx.loops.pop();
+    scope.loops.pop();
 
     return result;
   }

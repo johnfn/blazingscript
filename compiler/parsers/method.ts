@@ -38,31 +38,31 @@ export class BSMethodDeclaration extends BSNode {
   };
 
   constructor(
-    ctx       : Scope,
-    node      : MethodDeclaration,
-    info      : NodeInfo = defaultNodeInfo
+    scope : Scope,
+    node  : MethodDeclaration,
+    info  : NodeInfo = defaultNodeInfo
   ) {
-    super(ctx, node);
+    super(scope, node);
 
-    this.methodInfo = Functions.GetMethodTypeInfo(ctx, this.tsType);
+    this.methodInfo = Functions.GetMethodTypeInfo(scope, this.tsType);
 
-    ctx.addScopeFor({ type: ScopeName.Method, symbol: this.tsType.symbol });
-    const childCtx = ctx.getChildScope({ type: ScopeName.Method, symbol: this.tsType.symbol }); {
+    scope.addScopeFor({ type: ScopeName.Method, symbol: this.tsType.symbol });
+    const childScope = scope.getChildScope({ type: ScopeName.Method, symbol: this.tsType.symbol }); {
       this.children = flatArray(
-        this.decorators = buildNodeArray(childCtx, node.decorators),
-        this.parameters = buildNodeArray(childCtx, node.parameters),
-        this.body       = buildNode(childCtx, node.body),
+        this.decorators = buildNodeArray(childScope, node.decorators),
+        this.parameters = buildNodeArray(childScope, node.parameters),
+        this.body       = buildNode(childScope, node.body),
       );
 
       this.name = node.name ? node.name.getText() : null;
     }
  }
 
-  compile(parentCtx: Scope): Sexpr {
-    const ctx = parentCtx.getChildScope({ type: ScopeName.Method, symbol: this.tsType.symbol });
+  compile(parentScope: Scope): Sexpr {
+    const scope = parentScope.getChildScope({ type: ScopeName.Method, symbol: this.tsType.symbol });
 
-    const params = ctx.getParameters(this.parameters);
-    const sb     = parseStatementListBS(ctx, this.body!.children);
+    const params = scope.getParameters(this.parameters);
+    const sb     = parseStatementListBS(scope, this.body!.children);
 
     let last: Sexpr | null = null;
 
@@ -82,13 +82,13 @@ export class BSMethodDeclaration extends BSNode {
         ...params
       ],
       body: [
-        ...ctx.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
+        ...scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
         ...sb,
         ...(ret ? [ret] : [])
       ]
     });
 
-    parentCtx.functions.addCompiledFunctionNode(this);
+    parentScope.functions.addCompiledFunctionNode(this);
 
     return S.Const(0);
   }

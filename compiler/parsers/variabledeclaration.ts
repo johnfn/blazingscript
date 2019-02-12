@@ -13,21 +13,21 @@ export class BSVariableDeclaration extends BSNode {
   name       : string;
   initializer: BSExpression | null;
 
-  constructor(ctx: Scope, node: VariableDeclaration, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: VariableDeclaration, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.initializer = buildNode(ctx, node.initializer),
-      this.nameNode    = buildNode(ctx, node.name),
+      this.initializer = buildNode(scope, node.initializer),
+      this.nameNode    = buildNode(scope, node.name),
     );
 
     if (
       this.tsType.flags & TypeFlags.NumberLike ||
       this.tsType.flags & TypeFlags.StringLike ||
-      isFunctionType(ctx, this.tsType)         ||
-      isArrayType(ctx, this.tsType)
+      isFunctionType(scope, this.tsType)         ||
+      isArrayType(scope, this.tsType)
     ) {
-      ctx.variables.add({ name: this.nameNode.text, tsType: this.tsType, wasmType: "i32", isParameter: false });
+      scope.variables.add({ name: this.nameNode.text, tsType: this.tsType, wasmType: "i32", isParameter: false });
     } else {
       throw new Error(`Do not know how to handle that type: ${ TypeFlags[this.tsType.flags] } for ${ this.fullText }`);
     }
@@ -35,12 +35,12 @@ export class BSVariableDeclaration extends BSNode {
     this.name = this.nameNode.text;
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     const name = this.name;
 
     return S.SetLocal(
       name,
-      this.initializer ? this.initializer.compile(ctx) : S.Const(0)
+      this.initializer ? this.initializer.compile(scope) : S.Const(0)
     );
   }
 }

@@ -32,8 +32,8 @@ export class BSClassDeclaration extends BSNode {
 
   name: string;
 
-  constructor(ctx: Scope, node: ClassDeclaration, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ClassDeclaration, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     if (node.name) {
       this.name = node.name.text;
@@ -41,19 +41,19 @@ export class BSClassDeclaration extends BSNode {
       throw new Error("Dont currently handle anonymous functions.");
     }
 
-    ctx.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
-    const childCtx = ctx.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol }); {
+    scope.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
+    const childScope = scope.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol }); {
       BSClassDeclaration.AddClassToScope({
-        scope : childCtx,
+        scope : childScope,
         symbol: this.tsType.symbol,
       });
 
-      this.decorators = buildNodeArray(childCtx, node.decorators);
+      this.decorators = buildNodeArray(childScope, node.decorators);
       this.members = [...node.members].map(mem => {
         if (mem.kind === SyntaxKind.MethodDeclaration) {
-          return new BSMethodDeclaration(childCtx, mem as MethodDeclaration);
+          return new BSMethodDeclaration(childScope, mem as MethodDeclaration);
         } else if (mem.kind === SyntaxKind.PropertyDeclaration) {
-          return new BSPropertyDeclaration(childCtx, mem as PropertyDeclaration);
+          return new BSPropertyDeclaration(childScope, mem as PropertyDeclaration);
         } else if (mem.kind === SyntaxKind.IndexSignature) {
           return null;
         } else {
@@ -74,10 +74,10 @@ export class BSClassDeclaration extends BSNode {
     return `Class ${ this.name }`;
   }
 
-  compile(ctx: Scope): null {
-    const childCtx = ctx.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol }); {
+  compile(scope: Scope): null {
+    const childScope = scope.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol }); {
       for (const member of this.members) {
-        member.compile(childCtx);
+        member.compile(childScope);
       }
     }
 
@@ -99,7 +99,7 @@ export class BSClassDeclaration extends BSNode {
     const properties   = checker.getPropertiesOfType(instanceType);
 
     for (const prop of properties) {
-      const propType = checker.getTypeOfSymbolAtLocation(prop, scope.sourceFile!.node);
+      const propType = checker.getTypeOfSymbolAtLocation(prop, scope.sourceFile);
       const decl     = prop.getDeclarations()![0];
 
       if (prop.flags & SymbolFlags.Method) {

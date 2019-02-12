@@ -15,15 +15,15 @@ export class BSBlock extends BSNode {
   children : BSNode[];
   statement: BSStatement[] | null;
 
-  constructor(ctx: Scope, node: Block, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: Block, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.statement = buildNodeArray(ctx, node.statements),
+      this.statement = buildNodeArray(scope, node.statements),
     );
   }
 
-  compile(ctx: Scope): Sexpr {
-    return S.Block(parseStatementListBS(ctx, this.children));
+  compile(scope: Scope): Sexpr {
+    return S.Block(parseStatementListBS(scope, this.children));
   }
 }

@@ -15,16 +15,16 @@ export class BSNamedImports extends BSNode {
   children: BSNode[];
   imports: BSImportSpecifier[];
 
-  constructor(ctx: Scope, node: NamedImports, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: NamedImports, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
-    this.imports = buildNodeArray(ctx, node.elements, info);
+    this.imports = buildNodeArray(scope, node.elements, info);
     this.children = [
       ...this.imports,
     ];
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     return S.Const(0);
   }
 }

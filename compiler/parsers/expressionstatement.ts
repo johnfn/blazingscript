@@ -4,6 +4,7 @@ import { Sexpr, S } from "../sexpr";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode } from "./nodeutil";
 import { flatArray } from "../util";
+import { BSExpression } from "./expression";
 
 /**
  * e.g. result.length = size;
@@ -11,18 +12,18 @@ import { flatArray } from "../util";
  */
 export class BSExpressionStatement extends BSNode {
   children: BSNode[];
-  expression: BSNode;
+  expression: BSExpression;
 
-  constructor(ctx: Scope, node: ExpressionStatement, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ExpressionStatement, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.expression = buildNode(ctx, node.expression),
+      this.expression = buildNode(scope, node.expression),
     );
   }
 
-  compile(ctx: Scope): Sexpr | null {
-    const result = this.expression.compile(ctx);
+  compile(scope: Scope): Sexpr | null {
+    const result = this.expression.compile(scope);
 
     if (result === null) {
       return null

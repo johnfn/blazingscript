@@ -5,11 +5,11 @@ import { Scope } from "../scope/scope";
 export class BSTypeAliasDeclaration extends BSNode {
   children: BSNode[] = [];
 
-  constructor(ctx: Scope, node: TypeAliasDeclaration, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: TypeAliasDeclaration, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
   }
 
-  compile(ctx: Scope): null {
+  compile(scope: Scope): null {
     return null;
   }
 }

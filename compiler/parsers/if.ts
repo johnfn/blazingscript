@@ -18,19 +18,19 @@ export class BSIfStatement extends BSNode {
   ifTrue    : BSStatement | null;
   ifFalse   : BSStatement | null;
 
-  constructor(ctx: Scope, node: IfStatement, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: IfStatement, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.condition = buildNode(ctx, node.expression),
-      this.ifTrue    = buildNode(ctx, node.thenStatement),
-      this.ifFalse   = buildNode(ctx, node.elseStatement),
+      this.condition = buildNode(scope, node.expression),
+      this.ifTrue    = buildNode(scope, node.thenStatement),
+      this.ifFalse   = buildNode(scope, node.elseStatement),
     );
   }
 
-  compile(ctx: Scope): Sexpr {
-    let thn = (this.ifTrue && this.ifTrue.compile(ctx)) || S.Const(0);
-    let els = (this.ifFalse && this.ifFalse.compile(ctx)) || S.Const(0);
+  compile(scope: Scope): Sexpr {
+    let thn = (this.ifTrue && this.ifTrue.compile(scope)) || S.Const(0);
+    let els = (this.ifFalse && this.ifFalse.compile(scope)) || S.Const(0);
 
     if (thn.type !== "[]") {
       thn = S.Drop(thn);
@@ -43,7 +43,7 @@ export class BSIfStatement extends BSNode {
     const result = S(
       "[]",
       "if",
-      this.condition.compile(ctx),
+      this.condition.compile(scope),
       S("[]", "then", thn),
       S("[]", "else", els ? els : S("[]", "nop"))
     );

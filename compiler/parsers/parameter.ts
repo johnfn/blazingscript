@@ -15,15 +15,15 @@ export class BSParameter extends BSNode {
   initializer: BSNode | null;
   bindingName: BSBindingName;
 
-  constructor(ctx: Scope, node: ParameterDeclaration, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ParameterDeclaration, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     if (this.tsType === undefined) {
       throw new Error("asdf");
     }
 
-    this.initializer = buildNode(ctx, node.initializer);
-    this.bindingName = buildNode(ctx, node.name);
+    this.initializer = buildNode(scope, node.initializer);
+    this.bindingName = buildNode(scope, node.name);
     this.children = flatArray(
       this.initializer,
       this.bindingName,
@@ -32,16 +32,16 @@ export class BSParameter extends BSNode {
     if (
       this.tsType.flags & TypeFlags.NumberLike ||
       this.tsType.flags & TypeFlags.StringLike ||
-      isFunctionType(ctx, this.tsType)         ||
-      isArrayType(ctx, this.tsType)
+      isFunctionType(scope, this.tsType)         ||
+      isArrayType(scope, this.tsType)
     ) {
-      ctx.variables.add({ name: this.bindingName.text, tsType: this.tsType, wasmType: "i32", isParameter: true });
+      scope.variables.add({ name: this.bindingName.text, tsType: this.tsType, wasmType: "i32", isParameter: true });
     } else {
       throw new Error(`Do not know how to handle that type: ${ TypeFlags[this.tsType.flags] } for ${ this.fullText }`);
     }
   }
 
-  compile(ctx: Scope): null {
+  compile(scope: Scope): null {
     throw new Error("Trying to compile a parameter but dunno how");
   }
 }

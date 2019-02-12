@@ -26,10 +26,10 @@ export class Properties {
     return this.properties;
   }
 
-  get({ expr, exprCtx, name }: {
-    expr   : BSExpression,
-    exprCtx: Scope,
-    name   : string
+  get({ expr, exprScope, name }: {
+    expr     : BSExpression,
+    exprScope: Scope,
+    name     : string
   }): Sexpr {
     // TODO: I could store the properties directly on the class node itself, so that i dont have to go hunting them down later.
     const cls = this.scope.getScopeForClass(expr.tsType);
@@ -43,7 +43,7 @@ export class Properties {
 
     if (relevantProperty) {
       const res = S.Add(
-        expr.compile(exprCtx),
+        expr.compile(exprScope),
         relevantProperty.offset
       );
 

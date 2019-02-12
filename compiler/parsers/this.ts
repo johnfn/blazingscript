@@ -6,13 +6,13 @@ import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 export class BSThisKeyword extends BSNode {
   children: BSNode[];
 
-  constructor(ctx: Scope, node: ThisExpression, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ThisExpression, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = [];
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     return S.GetLocal("i32", "__this");
   }
 }

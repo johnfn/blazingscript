@@ -16,25 +16,25 @@ export class BSPostfixUnaryExpression extends BSNode {
   operandName: string;
   operator   : PostfixUnaryOperator;
 
-  constructor(ctx: Scope, node: PostfixUnaryExpression, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: PostfixUnaryExpression, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.operator = node.operator;
 
     this.children = flatArray(
-      this.expression = buildNode(ctx, node.operand),
+      this.expression = buildNode(scope, node.operand),
     );
 
     this.operandName = node.operand.getText();
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     // TODO: Check types! (mostly vs f32 etc)
     // TODO: Return previous value.
     // TODO: consider ++ vs --
     // TODO: Should use context to set local, it's safer
 
-    const exprCompiled = this.expression.compile(ctx);
+    const exprCompiled = this.expression.compile(scope);
 
     if (!exprCompiled) {
       throw new Error("lhs didnt compile???");

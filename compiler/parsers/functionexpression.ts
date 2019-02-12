@@ -12,11 +12,11 @@ import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 export class BSFunctionExpression extends BSNode {
   children = [];
 
-  constructor(ctx: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     throw new Error("unhandled node: function expression")
   }
 }

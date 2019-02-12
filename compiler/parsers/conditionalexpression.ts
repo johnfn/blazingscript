@@ -17,22 +17,22 @@ export class BSConditionalExpression extends BSNode {
   whenFalse: BSExpression;
   whenTrue : BSExpression;
 
-  constructor(ctx: Scope, node: ConditionalExpression, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ConditionalExpression, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.condition = buildNode(ctx, node.condition),
-      this.whenFalse = buildNode(ctx, node.whenFalse),
-      this.whenTrue  = buildNode(ctx, node.whenTrue),
+      this.condition = buildNode(scope, node.condition),
+      this.whenFalse = buildNode(scope, node.whenFalse),
+      this.whenTrue  = buildNode(scope, node.whenTrue),
     );
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     // TODO this is wrong because it always evaluates both sides
 
-    const whenTrueExpr = this.whenTrue.compile(ctx);
-    const whenFalseExpr = this.whenFalse.compile(ctx);
-    const condExpr = this.condition.compile(ctx);
+    const whenTrueExpr = this.whenTrue.compile(scope);
+    const whenFalseExpr = this.whenFalse.compile(scope);
+    const condExpr = this.condition.compile(scope);
 
     if (!whenTrueExpr)
       throw new Error("no true expr in conditional expression.");

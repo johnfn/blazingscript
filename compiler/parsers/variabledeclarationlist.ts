@@ -10,8 +10,8 @@ export class BSVariableDeclarationList extends BSNode {
   declarations: BSVariableDeclaration[];
   isDeclare   = false;
 
-  constructor(ctx: Scope, node: VariableDeclarationList, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: VariableDeclarationList, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     for (const mod of this.modifiers || []) {
       switch (mod.kind) {
@@ -31,16 +31,16 @@ export class BSVariableDeclarationList extends BSNode {
       }
     }
 
-    this.declarations = buildNodeArray(ctx, node.declarations);
+    this.declarations = buildNodeArray(scope, node.declarations);
 
     this.children = this.declarations;
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     if (this.isDeclare) {
       return S.Const(0);
     } else {
-      return S.Block(this.declarations.map(decl => decl.compile(ctx)));
+      return S.Block(this.declarations.map(decl => decl.compile(scope)));
     }
   }
 }

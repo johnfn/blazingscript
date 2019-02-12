@@ -15,26 +15,26 @@ export class BSPrefixUnaryExpression extends BSNode {
   expression: BSExpression;
   operator  : PrefixUnaryOperator;
 
-  constructor(ctx: Scope, node: PrefixUnaryExpression, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: PrefixUnaryExpression, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.expression = buildNode(ctx, node.operand),
+      this.expression = buildNode(scope, node.operand),
     );
 
     this.operator = node.operator;
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     switch (this.operator) {
       case SyntaxKind.ExclamationToken:
-        return S("i32", "i32.eqz", this.expression.compile(ctx));
+        return S("i32", "i32.eqz", this.expression.compile(scope));
       case SyntaxKind.MinusToken:
         return S(
           "i32",
           "i32.sub",
           S.Const(0),
-          this.expression.compile(ctx)
+          this.expression.compile(scope)
         );
       case SyntaxKind.PlusPlusToken:
       case SyntaxKind.MinusMinusToken:

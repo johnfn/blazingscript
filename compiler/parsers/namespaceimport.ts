@@ -6,13 +6,13 @@ import { ImportClause, NamespaceImport } from "typescript";
 export class BSNamespaceImport extends BSNode {
   children: BSNode[];
 
-  constructor(ctx: Scope, node: NamespaceImport, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: NamespaceImport, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = [ ];
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     return S.Const(0);
   }
 }

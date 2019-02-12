@@ -12,28 +12,28 @@ export class BSIdentifier extends BSNode {
   text    : string;
   isLhs   : boolean;
 
-  constructor(ctx: Scope, node: Identifier, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: Identifier, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.text  = node.text;
     this.isLhs = info.isLhs || false;
   }
 
-  compile(ctx: Scope): Sexpr {
-    const asVariable = ctx.variables.getOrNull(this.text);
+  compile(scope: Scope): Sexpr {
+    const asVariable = scope.variables.getOrNull(this.text);
 
     if (asVariable) {
       return asVariable;
     }
 
-    const fn = ctx.functions.getFunctionByName(this.text);
+    const fn = scope.functions.getFunctionByName(this.text);
 
     if (fn) {
       return S.Const(fn.tableIndex);
     }
 
     console.log(this.text);
-    // console.log(ctx.topmostScope().toString());
+    // console.log(scope.topmostScope().toString());
 
     throw new Error("Unhandled node type");
   }

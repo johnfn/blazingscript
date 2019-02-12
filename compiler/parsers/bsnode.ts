@@ -36,14 +36,14 @@ export abstract class BSNode {
    */
   char: number;
 
-  constructor(ctx: Scope, node: Node, info: NodeInfo = defaultNodeInfo) {
+  constructor(scope: Scope, node: Node, info: NodeInfo = defaultNodeInfo) {
     this.uid       = getUid();
     this.modifiers = [...(node.modifiers || [])];
     this.property  = null;
 
     if (node.parent) {
       if (node.kind !== SyntaxKind.ImportClause) {
-        this.tsType = ctx.typeChecker.getTypeAtLocation(node);
+        this.tsType = scope.typeChecker.getTypeAtLocation(node);
       }
     } else {
       // TODO: SHould handle this better.
@@ -52,7 +52,7 @@ export abstract class BSNode {
 
     this.fullText = node.getFullText();
 
-    if (!ctx.sourceFile) {
+    if (!scope.sourceFile) {
       if (node.kind !== SyntaxKind.SourceFile) {
         throw new Error("no source file!");
       }
@@ -60,7 +60,7 @@ export abstract class BSNode {
       this.line = 0;
       this.char = 0;
     } else {
-      const pos = ctx.sourceFile.getLineAndCharacterOfPosition(node.pos);
+      const pos = scope.sourceFile.getLineAndCharacterOfPosition(node.pos);
 
       this.line = pos.line;
       this.char = pos.character;
@@ -75,5 +75,5 @@ export abstract class BSNode {
 
   readableName(): string { return "unimplemented"; }
 
-  abstract compile(ctx: Scope): Sexpr | Sexpr[] | null;
+  abstract compile(scope: Scope): Sexpr | Sexpr[] | null;
 }

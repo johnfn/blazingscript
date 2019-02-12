@@ -12,11 +12,11 @@ import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 export class BSContinueStatement extends BSNode {
   children: BSNode[] = [];
 
-  constructor(ctx: Scope, node: ContinueStatement, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ContinueStatement, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
   }
 
-  compile(ctx: Scope): Sexpr {
-    return ctx.loops.getContinue();
+  compile(scope: Scope): Sexpr {
+    return scope.loops.getContinue();
   }
 }

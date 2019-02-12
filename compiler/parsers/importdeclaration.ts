@@ -17,24 +17,24 @@ export class BSImportDeclaration extends BSNode {
   moduleName  : BSStringLiteral;
   importClause: BSImportClause | null;
 
-  constructor(ctx: Scope, node: ImportDeclaration, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ImportDeclaration, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     if (!(node.moduleSpecifier.kind === SyntaxKind.StringLiteral)) {
       throw new Error(`Trying to import from ${ node.moduleSpecifier.getText() } which is not a string.`)
     }
 
-    const moduleName = buildNode(ctx, node.moduleSpecifier as StringLiteral);
+    const moduleName = buildNode(scope, node.moduleSpecifier as StringLiteral);
 
     this.children = flatArray(
       this.moduleName = moduleName,
-      this.importClause = buildNode(ctx, node.importClause, { moduleName: moduleName.text })
+      this.importClause = buildNode(scope, node.importClause, { moduleName: moduleName.text })
     );
 
-    ctx.modules.add(this.moduleName.text + ".ts");
+    scope.modules.add(this.moduleName.text + ".ts");
   }
 
-  compile(ctx: Scope): Sexpr {
-    return S.Block(parseStatementListBS(ctx, this.children));
+  compile(scope: Scope): Sexpr {
+    return S.Block(parseStatementListBS(scope, this.children));
   }
 }

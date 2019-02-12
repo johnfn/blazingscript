@@ -126,7 +126,7 @@ S.Func = ({
 );
 
 /**
- * Reminder: dont use this function! use ctx.getVariable instead.
+ * Reminder: dont use this function! use scope.getVariable instead.
  */
 S.GetLocal = (type: "i32", name: string): Sexpr =>
   S(type, "get_local", "$" + name);

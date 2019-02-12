@@ -200,7 +200,7 @@ export class Functions {
       fullyQualifiedName,
     } = Functions.GetMethodTypeInfo(this.scope, type);
 
-    if (!this.scope.sourceFile.moduleName) { throw new Error("module name undefined"); } // TODO - shuold be able to get rid of this error (by pushing it up)
+    if (!this.scope.sourceFile.fileName) { throw new Error("module name undefined"); } // TODO - shuold be able to get rid of this error (by pushing it up)
 
     /** 
      * If we've already seen this function in a different file, don't add it
@@ -215,7 +215,7 @@ export class Functions {
     const fn: Function = {
       name              : methodName,
       fullyQualifiedName,
-      moduleName        : normalizePath(this.scope.sourceFile.moduleName),
+      moduleName        : normalizePath(this.scope.sourceFile.fileName),
       className         ,
       overload          ,
       tableIndex        : Functions.TableIndex++,
@@ -232,7 +232,7 @@ export class Functions {
     let fn: Function;
 
     if (node instanceof BSFunctionDeclaration && !node.name) { throw new Error("Dont support anon functions yet."); }
-    if (!this.scope.sourceFile.moduleName) { throw new Error("module name undefined"); } // TODO - shuold be able to get rid of this error (by pushing it up)
+    if (!this.scope.sourceFile.fileName) { throw new Error("module name undefined"); } // TODO - shuold be able to get rid of this error (by pushing it up)
 
     const id         = Functions.TableIndex++;
     const signature  = Functions.GetSignature(this.scope, node.tsType);
@@ -242,12 +242,12 @@ export class Functions {
 
     if (node instanceof BSFunctionDeclaration) {
       name               = node.name!; // i checked this above.
-      fullyQualifiedName = normalizePath(this.scope.sourceFile.moduleName) + "__" + node.name;
-      moduleName         = normalizePath(this.scope.sourceFile.moduleName);
+      fullyQualifiedName = normalizePath(this.scope.sourceFile.fileName) + "__" + node.name;
+      moduleName         = normalizePath(this.scope.sourceFile.fileName);
     } else if (node instanceof BSArrowFunction) {
       name               = `arrow_${ id }`;
       fullyQualifiedName = name;
-      moduleName         = normalizePath(this.scope.sourceFile.moduleName);
+      moduleName         = normalizePath(this.scope.sourceFile.fileName);
     } else if (node instanceof BSImportSpecifier) {
       name               = node.name.text;
       moduleName         = normalizePath(node.moduleName);

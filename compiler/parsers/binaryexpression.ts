@@ -26,8 +26,8 @@ export class BSBinaryExpression extends BSNode {
   operatorToken: Token<BinaryOperator>;
   fullText     : string;
 
-  constructor(ctx: Scope, node: BinaryExpression, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: BinaryExpression, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.operatorToken = node.operatorToken;
     const nodeInfo: NodeInfo = { isLhs: false }
@@ -37,16 +37,16 @@ export class BSBinaryExpression extends BSNode {
     }
 
     this.children = flatArray(
-      this.left  = buildNode(ctx, node.left, nodeInfo),
-      this.right = buildNode(ctx, node.right),
+      this.left  = buildNode(scope, node.left, nodeInfo),
+      this.right = buildNode(scope, node.right),
     );
 
     this.fullText = node.getFullText();
   }
 
-  compile(ctx: Scope): Sexpr {
-    const leftParsed  = this.left.compile(ctx);
-    const rightParsed = this.right.compile(ctx);
+  compile(scope: Scope): Sexpr {
+    const leftParsed  = this.left.compile(scope);
+    const rightParsed = this.right.compile(scope);
 
     if (this.operatorToken.kind === SyntaxKind.EqualsToken) {
       if (this.left instanceof BSIdentifier) {
@@ -155,21 +155,21 @@ export class BSBinaryExpression extends BSNode {
     ) {
       switch (this.operatorToken.kind) {
         case SyntaxKind.EqualsEqualsEqualsToken:
-          return ctx.functions.callMethodByOperator({
+          return scope.functions.callMethodByOperator({
             type    : this.left.tsType,
             opName  : Operator.TripleEquals,
             thisExpr: this.left,
             argExprs: [this.right]
           });
         case SyntaxKind.ExclamationEqualsEqualsToken:
-          return ctx.functions.callMethodByOperator({
+          return scope.functions.callMethodByOperator({
             type    : this.left.tsType,
             opName  : Operator.NotEquals,
             thisExpr: this.left,
             argExprs: [this.right]
           });
         case SyntaxKind.PlusToken:
-          return ctx.functions.callMethodByOperator({
+          return scope.functions.callMethodByOperator({
             type    : this.left.tsType,
             opName  : Operator.Add,
             thisExpr: this.left,

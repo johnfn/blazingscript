@@ -12,11 +12,11 @@ import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 export class BSBreakStatement extends BSNode {
   children: BSNode[] = [];
 
-  constructor(ctx: Scope, node: BreakStatement, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: BreakStatement, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
   }
 
-  compile(ctx: Scope): Sexpr {
-    return S("[]", "br", ctx.loops.getBreakLabel());
+  compile(scope: Scope): Sexpr {
+    return S("[]", "br", scope.loops.getBreakLabel());
   }
 }

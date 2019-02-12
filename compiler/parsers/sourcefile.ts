@@ -12,17 +12,17 @@ export class BSSourceFile extends BSNode {
   moduleName : string;
   node       : SourceFile;
 
-  constructor(ctx: Scope, file: SourceFile, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, file);
+  constructor(scope: Scope, file: SourceFile, info: NodeInfo = defaultNodeInfo) {
+    super(scope, file);
 
     this.moduleName = file.fileName;
     this.node       = file;
 
-    ctx.addScopeFor({ type: ScopeName.SourceFile, sourceFile: this });
-    const sourceCtx = ctx.getChildScope({ type: ScopeName.SourceFile, sourceFile: this });
+    scope.addScopeFor({ type: ScopeName.SourceFile, sourceFile: file });
+    const sourceScope = scope.getChildScope({ type: ScopeName.SourceFile, sourceFile: file });
 
     this.children = flatArray(
-      this.statements = buildNodeArray(sourceCtx, file.statements)
+      this.statements = buildNodeArray(sourceScope, file.statements)
     );
   }
 
@@ -30,15 +30,15 @@ export class BSSourceFile extends BSNode {
     return this.node.getLineAndCharacterOfPosition(pos);
   }
 
-  compile(parentCtx: Scope): Sexpr[] {
-    const ctx = parentCtx.getChildScope({ type: ScopeName.SourceFile, sourceFile: this });
+  compile(parentScope: Scope): Sexpr[] {
+    const scope = parentScope.getChildScope({ type: ScopeName.SourceFile, sourceFile: this.node });
 
     for (const statement of this.statements) {
-      statement.compile(ctx);
+      statement.compile(scope);
     }
 
-    const functions = ctx.topmostScope().functions.getAllNodes();
-    ctx.topmostScope().functions.clearAllNodes();
+    const functions = scope.topmostScope().functions.getAllNodes();
+    scope.topmostScope().functions.clearAllNodes();
 
     return functions.map(fn => {
       return fn.getDeclaration(); 

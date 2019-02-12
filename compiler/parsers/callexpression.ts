@@ -22,17 +22,17 @@ export class BSCallExpression extends BSNode {
   expression: BSExpression;
   arguments : BSExpression[];
 
-  constructor(ctx: Scope, node: CallExpression, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: CallExpression, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.expression = buildNode(ctx, node.expression, { isLhs: true }),
-      this.arguments  = buildNodeArray(ctx, node.arguments),
+      this.expression = buildNode(scope, node.expression, { isLhs: true }),
+      this.arguments  = buildNodeArray(scope, node.arguments),
     );
   }
 
-  compile(ctx: Scope): Sexpr {
-    const special = this.handleSpecialFunctions(ctx);
+  compile(scope: Scope): Sexpr {
+    const special = this.handleSpecialFunctions(scope);
 
     if (special !== null) {
       return special;
@@ -47,9 +47,9 @@ export class BSCallExpression extends BSNode {
         "i32",
         "call_indirect",
         S("[]", "type", sig.name),
-        this.expression.expression.compile(ctx),
-        ...parseStatementListBS(ctx, this.arguments),
-        this.expression.compile(ctx),
+        this.expression.expression.compile(scope),
+        ...parseStatementListBS(scope, this.arguments),
+        this.expression.compile(scope),
         `;; ${ this.fullText.replace(/\n/g, "") } (with this)\n`
       );
 
@@ -59,26 +59,26 @@ export class BSCallExpression extends BSNode {
         "i32",
         "call_indirect",
         S("[]", "type", sig.name),
-        ...parseStatementListBS(ctx, this.arguments),
-        this.expression.compile(ctx),
+        ...parseStatementListBS(scope, this.arguments),
+        this.expression.compile(scope),
         `;; ${ this.expression.fullText.replace(/\n/g, "") }\n`
       );
     }
   }
 
-  handleSpecialFunctions(ctx: Scope): Sexpr | null {
+  handleSpecialFunctions(scope: Scope): Sexpr | null {
     if (this.expression instanceof BSIdentifier) {
       if (this.expression.text === "memwrite") {
         const res = S.Store(
-          this.arguments[0].compile(ctx)!,
-          this.arguments[1].compile(ctx)!
+          this.arguments[0].compile(scope)!,
+          this.arguments[1].compile(scope)!
         );
 
         return res;
       } else if (this.expression.text === "memread") {
-        return S.Load("i32", this.arguments[0].compile(ctx)!);
+        return S.Load("i32", this.arguments[0].compile(scope)!);
       } else if (this.expression.text === "elemSize") {
-        return S.Const(BSArrayLiteral.GetArrayElemSize(ctx, this.arguments[0].tsType));
+        return S.Const(BSArrayLiteral.GetArrayElemSize(scope, this.arguments[0].tsType));
       } else if (this.expression.text === "divfloor") {
         return S(
           "i32",
@@ -89,8 +89,8 @@ export class BSCallExpression extends BSNode {
             S(
               "f32",
               "f32.div",
-              S("f32", "f32.convert_s/i32", this.arguments[0].compile(ctx)!),
-              S("f32", "f32.convert_s/i32", this.arguments[0].compile(ctx)!)
+              S("f32", "f32.convert_s/i32", this.arguments[0].compile(scope)!),
+              S("f32", "f32.convert_s/i32", this.arguments[0].compile(scope)!)
             )
           )
         );
@@ -121,11 +121,11 @@ export class BSCallExpression extends BSNode {
           } else if (arg instanceof BSIdentifier) {
             if (arg.tsType.flags & TypeFlags.StringLike) {
               logArgs.push({
-                size: S.Load("i32", ctx.variables.get(arg.text)),
-                start: ctx.variables.get(arg.text),
+                size: S.Load("i32", scope.variables.get(arg.text)),
+                start: scope.variables.get(arg.text),
                 type: 2,
                 putValueInMemory: [
-                  S.Store(S.Const(offset), ctx.variables.get(arg.text))
+                  S.Store(S.Const(offset), scope.variables.get(arg.text))
                 ]
               });
             } else if (arg.tsType.flags & TypeFlags.NumberLike) {
@@ -134,7 +134,7 @@ export class BSCallExpression extends BSNode {
                 start: S.Const(offset),
                 type: 1,
                 putValueInMemory: [
-                  S.Store(S.Const(offset), ctx.variables.get(arg.text))
+                  S.Store(S.Const(offset), scope.variables.get(arg.text))
                 ]
               });
             } else {
@@ -145,7 +145,7 @@ export class BSCallExpression extends BSNode {
 
             offset += 4;
           } else {
-            const result = arg.compile(ctx);
+            const result = arg.compile(scope);
 
             if (!result) {
               throw new Error("Cant compile that!");

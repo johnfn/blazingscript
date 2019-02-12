@@ -23,16 +23,16 @@ export class BSPropertyDeclaration extends BSNode {
   decorators: BSDecorator[];
   name      : BSPropertyName;
 
-  constructor(ctx: Scope, node: PropertyDeclaration, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: PropertyDeclaration, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.decorators = buildNodeArray(ctx, node.decorators),
-      this.name       = buildNode(ctx, node.name),
+      this.decorators = buildNodeArray(scope, node.decorators),
+      this.name       = buildNode(scope, node.name),
     );
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     return S.Const(0);
   }
 

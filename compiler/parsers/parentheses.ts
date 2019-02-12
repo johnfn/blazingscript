@@ -14,15 +14,15 @@ export class BSParenthesizedExpression extends BSNode {
   children  : BSNode[];
   expression: BSExpression;
 
-  constructor(ctx: Scope, node: ParenthesizedExpression, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ParenthesizedExpression, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.expression = buildNode(ctx, node.expression),
+      this.expression = buildNode(scope, node.expression),
     );
   }
 
-  compile(ctx: Scope): Sexpr {
-    return this.expression.compile(ctx);
+  compile(scope: Scope): Sexpr {
+    return this.expression.compile(scope);
   }
 }

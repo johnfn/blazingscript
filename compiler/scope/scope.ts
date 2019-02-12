@@ -99,7 +99,7 @@ export class Scope {
       case ScopeName.Global:
         return one.type === ScopeName.Global;
       case ScopeName.SourceFile:
-        return one.type === two.type && one.sourceFile.moduleName === two.sourceFile.moduleName;
+        return one.type === two.type && one.sourceFile.fileName === two.sourceFile.fileName;
       case ScopeName.Method:
       case ScopeName.Class:
       case ScopeName.Function:
@@ -114,7 +114,7 @@ export class Scope {
       return this.scopesEqual(child.scopeType, scopeType);
     });
 
-    // console.log(children.map(x => x.scopeType.type === ScopeName.SourceFile && x.scopeType.sourceFile.moduleName));
+    // console.log(children.map(x => x.scopeType.type === ScopeName.SourceFile && x.scopeType.sourceFile.fileName));
 
     if (children.length > 1) { throw new Error(`Too many scopes for ${ ScopeName[scopeType.type] }`); }
     if (children.length === 0) { throw new Error(`No scopes for ${ ScopeName[scopeType.type] }`); }
@@ -258,7 +258,7 @@ export class Scope {
       case ScopeName.Global:
         break;
       case ScopeName.SourceFile:
-        string += this.scopeType.sourceFile.moduleName;
+        string += this.scopeType.sourceFile.fileName;
         break;
       case ScopeName.Class:
       case ScopeName.Function:

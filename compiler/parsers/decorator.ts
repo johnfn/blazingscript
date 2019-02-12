@@ -17,15 +17,15 @@ export class BSDecorator extends BSNode {
   children  : BSNode[];
   expression: BSExpression;
 
-  constructor(ctx: Scope, node: Decorator, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: Decorator, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.expression = buildNode(ctx, node.expression),
+      this.expression = buildNode(scope, node.expression),
     );
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     throw new Error("Cant compile decorators! They are only currently for metadata.");
   }
 }

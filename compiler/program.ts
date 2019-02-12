@@ -117,7 +117,7 @@ export class Program {
       allContexts.push(scope);
     }
 
-    let functions = flatten(allContexts.map(ctx => ctx.functions.getAll())).sort((a, b) => a.tableIndex - b.tableIndex);
+    let functions = flatten(allContexts.map(scope => scope.functions.getAll())).sort((a, b) => a.tableIndex - b.tableIndex);
     const namesToExport = [...new Set(functions.map(f => f.fullyQualifiedName)).values()];
 
     const resultSexpr = S(

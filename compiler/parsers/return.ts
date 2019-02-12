@@ -9,17 +9,17 @@ export class BSReturnStatement extends BSNode {
   children  : BSNode[];
   expression: BSNode | null;
 
-  constructor(ctx: Scope, node: ReturnStatement, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ReturnStatement, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.expression = buildNode(ctx, node.expression),
+      this.expression = buildNode(scope, node.expression),
     );
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     if (this.expression) {
-      const exprCompiled = this.expression.compile(ctx);
+      const exprCompiled = this.expression.compile(scope);
 
       if (exprCompiled) {
         return S("[]", "return", S.Block(exprCompiled));

@@ -19,22 +19,22 @@ export class BSElementAccessExpression extends BSNode {
 
   isLhs = false;
 
-  constructor(ctx: Scope, node: ElementAccessExpression, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ElementAccessExpression, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.isLhs = info.isLhs || false;
 
     this.children = flatArray(
-      this.array = buildNode(ctx, node.expression, { isLhs: true }),
-      this.index = buildNode(ctx, node.argumentExpression),
+      this.array = buildNode(scope, node.expression, { isLhs: true }),
+      this.index = buildNode(scope, node.argumentExpression),
     );
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     const arrayType = this.array.tsType;
 
     if (arrayType.symbol && arrayType.symbol.name === "BuiltInArray") {
-      const expr = S.Add(this.array.compile(ctx), S.Mul(this.index.compile(ctx), 4));
+      const expr = S.Add(this.array.compile(scope), S.Mul(this.index.compile(scope), 4));
 
       if (this.isLhs) {
         return expr;
@@ -43,7 +43,7 @@ export class BSElementAccessExpression extends BSNode {
       }
     }
 
-    const expr = ctx.functions.callMethodByOperator({
+    const expr = scope.functions.callMethodByOperator({
       type    : arrayType,
       opName  : Operator.ArrayIndex,
       thisExpr: this.array,
@@ -51,7 +51,7 @@ export class BSElementAccessExpression extends BSNode {
     });
 
     if (
-      isArrayType(ctx, this.array.tsType)
+      isArrayType(scope, this.array.tsType)
     ) {
       if (this.isLhs) {
         return expr;

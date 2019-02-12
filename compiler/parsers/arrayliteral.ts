@@ -23,51 +23,51 @@ export class BSArrayLiteral extends BSNode {
   children: BSNode[] = [];
   elements: BSExpression[] = [];
 
-  constructor(ctx: Scope, node: ArrayLiteralExpression, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ArrayLiteralExpression, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = flatArray(
-      this.elements = buildNodeArray(ctx, node.elements)
+      this.elements = buildNodeArray(scope, node.elements)
     );
 
-    ctx.variables.addOnce("array_temp", this.tsType, "i32");
-    ctx.variables.addOnce("array_content_temp", this.tsType, "i32");
+    scope.variables.addOnce("array_temp", this.tsType, "i32");
+    scope.variables.addOnce("array_content_temp", this.tsType, "i32");
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     const allocatedLength = 16;
-    const elemSize = BSArrayLiteral.GetArrayElemSize(ctx, this.tsType);
+    const elemSize = BSArrayLiteral.GetArrayElemSize(scope, this.tsType);
 
     return S("i32", "block", S("[]", "result", "i32"),
       S.SetLocal("array_temp"        , S("i32", "call", "$malloc__malloc", S.Const(4               * 4))),
       S.SetLocal("array_content_temp", S("i32", "call", "$malloc__malloc", S.Const(allocatedLength * 4))),
 
       // store allocated length
-      S.Store(ctx.variables.get("array_temp"), allocatedLength),
+      S.Store(scope.variables.get("array_temp"), allocatedLength),
 
       // store length
-      S.Store(S.Add(ctx.variables.get("array_temp"), 4), this.elements.length),
+      S.Store(S.Add(scope.variables.get("array_temp"), 4), this.elements.length),
 
       // store element size (probably unnecessary)
-      S.Store(S.Add(ctx.variables.get("array_temp"), 8), elemSize),
+      S.Store(S.Add(scope.variables.get("array_temp"), 8), elemSize),
 
       // store content
-      S.Store(S.Add(ctx.variables.get("array_temp"), 12), ctx.variables.get("array_content_temp")),
+      S.Store(S.Add(scope.variables.get("array_temp"), 12), scope.variables.get("array_content_temp")),
 
       ...(
         this.elements.map((elem, i) =>
           S.Store(
-            S.Add(ctx.variables.get("array_content_temp"), i * 4),
-            elem.compile(ctx)
+            S.Add(scope.variables.get("array_content_temp"), i * 4),
+            elem.compile(scope)
           )
         )
       ),
 
-      ctx.variables.get("array_temp")
+      scope.variables.get("array_temp")
     );
   }
 
-  public static GetArrayElemSize(ctx: Scope, type: Type) {
+  public static GetArrayElemSize(scope: Scope, type: Type) {
     const typeArguments = [...(type as any).typeArguments] as Type[];
 
     if (typeArguments.length > 1) {
@@ -78,7 +78,7 @@ export class BSArrayLiteral extends BSNode {
       throw new Error("That's not an array...")
     }
 
-    const argName = ctx.typeChecker.typeToString(typeArguments[0]);
+    const argName = scope.typeChecker.typeToString(typeArguments[0]);
 
     if (argName === "number") {
       return 4;
@@ -88,16 +88,16 @@ export class BSArrayLiteral extends BSNode {
   }
 }
 
-export function isArrayType(ctx: Scope, type: Type) {
+export function isArrayType(scope: Scope, type: Type) {
   return (
     (type.symbol && type.symbol.name === "Array") ||
     (type.symbol && type.symbol.name === "ArrayImpl") ||
-    (type.symbol && type.symbol.name === ctx.getNativeTypeName("Array"))
+    (type.symbol && type.symbol.name === scope.getNativeTypeName("Array"))
   );
 }
 
-export function isFunctionType(ctx: Scope, type: Type) {
-  const sigs = ctx.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
+export function isFunctionType(scope: Scope, type: Type) {
+  const sigs = scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
 
   return sigs.length > 0;
 }

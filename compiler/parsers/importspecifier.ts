@@ -19,8 +19,8 @@ export class BSImportSpecifier extends BSNode {
   name      : BSIdentifier;
   moduleName: string;
 
-  constructor(ctx: Scope, node: ImportSpecifier, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: ImportSpecifier, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     if (!info.moduleName) {
       throw new Error("BSImportSpecifier without module name.");
@@ -29,35 +29,35 @@ export class BSImportSpecifier extends BSNode {
     this.moduleName = info.moduleName;
 
     this.children = [
-      this.name  = buildNode(ctx, node.name),
+      this.name  = buildNode(scope, node.name),
     ];
 
-    const type = ctx.typeChecker.getTypeAtLocation(node);
+    const type = scope.typeChecker.getTypeAtLocation(node);
 
-    if (isFunctionType(ctx, type)) {
-      ctx.functions.addFunction(this);
+    if (isFunctionType(scope, type)) {
+      scope.functions.addFunction(this);
     } else {
-      ctx.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
-      const classScope = ctx.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol });
+      scope.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
+      const classScope = scope.getChildScope({ type: ScopeName.Class, symbol: this.tsType.symbol });
 
       BSClassDeclaration.AddClassToScope({ scope: classScope, symbol: this.tsType.symbol });
       // throw new Error("nope not yet!");
     }
 
 
-    // ctx.functions.addFunction(this);
+    // scope.functions.addFunction(this);
 
     /*
-    ctx.variables.add({
+    scope.variables.add({
       name       : node.name.text,
-      tsType     : ctx.typeChecker.getTypeAtLocation(node),
+      tsType     : scope.typeChecker.getTypeAtLocation(node),
       wasmType   : "i32",
       isParameter: false,
     })
     */
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     return S.Const(0);
   }
 }

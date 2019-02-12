@@ -11,15 +11,15 @@ export class BSNumericLiteral extends BSNode {
   children: BSNode[] = [];
   value   : number;
 
-  constructor(ctx: Scope, node: NumericLiteral, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: NumericLiteral, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     // TODO: Won't handle weird literals?
 
     this.value = Number(node.text);
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     return S.Const(this.value);
   }
 }

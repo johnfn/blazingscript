@@ -6,13 +6,13 @@ import { Node } from "typescript";
 export class BSTrueKeyword extends BSNode {
   children: BSNode[];
 
-  constructor(ctx: Scope, node: Node, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: Node, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.children = [];
   }
 
-  compile(ctx: Scope): Sexpr {
+  compile(scope: Scope): Sexpr {
     return S.Const(1);
   }
 }

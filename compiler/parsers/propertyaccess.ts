@@ -25,22 +25,22 @@ export class BSPropertyAccessExpression extends BSNode {
   name      : BSIdentifier;
   isLhs     : boolean;
 
-  constructor(ctx: Scope, node: PropertyAccessExpression, info: NodeInfo = defaultNodeInfo) {
-    super(ctx, node);
+  constructor(scope: Scope, node: PropertyAccessExpression, info: NodeInfo = defaultNodeInfo) {
+    super(scope, node);
 
     this.isLhs = info.isLhs || false;
 
     this.children = flatArray(
-      this.expression = buildNode(ctx, node.expression),
-      this.name       = buildNode(ctx, node.name),
+      this.expression = buildNode(scope, node.expression),
+      this.name       = buildNode(scope, node.name),
     );
   }
 
-  compile(ctx: Scope): Sexpr {
-    const prop = ctx.properties.get({ 
-      expr   : this.expression, 
-      exprCtx: ctx, 
-      name   : this.name.text,
+  compile(scope: Scope): Sexpr {
+    const prop = scope.properties.get({ 
+      expr      : this.expression, 
+      exprScope: scope, 
+      name      : this.name.text,
     });
 
     if (this.isLhs) {
