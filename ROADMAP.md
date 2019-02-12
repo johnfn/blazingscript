@@ -15,8 +15,8 @@
 | :wavy_dash: | arguments | I can do this, but does anyone want it? |
 | :black_square_button: | async | Oh boy
 | :white_check_mark: | break | Still need to do labelled breaks |
-| :black_square_button: | case | Still need to do labelled breaks |
-|:wavy_dash: | catch | See exception handling section below
+| :black_square_button: | case | |
+| :wavy_dash: | catch | See exception handling section below
 | :black_square_button: | class | See class section below
 | :white_check_mark: | const |
 | :white_check_mark: | continue | Still need to do labelled continues
@@ -86,7 +86,7 @@
 |----------|---------|-------|
 | :black_square_button: | Rudimentary module loading and bundling | 
 | :white_check_mark: | Import function declarations | 
-| :black_square_button:  | Import class declarations | 
+| :white_check_mark:  | Import class declarations | there are no real classes yet but i'm prepared
 | :black_square_button: | Absolute paths | 
 | :black_square_button: | Relative paths | 
 

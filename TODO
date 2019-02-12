@@ -11,6 +11,8 @@
   enough information from the typechecker to get something unique. i mean, we could get line and character number. that 
   itself is more than enough...
 
+* importing variables is hard because it leads to cyclical references...
+
 * modules
    * is functions.getAll even necessary?
    * S.Func should just take a Function.
@@ -70,6 +72,7 @@
    * I'm beginning to have a good idea of how to do this. The only "hard" part is parsing the string/array literal. the
    rest i can write code for. So I should just have a couple of builtins for the literals, and then use a constructor like
    normal.
+* handle weird types of literals in numericliteral
 * THOUGHT: should Sexpr be Sexpr<T> where T is the type? I feel like it could be?
 * put getExpressionNode on BaseNode
    cant be done, circular dependencies.
@@ -97,8 +100,8 @@
   * pull out constant expressions that are repeatedly evaluated
   * inline functions
 
-TODO: generate a d.ts file for the exported members of the wasm thing
-TODO: actually check for TS errors n stuff.
+* generate a d.ts file for the exported members of the wasm thing
+* actually check for TS errors n stuff.
 
 
 useful to get wat snippets

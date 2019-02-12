@@ -40,20 +40,7 @@ export class BSImportSpecifier extends BSNode {
       const importedClassScope = scope.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
 
       BSClassDeclaration.AddClassToScope({ scope: importedClassScope, symbol: this.tsType.symbol });
-      // throw new Error("nope not yet!");
     }
-
-
-    // scope.functions.addFunction(this);
-
-    /*
-    scope.variables.add({
-      name       : node.name.text,
-      tsType     : scope.typeChecker.getTypeAtLocation(node),
-      wasmType   : "i32",
-      isParameter: false,
-    })
-    */
   }
 
   compile(scope: Scope): Sexpr {

@@ -14,8 +14,6 @@ export class BSNumericLiteral extends BSNode {
   constructor(scope: Scope, node: NumericLiteral, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    // TODO: Won't handle weird literals?
-
     this.value = Number(node.text);
   }
 
