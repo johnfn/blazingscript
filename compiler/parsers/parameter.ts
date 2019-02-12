@@ -18,10 +18,6 @@ export class BSParameter extends BSNode {
   constructor(scope: Scope, node: ParameterDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    if (this.tsType === undefined) {
-      throw new Error("asdf");
-    }
-
     this.initializer = buildNode(scope, node.initializer);
     this.bindingName = buildNode(scope, node.name);
     this.children = flatArray(

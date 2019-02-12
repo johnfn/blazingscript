@@ -1,5 +1,6 @@
 * How come "Scope for class StringImpl" shows up twice? Is it once for the import, once for the actual decl?
-*i dont think sourcefile needs to make its own scope.
+
+* i dont think sourcefile needs to make its own scope.
 
 * addScopeFor should return the scope.
 

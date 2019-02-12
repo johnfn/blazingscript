@@ -96,6 +96,10 @@ export function isArrayType(scope: Scope, type: Type) {
   );
 }
 
+/**
+ * symbol has a much more useful Function flag, but symbol doesn't always exist for
+ * some reason? e.g. on parameters
+ */
 export function isFunctionType(scope: Scope, type: Type) {
   const sigs = scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
 

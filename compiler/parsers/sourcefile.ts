@@ -18,11 +18,8 @@ export class BSSourceFile extends BSNode {
     this.moduleName = file.fileName;
     this.node       = file;
 
-    scope.addScopeFor({ type: ScopeName.SourceFile, sourceFile: file });
-    const sourceScope = scope.getChildScope({ type: ScopeName.SourceFile, sourceFile: file });
-
     this.children = flatArray(
-      this.statements = buildNodeArray(sourceScope, file.statements)
+      this.statements = buildNodeArray(scope, file.statements)
     );
   }
 
@@ -30,9 +27,7 @@ export class BSSourceFile extends BSNode {
     return this.node.getLineAndCharacterOfPosition(pos);
   }
 
-  compile(parentScope: Scope): Sexpr[] {
-    const scope = parentScope.getChildScope({ type: ScopeName.SourceFile, sourceFile: this.node });
-
+  compile(scope: Scope): Sexpr[] {
     for (const statement of this.statements) {
       statement.compile(scope);
     }
