@@ -18,13 +18,13 @@ export function getUid() { return ++uid; }
 export abstract class BSNode {
   abstract children: BSNode[];
 
-  // Arguably this can be undefined for one type of node, but the mess of if()
-  // is really not worth it.
-  tsType          !: Type; 
-  fullText         : string;
-  modifiers        : Modifier[];
-  uid              : number;
-  property         : Property | null;
+  // Arguably this can be undefined for one type of node (SourceFile), but the
+  // mess of resulting checks is really not worth it.
+  tsType   !: Type; 
+  fullText  : string;
+  modifiers : Modifier[];
+  uid       : number;
+  property  : Property | null;
 
   /**
    * Line this token appears in the source file.

@@ -12,12 +12,15 @@ export const THIS_NAME = "__this";
 export class Program {
   typeChecker: ts.TypeChecker;
   program    : ts.Program;
+  paths      : string[];
 
   constructor(props: {
     paths: string[];
     root : string;
   }) {
     const { paths, root } = props;
+
+    this.paths = paths;
 
     this.program = ts.createProgram(paths, {
       experimentalDecorators: true,
@@ -88,47 +91,33 @@ export class Program {
   }
 
   parse(): string {
-    const ctx = new Scope({
-      tc        : this.typeChecker, 
-      sourceFile: null, 
-      parent    : null, 
-      scopeType : { type: ScopeName.Global },
-      fileName  : null,
-    });
+    const allFiles   : Sexpr[][] = [];
+    const allContexts: Scope[] = [];
 
-    ctx.addJsTypes({
-      "String": "StringImpl",
-      "Array" : "ArrayImpl",
-    });
-
-    // TODO: Choose a root somehow?
-    const source = this.program.getSourceFile("./testcontents.ts");
-
-    if (!source) {
-      throw new Error("source undefined, something has gone horribly wrong!!!");
-    }
-
-    const allFiles: Sexpr[][] = [];
-
-    allFiles.push(new BSSourceFile(ctx, source).compile(ctx));
-
-    const modules = ctx.modules.getAll();
-
-    for (const module of modules) {
-      const source = this.program.getSourceFile(module.path);
-
-      if (module.path === "./testcontents.ts") { continue; } // lol TODO
+    for (const path of this.paths) {
+      const source = this.program.getSourceFile(path);
 
       if (!source) {
         throw new Error("source undefined, something has gone horribly wrong!!!");
       }
 
-      allFiles.push(new BSSourceFile(ctx, source).compile(ctx));
+      const scope = new Scope({
+        tc        : this.typeChecker, 
+        sourceFile: source, 
+        parent    : null, 
+        scopeType : { type: ScopeName.SourceFile, sourceFile: source },
+      });
+
+      scope.addJsTypes({
+        "String": "StringImpl",
+        "Array" : "ArrayImpl",
+      });
+
+      allFiles.push(new BSSourceFile(scope, source).compile(scope));
+      allContexts.push(scope);
     }
 
-    let functions = ctx.functions.getAll();
-    functions = functions.sort((a, b) => a.tableIndex - b.tableIndex);
-
+    let functions = flatten(allContexts.map(ctx => ctx.functions.getAll())).sort((a, b) => a.tableIndex - b.tableIndex);
     const namesToExport = [...new Set(functions.map(f => f.fullyQualifiedName)).values()];
 
     const resultSexpr = S(

@@ -1,9 +1,4 @@
-* I need to stop making BSNodes as the primary key for scopes. This is mainly because we could
-  introduce scopes from imports that don't have associated BSNodes. I need to come up with another way -
-  probably by generating some sort of unique id from symbols.
-  Then when I do this, I can do AddClassToScope on arbitrary imports, which will mean i can FINALLY IMPORT CLASSES.
-
-
+* rename ctx to scope everywhere.
 * How come "Scope for class StringImpl" shows up twice? Is it once for the import, once for the actual decl?
 
 * addScopeFor should return the scope.
@@ -23,7 +18,6 @@ scope list of nodes every time it compiles.
 
 * i've been doing everything wrong - should be checking type with symbol.flags
 
-* rename ctx to scope everywhere.
 * now that i can pull fqname off types, do i really need name in the function struct?
 
 * dont handle the case where two classes with the same name are defined in two separate modules.

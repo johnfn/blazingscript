@@ -37,7 +37,7 @@ export enum ScopeName {
 
 export type ScopeType = 
   | { type : ScopeName.Global       }
-  | { type : ScopeName.SourceFile   ; sourceFile: BSSourceFile;    }
+  | { type : ScopeName.SourceFile   ; sourceFile: SourceFile;      }
   | { type : ScopeName.Function     ; symbol    : Symbol;          }
   | { type : ScopeName.Method       ; symbol    : Symbol;          }
   | { type : ScopeName.Class        ; symbol    : Symbol;          }
@@ -53,27 +53,24 @@ export class Scope {
   modules   : Modules;
   loops     : Loops;
   scopeType : ScopeType;
-  moduleName: string | null;
 
   typeChecker: TypeChecker;
-  sourceFile : BSSourceFile | null;
+  sourceFile : SourceFile;
   jsTypes    : { [jsType: string]: string } = {};
 
   constructor(props: {
     tc        : ts.TypeChecker,
-    sourceFile: BSSourceFile | null,
+    sourceFile: SourceFile,
     scopeType : ScopeType,
     parent    : Scope | null,
-    fileName  : string | null,
   }) {
-    const { tc, sourceFile, scopeType, parent, fileName } = props;
+    const { tc, sourceFile, scopeType, parent } = props;
 
     this.typeChecker = tc;
     this.sourceFile  = sourceFile;
 
     this.scopeType   = scopeType;
     this.parent      = parent;
-    this.moduleName  = fileName;
 
     this.variables   = new Variables(this);
     this.properties  = new Properties(this);
@@ -132,7 +129,6 @@ export class Scope {
         sourceFile: scopeType.sourceFile, 
         scopeType : scopeType, 
         parent    : this, 
-        fileName  : scopeType.sourceFile.moduleName,
       }));
     } else {
       this.children.push(new Scope({ 
@@ -140,7 +136,6 @@ export class Scope {
         sourceFile: this.sourceFile, 
         scopeType : scopeType, 
         parent    : this, 
-        fileName  : this.moduleName,
       }));
     }
   }

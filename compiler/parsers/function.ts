@@ -26,12 +26,10 @@ export class BSFunctionDeclaration extends BSNode {
   constructor(ctx: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(ctx, node);
 
-    if (!ctx.moduleName) {
-      throw new Error("no module name when creating function.");
-    }
+    if (!ctx.sourceFile.moduleName) { throw new Error("module name undefined"); } // TODO - shuold be able to get rid of this error (by pushing it up)
 
     this.name       = node.name ? node.name.text : null;
-    this.moduleName = ctx.moduleName;
+    this.moduleName = ctx.sourceFile.moduleName;
 
     ctx.addScopeFor({ type: ScopeName.Function, symbol: this.tsType.symbol });
     const childCtx = ctx.getChildScope({ type: ScopeName.Function, symbol: this.tsType.symbol }); {
