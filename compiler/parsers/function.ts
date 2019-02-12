@@ -27,8 +27,6 @@ export class BSFunctionDeclaration extends BSNode {
   constructor(parentScope: Scope, node: FunctionDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(parentScope, node);
 
-    if (!parentScope.sourceFile.fileName) { throw new Error("module name undefined"); } // TODO - shuold be able to get rid of this error (by pushing it up)
-
     this.name     = node.name ? node.name.text : null;
     this.fileName = parentScope.sourceFile.fileName;
 

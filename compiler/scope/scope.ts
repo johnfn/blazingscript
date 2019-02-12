@@ -56,6 +56,7 @@ export class Scope {
 
   typeChecker: TypeChecker;
   sourceFile : SourceFile;
+  fileName   : string;
   jsTypes    : { [jsType: string]: string } = {};
 
   constructor(props: {
@@ -78,6 +79,8 @@ export class Scope {
     this.loops       = new Loops(this);
     this.modules     = new Modules(this);
     this.children    = [];
+
+    this.fileName = sourceFile.fileName;
   }
 
   // TODO: Somehow i want to ensure that this is actually targetting js

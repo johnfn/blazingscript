@@ -200,8 +200,6 @@ export class Functions {
       fullyQualifiedName,
     } = Functions.GetMethodTypeInfo(this.scope, type);
 
-    if (!this.scope.sourceFile.fileName) { throw new Error("module name undefined"); } // TODO - should be able to get rid of this error (by pushing it up)
-
     /** 
      * If we've already seen this function in a different file, don't add it
      * again.
@@ -231,8 +229,7 @@ export class Functions {
     let className: string | null = null;
     let fn: Function;
 
-    if (node instanceof BSFunctionDeclaration && !node.name) { throw new Error("Dont support anon functions yet."); }
-    if (!this.scope.sourceFile.fileName) { throw new Error("module name undefined"); } // TODO - shuold be able to get rid of this error (by pushing it up)
+    if (node instanceof BSFunctionDeclaration && !node.name) { throw new Error("Dont support anonymous functions yet."); }
 
     const id         = Functions.TableIndex++;
     const signature  = Functions.GetSignature(this.scope, node.tsType);
