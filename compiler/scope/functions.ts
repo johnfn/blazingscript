@@ -200,11 +200,11 @@ export class Functions {
       fullyQualifiedName,
     } = Functions.GetMethodTypeInfo(this.scope, type);
 
-    if (!this.scope.sourceFile.fileName) { throw new Error("module name undefined"); } // TODO - shuold be able to get rid of this error (by pushing it up)
+    if (!this.scope.sourceFile.fileName) { throw new Error("module name undefined"); } // TODO - should be able to get rid of this error (by pushing it up)
 
     /** 
      * If we've already seen this function in a different file, don't add it
-     * again, but do keep track of the node so we can compile it in this file.
+     * again.
      */
     for (const fn of this.getAll(this.scope.topmostScope())) {
       if (fn.name === methodName && fn.className === className) { // TODO: Check module name too.

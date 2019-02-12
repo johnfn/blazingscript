@@ -40,25 +40,7 @@ export class BSArrowFunction extends BSNode {
     return "Arrow function";
   }
 
-  compile(scope: Scope): Sexpr {
-    // TODO - wait, why is this a separate function?
-
-    this.compileDeclaration(scope);
-
-    scope.functions.addCompiledFunctionNode(this);
-
-    return S.Const(this.fn.tableIndex);
-  }
-
-  getDeclaration(): Sexpr {
-    if (this.declaration === null) {
-      throw new Error("This arrow function needs to be compiled before it has a declaration ready.");
-    }
-
-    return this.declaration;
-  }
-
-  compileDeclaration(parentScope: Scope): void {
+  compile(parentScope: Scope): Sexpr {
     // TODO - this is copied from function
 
     const params = this.scope.getParameters(this.parameters);
@@ -93,5 +75,17 @@ export class BSArrowFunction extends BSNode {
         ...content,
       ]
     });
+
+    parentScope.functions.addCompiledFunctionNode(this);
+
+    return S.Const(this.fn.tableIndex);
+  }
+
+  getDeclaration(): Sexpr {
+    if (this.declaration === null) {
+      throw new Error("This arrow function needs to be compiled before it has a declaration ready.");
+    }
+
+    return this.declaration;
   }
 }

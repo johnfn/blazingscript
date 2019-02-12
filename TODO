@@ -20,6 +20,8 @@
    * going to need to make relative and absolute paths the same and parse out any redundant paths.
    * shuold be doing path normalization higher up
    
+* if i want to write log() correctly i basically have to handle union types, which seems hard
+
 * functions can return [] and it's pretty FREAKING annoying
 
 * calls to malloc should find the ACTUAL name of malloc. somehow.
@@ -53,7 +55,7 @@
   * get correct file name.
 * i should handle functions returning void rather than just saying everything returns an i32 lol (in functions.ts)
 * move everything in functions towards getting functions by identifier
-* looks liek we're generating string_temp when we shouldnt be
+* looks like we're generating string_temp when we shouldnt be
 * callexpression ALWAYS uses the function table. however it's pretty easy not to when we have identifiers.
 * should work out what left hand side expression is. see: decorator.ts
 * Remove the string-specific array handling in elementaccess.ts
@@ -82,6 +84,7 @@
 * hard stuff
   * closures
   * generics (is there a better way than just copy pasting the asm implementation n times for n call sites)
+  * async/await
 * rewrite log to use malloc so its not a ticking time bomb!!!!!!! it was overwriting my malloc offset and causing everything to explode.
    * okay so the main thing is that log is polymorphic on argument type, but that's impossible to currently do rn because
    all values are the same and have no type information. HOWEVER, it's not impossible in theory because i could write
