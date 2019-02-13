@@ -3,7 +3,7 @@ import { Scope } from "../scope/scope";
 import { Sexpr, S } from "../sexpr";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { buildNode } from "./nodeutil";
 
 /**
@@ -20,7 +20,7 @@ export class BSConditionalExpression extends BSNode {
   constructor(scope: Scope, node: ConditionalExpression, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.condition = buildNode(scope, node.condition),
       this.whenFalse = buildNode(scope, node.whenFalse),
       this.whenTrue  = buildNode(scope, node.whenTrue),

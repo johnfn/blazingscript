@@ -190,7 +190,7 @@ export class Scope {
     }
 
     if (!classNameToFind) {
-      throw new Error("Dont know the type of that class.");
+      throw new Error(`Dont know the type of that class - looking for ${ this.typeChecker.typeToString(type) }`);
     }
 
     const allClasses = this.getAllClasses();

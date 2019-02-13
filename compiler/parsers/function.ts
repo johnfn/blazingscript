@@ -7,7 +7,7 @@ import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
 import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
 import { buildNode, buildNodeArray } from "./nodeutil";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 
 /**
  * e.g. function myFn() { }
@@ -31,7 +31,7 @@ export class BSFunctionDeclaration extends BSNode {
     this.fileName = parentScope.sourceFile.fileName;
 
     this.scope = parentScope.addScopeFor({ type: ScopeName.Function, symbol: this.tsType.symbol });
-    this.children  = flatArray(
+    this.children  = flattenArray(
       this.body       = buildNode(this.scope, node.body),
       this.parameters = buildNodeArray(this.scope, node.parameters),
     );

@@ -4,7 +4,7 @@ import { Scope, ScopeName } from "../scope/scope";
 import { Function, Functions } from "../scope/functions";
 import { THIS_NAME } from "../program";
 import { parseStatementListBS } from "./statementlist";
-import { assertNever, flatArray } from "../util";
+import { assertNever, flattenArray } from "../util";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
@@ -48,7 +48,7 @@ export class BSMethodDeclaration extends BSNode {
     this.methodInfo = Functions.GetMethodTypeInfo(scope, this.tsType);
 
     this.scope = scope.addScopeFor({ type: ScopeName.Method, symbol: this.tsType.symbol });
-    this.children = flatArray(
+    this.children = flattenArray(
       this.decorators = buildNodeArray(this.scope, node.decorators),
       this.parameters = buildNodeArray(this.scope, node.parameters),
       this.body       = buildNode(this.scope, node.body),

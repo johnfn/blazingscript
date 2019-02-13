@@ -4,7 +4,7 @@ import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 
 /**
  * e.g. myFunction(++x);
@@ -18,7 +18,7 @@ export class BSPrefixUnaryExpression extends BSNode {
   constructor(scope: Scope, node: PrefixUnaryExpression, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.expression = buildNode(scope, node.operand),
     );
 

@@ -3,7 +3,7 @@ import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { Scope } from "../scope/scope";
 import { buildNode } from "./nodeutil";
 import { isArrayType, isFunctionType } from "./arrayliteral";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { BSBindingName } from "./expression";
 
 /**
@@ -20,7 +20,7 @@ export class BSParameter extends BSNode {
 
     this.initializer = buildNode(scope, node.initializer);
     this.bindingName = buildNode(scope, node.name);
-    this.children = flatArray(
+    this.children = flattenArray(
       this.initializer,
       this.bindingName,
     );

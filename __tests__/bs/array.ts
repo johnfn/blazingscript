@@ -9,9 +9,6 @@ export class ArrayImpl {
   length = 0;
 
   @property(8)
-  private elemSize = 0;
-
-  @property(12)
   private contents = 0;
 
   [key: number]: number;
@@ -61,7 +58,6 @@ export class ArrayImpl {
     result.contents        = malloc((size + 1) * 4);
     result.allocatedLength = (size + 1) * 4;
     result.length          = size;
-    result.elemSize        = 4;
 
     return result as any as number[];
   }

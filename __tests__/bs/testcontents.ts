@@ -513,3 +513,9 @@ function test_string_repeat() {
 function test_module() {
   return mytest() === 5;
 }
+
+function test_object_literal() {
+  const x = { a: 1, b: 2, c: 3 };
+
+  return x.a === 1 && x.b === 2 && x.c === 3;
+}

@@ -3,11 +3,8 @@ import { Sexpr, S } from "../sexpr";
 import { Scope, InternalPropertyType } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSDecorator } from "./decorator";
-import { BSCallExpression } from "./callexpression";
-import { BSIdentifier } from "./identifier";
-import { BSNumericLiteral } from "./numericliteral";
 import { buildNodeArray, buildNode } from "./nodeutil";
-import { flatArray, assertNever } from "../util";
+import { flattenArray, assertNever } from "../util";
 import { BSPropertyName } from "./expression";
 
 export type PropertyType =
@@ -26,7 +23,7 @@ export class BSPropertyDeclaration extends BSNode {
   constructor(scope: Scope, node: PropertyDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.decorators = buildNodeArray(scope, node.decorators),
       this.name       = buildNode(scope, node.name),
     );

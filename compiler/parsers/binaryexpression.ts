@@ -10,7 +10,7 @@ import { Sexpr, S, sexprToString } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSIdentifier } from "./identifier";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { buildNode } from "./nodeutil";
 import { BSExpression } from "./expression";
 import { Operator } from "../scope/functions";
@@ -36,7 +36,7 @@ export class BSBinaryExpression extends BSNode {
       nodeInfo.isLhs = true;
     }
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.left  = buildNode(scope, node.left, nodeInfo),
       this.right = buildNode(scope, node.right),
     );

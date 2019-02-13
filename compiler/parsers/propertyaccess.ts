@@ -1,11 +1,12 @@
-import { PropertyAccessExpression, TypeFlags } from "typescript";
+import { PropertyAccessExpression, TypeFlags, SymbolFlags } from "typescript";
 import { Sexpr, S, sexprToString } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { BSIdentifier } from "./identifier";
 import { buildNode } from "./nodeutil";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
+import { BSObjectLiteralExpression } from "./objectliteralexpression";
 
 /**
  * e.g. const x = foo.bar
@@ -30,23 +31,37 @@ export class BSPropertyAccessExpression extends BSNode {
 
     this.isLhs = info.isLhs || false;
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.expression = buildNode(scope, node.expression),
       this.name       = buildNode(scope, node.name),
     );
   }
 
   compile(scope: Scope): Sexpr {
-    const prop = scope.properties.get({ 
-      expr      : this.expression, 
-      exprScope: scope, 
-      name      : this.name.text,
-    });
+    let expr: Sexpr;
+
+    if (this.expression.tsType.symbol && this.expression.tsType.symbol.flags & SymbolFlags.ObjectLiteral) {
+      const objectType = BSObjectLiteralExpression.FindObjectTypeBySymbol(this.expression.tsType.symbol);
+      const prop = objectType.propertyOffsets.find(({ name }) => name === this.name.text);
+
+      if (!prop) { throw new Error("Offset not found for property in object literal!") }
+
+      expr = S.Add(
+        this.expression.compile(scope),
+        prop.offset
+      );
+    } else {
+      expr = scope.properties.get({ 
+        expr      : this.expression, 
+        exprScope: scope, 
+        name      : this.name.text,
+      });
+    }
 
     if (this.isLhs) {
-      return prop;
+      return expr;
     } else {
-      return S.Load("i32", prop);
+      return S.Load("i32", expr);
     }
   }
 }

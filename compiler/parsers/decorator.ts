@@ -3,7 +3,7 @@ import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { Decorator } from "typescript";
 import { BSExpression } from "./expression";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { buildNode } from "./nodeutil";
 
 /**
@@ -20,7 +20,7 @@ export class BSDecorator extends BSNode {
   constructor(scope: Scope, node: Decorator, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.expression = buildNode(scope, node.expression),
     );
   }

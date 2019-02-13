@@ -3,7 +3,7 @@ import { AsExpression, Expression } from "typescript";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { Scope } from "../scope/scope";
 import { Sexpr } from "../sexpr";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { buildNodeArray, buildNode } from "./nodeutil";
 
 /**
@@ -17,7 +17,7 @@ export class BSAsExpression extends BSNode {
   constructor(scope: Scope, node: AsExpression, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.expression = buildNode(scope, node.expression),
     );
   }

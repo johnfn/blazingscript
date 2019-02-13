@@ -3,7 +3,7 @@ import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode } from "./nodeutil";
-import { flatArray, assertNever } from "../util";
+import { flattenArray, assertNever } from "../util";
 import { BSExpression } from "./expression";
 
 /**
@@ -21,7 +21,7 @@ export class BSPostfixUnaryExpression extends BSNode {
 
     this.operator = node.operator;
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.expression = buildNode(scope, node.operand),
     );
 

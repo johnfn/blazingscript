@@ -3,7 +3,7 @@ import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode } from "./nodeutil";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 
 export class BSReturnStatement extends BSNode {
   children  : BSNode[];
@@ -12,7 +12,7 @@ export class BSReturnStatement extends BSNode {
   constructor(scope: Scope, node: ReturnStatement, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.expression = buildNode(scope, node.expression),
     );
   }

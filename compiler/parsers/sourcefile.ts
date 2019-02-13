@@ -3,7 +3,7 @@ import { Sexpr, S } from "../sexpr";
 import { Scope, ScopeName } from "../scope/scope";
 import { BSStatement } from "./statement";
 import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
-import { flatArray, assertNever, normalizeString as normalizeModuleName } from "../util";
+import { flattenArray, assertNever, normalizeString as normalizeModuleName } from "../util";
 import { buildNodeArray } from "./nodeutil";
 
 export class BSSourceFile extends BSNode {
@@ -18,7 +18,7 @@ export class BSSourceFile extends BSNode {
     this.moduleName = file.fileName;
     this.node       = file;
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.statements = buildNodeArray(scope, file.statements)
     );
   }

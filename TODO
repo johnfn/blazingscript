@@ -1,3 +1,16 @@
+* object literals
+   * should include module too
+
+* does it bother you that object literal code is scattered between
+  objectliteralexpression and propertyaccess? it bothers me.
+
+* storing scopes... AT ALL... is kind of a dumb idea. there's no need, since TS does all the scope validation
+  you could ever want, and the TS api lets you look up any type's declaration and get whatever you need!!!
+  * probably a better approach would just be to have a generic "type schema" deliverer that would produce or fetch type
+    schemas on the fly given a specific symbol or type...
+
+* objects with index signatures...
+
 * doesn't ImportSpecifiers if statement cascade look weird? Its because there shuold be a generic handler guy who 
   puts stuff into scopes - it shouldn't be scattered all around the code.
 
@@ -6,6 +19,8 @@
 * now that i can pull fqname off types, do i really need name in the function struct?
 
 * dont handle the case where two classes with the same name are defined in two separate modules.
+
+* what happens when a function fqname clashes with another name eg i have a variable named StringInternal__indexOf or something?
 
 * I'm beginning to think that even constructing and sharing a TableId is a bad idea because we probably have 
   enough information from the typechecker to get something unique. i mean, we could get line and character number. that 

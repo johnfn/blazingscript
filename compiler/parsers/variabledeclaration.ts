@@ -1,10 +1,10 @@
 import { BSExpression, BSBindingName } from "./expression";
-import { VariableDeclaration, TypeFlags } from "typescript";
+import { VariableDeclaration, TypeFlags, SymbolFlags } from "typescript";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { Scope } from "../scope/scope";
 import { S, Sexpr } from "../sexpr";
 import { buildNode } from "./nodeutil";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { isArrayType, isFunctionType } from "./arrayliteral";
 
 export class BSVariableDeclaration extends BSNode {
@@ -16,7 +16,7 @@ export class BSVariableDeclaration extends BSNode {
   constructor(scope: Scope, node: VariableDeclaration, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.initializer = buildNode(scope, node.initializer),
       this.nameNode    = buildNode(scope, node.name),
     );
@@ -24,7 +24,8 @@ export class BSVariableDeclaration extends BSNode {
     if (
       this.tsType.flags & TypeFlags.NumberLike ||
       this.tsType.flags & TypeFlags.StringLike ||
-      isFunctionType(scope, this.tsType)         ||
+      isFunctionType(scope, this.tsType)       ||
+      (this.tsType.symbol && this.tsType.symbol.flags & SymbolFlags.ObjectLiteral) ||
       isArrayType(scope, this.tsType)
     ) {
       scope.variables.add({ name: this.nameNode.text, tsType: this.tsType, wasmType: "i32", isParameter: false });

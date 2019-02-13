@@ -24,7 +24,7 @@ export function assertNever(x: never): never {
   throw new Error("Unexpected object: " + x);
 }
 
-export function flatArray(...args: (null | BSNode | BSNode[])[]): BSNode[] {
+export function flattenArray(...args: (null | BSNode | BSNode[])[]): BSNode[] {
   let result: BSNode[] = [];
 
   for (const arg of args) {

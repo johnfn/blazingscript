@@ -5,7 +5,7 @@ import { BSStatement } from "./statement";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 
 /**
  * e.g. if (foo) { bar() } else { baz() }
@@ -21,7 +21,7 @@ export class BSIfStatement extends BSNode {
   constructor(scope: Scope, node: IfStatement, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.condition = buildNode(scope, node.expression),
       this.ifTrue    = buildNode(scope, node.thenStatement),
       this.ifFalse   = buildNode(scope, node.elseStatement),

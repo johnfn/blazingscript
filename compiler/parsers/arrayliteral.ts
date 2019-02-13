@@ -3,7 +3,7 @@ import { ArrayLiteralExpression, Type, SignatureKind, TypeFlags } from "typescri
 import { Sexpr, S, Sx } from "../sexpr";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { buildNodeArray } from "./nodeutil";
 
 /**
@@ -26,7 +26,7 @@ export class BSArrayLiteral extends BSNode {
   constructor(scope: Scope, node: ArrayLiteralExpression, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.elements = buildNodeArray(scope, node.elements)
     );
 
@@ -48,11 +48,8 @@ export class BSArrayLiteral extends BSNode {
       // store length
       S.Store(S.Add(scope.variables.get("array_temp"), 4), this.elements.length),
 
-      // store element size (probably unnecessary)
-      S.Store(S.Add(scope.variables.get("array_temp"), 8), elemSize),
-
       // store content
-      S.Store(S.Add(scope.variables.get("array_temp"), 12), scope.variables.get("array_content_temp")),
+      S.Store(S.Add(scope.variables.get("array_temp"), 8), scope.variables.get("array_content_temp")),
 
       ...(
         this.elements.map((elem, i) =>

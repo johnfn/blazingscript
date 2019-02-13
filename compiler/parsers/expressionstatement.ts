@@ -3,7 +3,7 @@ import { ExpressionStatement, isExpressionStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode } from "./nodeutil";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { BSExpression } from "./expression";
 
 /**
@@ -17,7 +17,7 @@ export class BSExpressionStatement extends BSNode {
   constructor(scope: Scope, node: ExpressionStatement, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.expression = buildNode(scope, node.expression),
     );
   }

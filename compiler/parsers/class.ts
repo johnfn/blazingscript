@@ -18,7 +18,7 @@ import { BSMethodDeclaration } from "./method";
 import { BSPropertyDeclaration, PropertyType } from "./propertydeclaration";
 import { BSDecorator } from "./decorator";
 import { buildNodeArray } from "./nodeutil";
-import { flatArray, assertNever } from "../util";
+import { flattenArray, assertNever } from "../util";
 import { OperatorOverload, Operator } from "../scope/functions";
 
 /**
@@ -62,7 +62,7 @@ export class BSClassDeclaration extends BSNode {
       }
     }).filter(x => x) as BSNode[];
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.decorators,
       this.members,
     );

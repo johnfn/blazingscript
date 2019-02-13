@@ -3,7 +3,7 @@ import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { buildNode } from "./nodeutil";
 import { isArrayType } from "./arrayliteral";
 import { Operator } from "../scope/functions";
@@ -24,7 +24,7 @@ export class BSElementAccessExpression extends BSNode {
 
     this.isLhs = info.isLhs || false;
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.array = buildNode(scope, node.expression, { isLhs: true }),
       this.index = buildNode(scope, node.argumentExpression),
     );

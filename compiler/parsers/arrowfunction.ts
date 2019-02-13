@@ -4,7 +4,7 @@ import { Scope, ScopeName } from "../scope/scope";
 import { Function } from "../scope/functions";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode, buildNodeArray } from "./nodeutil";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
 import { BSExpression } from "./expression";
@@ -31,7 +31,7 @@ export class BSArrowFunction extends BSNode {
       ? buildNode(this.scope, node.body as Block)
       : buildNode(this.scope, node.body as Expression);
     this.parameters = buildNodeArray(this.scope, node.parameters);
-    this.children   = flatArray(this.parameters, this.body);
+    this.children   = flattenArray(this.parameters, this.body);
 
     this.fn = parentScope.functions.addFunction(this);
   }

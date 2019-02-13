@@ -1,5 +1,5 @@
 import { BSDecorator } from "./decorator";
-import { Decorator, Node, SyntaxKind, NodeArray, Block, ParameterDeclaration, Expression, Statement, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, ParenthesizedExpression, PropertyAccessExpression, ElementAccessExpression, ThisExpression, ArrayLiteralExpression, ReturnStatement, ExpressionStatement, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, TypeAliasDeclaration, InterfaceDeclaration, FunctionDeclaration, ClassDeclaration, BindingName, VariableDeclaration, PropertyName, ArrowFunction, ImportDeclaration, ImportClause, NamedImports, NamespaceImport, ImportSpecifier, VariableDeclarationList } from "typescript";
+import { Decorator, Node, SyntaxKind, NodeArray, Block, ParameterDeclaration, Expression, Statement, BinaryExpression, CallExpression, Identifier, NumericLiteral, ConditionalExpression, PostfixUnaryExpression, PrefixUnaryExpression, StringLiteral, AsExpression, ParenthesizedExpression, PropertyAccessExpression, ElementAccessExpression, ThisExpression, ArrayLiteralExpression, ReturnStatement, ExpressionStatement, IfStatement, VariableStatement, ForStatement, BreakStatement, ContinueStatement, TypeAliasDeclaration, InterfaceDeclaration, FunctionDeclaration, ClassDeclaration, BindingName, VariableDeclaration, PropertyName, ArrowFunction, ImportDeclaration, ImportClause, NamedImports, NamespaceImport, ImportSpecifier, VariableDeclarationList, ObjectLiteralElementLike, ObjectLiteralExpression, PropertyAssignment } from "typescript";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo } from "./bsnode";
 import { BSBlock } from "./block";
@@ -41,6 +41,8 @@ import { BSNamedImports } from "./namedimports";
 import { BSNamespaceImport } from "./namespaceimport";
 import { BSImportSpecifier } from "./importspecifier";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
+import { BSObjectLiteralElementLike, BSObjectLiteralExpression } from "./objectliteralexpression";
+import { BSPropertyAssignment } from "./propertyassignment";
 
 /**
  * This is where the (typesafe) sausage is made. Avert your eyes!
@@ -114,18 +116,21 @@ export function buildNode(scope: Scope, obj: Node | undefined      , info?: Node
     case SyntaxKind.ImportSpecifier         : return new BSImportSpecifier         (scope, obj as ImportSpecifier         , info);
     case SyntaxKind.NamedImports            : return new BSNamedImports            (scope, obj as NamedImports            , info);
     case SyntaxKind.VariableDeclarationList : return new BSVariableDeclarationList (scope, obj as VariableDeclarationList , info);
+    case SyntaxKind.ObjectLiteralExpression : return new BSObjectLiteralExpression (scope, obj as ObjectLiteralExpression , info);
+    case SyntaxKind.PropertyAssignment      : return new BSPropertyAssignment      (scope, obj as PropertyAssignment      , info);
   }
 
   throw new Error(`Unhandled node in buildNode! ${ SyntaxKind[obj.kind] }`)
 }
 
-export function buildNodeArray(scope: Scope, obj: NodeArray<Decorator>            | undefined, info?: NodeInfo): BSDecorator[];
-export function buildNodeArray(scope: Scope, obj: NodeArray<ImportSpecifier>      | undefined, info?: NodeInfo): BSImportSpecifier[];
-export function buildNodeArray(scope: Scope, obj: NodeArray<VariableDeclaration>  | undefined, info?: NodeInfo): BSVariableDeclaration[];
-export function buildNodeArray(scope: Scope, obj: NodeArray<Statement>            | undefined, info?: NodeInfo): BSStatement[];
-export function buildNodeArray(scope: Scope, obj: NodeArray<Expression>           | undefined, info?: NodeInfo): BSExpression[];
-export function buildNodeArray(scope: Scope, obj: NodeArray<ParameterDeclaration> | undefined, info?: NodeInfo): BSParameter[];
-export function buildNodeArray(scope: Scope, obj: NodeArray<Node>                 | undefined, info?: NodeInfo): BSNode[] {
+export function buildNodeArray(scope: Scope, obj: NodeArray<ObjectLiteralElementLike> | undefined, info?: NodeInfo): BSObjectLiteralElementLike[];
+export function buildNodeArray(scope: Scope, obj: NodeArray<Decorator>                | undefined, info?: NodeInfo): BSDecorator[];
+export function buildNodeArray(scope: Scope, obj: NodeArray<ImportSpecifier>          | undefined, info?: NodeInfo): BSImportSpecifier[];
+export function buildNodeArray(scope: Scope, obj: NodeArray<VariableDeclaration>      | undefined, info?: NodeInfo): BSVariableDeclaration[];
+export function buildNodeArray(scope: Scope, obj: NodeArray<Statement>                | undefined, info?: NodeInfo): BSStatement[];
+export function buildNodeArray(scope: Scope, obj: NodeArray<Expression>               | undefined, info?: NodeInfo): BSExpression[];
+export function buildNodeArray(scope: Scope, obj: NodeArray<ParameterDeclaration>     | undefined, info?: NodeInfo): BSParameter[];
+export function buildNodeArray(scope: Scope, obj: NodeArray<Node>                     | undefined, info?: NodeInfo): BSNode[] {
   if (obj === undefined) { return []; }
   if (obj.length === 0) { return []; }
 

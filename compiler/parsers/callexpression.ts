@@ -9,7 +9,7 @@ import { BSIdentifier } from "./identifier";
 import { BSPropertyAccessExpression } from "./propertyaccess";
 import { BSStringLiteral } from "./stringliteral";
 import { buildNode, buildNodeArray } from "./nodeutil";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { BSArrayLiteral, isArrayType } from "./arrayliteral";
 import { TsTypeToWasmType, Functions } from "../scope/functions";
 
@@ -25,7 +25,7 @@ export class BSCallExpression extends BSNode {
   constructor(scope: Scope, node: CallExpression, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.expression = buildNode(scope, node.expression, { isLhs: true }),
       this.arguments  = buildNodeArray(scope, node.arguments),
     );
@@ -95,8 +95,6 @@ export class BSCallExpression extends BSNode {
           )
         );
       } else if (this.expression.text === "log") {
-        console.log(this.expression.line, this.expression.char);
-
         const logArgs: {
           size: Sexpr;
           start: Sexpr;

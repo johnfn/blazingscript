@@ -3,7 +3,7 @@ import { Sexpr, S } from "../sexpr";
 import { parseStatementListBS } from "./statementlist";
 import { Scope } from "../scope/scope";
 import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { buildNode } from "./nodeutil";
 import { BSStringLiteral } from "./stringliteral";
 import { BSImportClause } from "./importclause";
@@ -26,7 +26,7 @@ export class BSImportDeclaration extends BSNode {
 
     const moduleName = buildNode(scope, node.moduleSpecifier as StringLiteral);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.moduleName = moduleName,
       this.importClause = buildNode(scope, node.importClause, { moduleName: moduleName.text })
     );

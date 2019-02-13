@@ -4,7 +4,7 @@ import { parseStatementListBS } from "./statementlist";
 import { Scope } from "../scope/scope";
 import { BSStatement } from "./statement";
 import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
-import { flatArray } from "../util";
+import { flattenArray } from "../util";
 import { buildNode, buildNodeArray } from "./nodeutil";
 
 /**
@@ -18,7 +18,7 @@ export class BSBlock extends BSNode {
   constructor(scope: Scope, node: Block, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
 
-    this.children = flatArray(
+    this.children = flattenArray(
       this.statement = buildNodeArray(scope, node.statements),
     );
   }
