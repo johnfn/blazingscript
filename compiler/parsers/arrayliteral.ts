@@ -35,8 +35,17 @@ export class BSArrayLiteral extends BSNode {
   }
 
   compile(scope: Scope): Sexpr {
-    const allocatedLength = 16;
-    const elemSize = BSArrayLiteral.GetArrayElemSize(scope, this.tsType);
+    return BSArrayLiteral.EmitArrayLiteral(scope, this.elements);
+  }
+
+  /** 
+   * Creates an array and emits a pointer to that array. Note that this function
+   * requires you to have add a variable valled array_temp to scope in your
+   * constructor - e.g. 
+   * scope.variables.addOnce("array_temp", this.tsType, "i32")
+   */
+  public static EmitArrayLiteral(scope: Scope, elements: BSExpression[]): Sexpr {
+    const allocatedLength = elements.length + 1;
 
     return S("i32", "block", S("[]", "result", "i32"),
       S.SetLocal("array_temp"        , S("i32", "call", "$malloc__malloc", S.Const(4               * 4))),
@@ -46,13 +55,13 @@ export class BSArrayLiteral extends BSNode {
       S.Store(scope.variables.get("array_temp"), allocatedLength),
 
       // store length
-      S.Store(S.Add(scope.variables.get("array_temp"), 4), this.elements.length),
+      S.Store(S.Add(scope.variables.get("array_temp"), 4), elements.length),
 
       // store content
       S.Store(S.Add(scope.variables.get("array_temp"), 8), scope.variables.get("array_content_temp")),
 
       ...(
-        this.elements.map((elem, i) =>
+        elements.map((elem, i) =>
           S.Store(
             S.Add(scope.variables.get("array_content_temp"), i * 4),
             elem.compile(scope)

@@ -3,11 +3,10 @@ import { Sexpr, S, Sx } from "../sexpr";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { NamedImports, ObjectLiteralExpression, ObjectLiteralElementLike, Symbol } from "typescript";
 import { buildNodeArray } from "./nodeutil";
-import { BSImportSpecifier } from "./importspecifier";
-import { BSMethodDeclaration } from "./method";
 import { BSPropertyAssignment } from "./propertyassignment";
 import { flattenArray as flattenArray } from "../util";
 import { BSIdentifier } from "./identifier";
+import { BSArrayLiteral } from "./arrayliteral";
 
 export type BSObjectLiteralElementLike = 
   | BSPropertyAssignment
@@ -22,7 +21,13 @@ interface ObjectLiteralProperty {
 };
 
 interface ObjectLiteralMapping {
-  propertyOffsets : ObjectLiteralProperty[];
+  propertyOffsets: ObjectLiteralProperty[];
+  keyArrayOffset : 4;
+
+  /** 
+   * Character location of the declaration of the associated object literal
+   * type. Used to identify which object literal type we're talking about.
+   */
   declarationStart: number;
 }
 
@@ -55,6 +60,8 @@ export class BSObjectLiteralExpression extends BSNode {
     this.createObjectType(scope);
 
     scope.variables.addOnce("obj_temp", this.tsType, "i32");
+    scope.variables.addOnce("array_temp", this.tsType, "i32");
+    scope.variables.addOnce("array_content_temp", this.tsType, "i32");
   }
 
   static ObjectTypes: ObjectLiteralMapping[] = [];
@@ -65,7 +72,7 @@ export class BSObjectLiteralExpression extends BSNode {
     if (mapping === undefined) {
       const props: ObjectLiteralProperty[] = [];
       const propTypes = scope.typeChecker.getPropertiesOfType(this.tsType);
-      let offset = 0;
+      let offset = 4;
 
       for (const propType of propTypes) {
         props.push({
@@ -78,6 +85,7 @@ export class BSObjectLiteralExpression extends BSNode {
 
       const newMapping: ObjectLiteralMapping = {
         declarationStart: this.declStart,
+        keyArrayOffset  : 4,
         propertyOffsets : props,
       };
 
@@ -103,15 +111,14 @@ export class BSObjectLiteralExpression extends BSNode {
     return S("i32", "block", S("[]", "result", "i32"),
       S.SetLocal("obj_temp", S("i32", "call", "$malloc__malloc", S.Const(allocatedLength * 4))),
 
+      // Store array of string keys
       /*
-      // store length
-      S.Store(S.Add(scope.variables.get("array_temp"), 4), this.elements.length),
-
-      // store element size (probably unnecessary)
-      S.Store(S.Add(scope.variables.get("array_temp"), 8), elemSize),
-
-      // store content
-      S.Store(S.Add(scope.variables.get("array_temp"), 12), scope.variables.get("array_content_temp")),
+      S.Store(S.Add(
+        scope.variables.get("array_temp"), 0), 
+        BSArrayLiteral.EmitArrayLiteral(scope, this.properties.map(prop => {
+          return prop.name
+        }))
+      ),
       */
 
       ...(

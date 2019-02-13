@@ -1,5 +1,9 @@
 * object literals
-   * should include module too
+  * We need to do deduping of object literal types:
+     * Typescript will accept { b: number, a: number } and { a: number, b: number } to be passed 
+       into the same function, even though we treat those as distinct types.
+
+   * handle for...in
 
 * does it bother you that object literal code is scattered between
   objectliteralexpression and propertyaccess? it bothers me.
@@ -10,6 +14,9 @@
     schemas on the fly given a specific symbol or type...
 
 * objects with index signatures...
+
+
+* handle i64 - note that this will require arrays to double their elem size.
 
 * doesn't ImportSpecifiers if statement cascade look weird? Its because there shuold be a generic handler guy who 
   puts stuff into scopes - it shouldn't be scattered all around the code.
@@ -68,7 +75,6 @@
 * Sexprs can be better created if i use some sort of function overloading syntax such that S("add") automagically
   figures out the right arguments (and return type!).
 * log:
-  * pull line number ha! This is not even that hard!
   * get correct file name.
 * i should handle functions returning void rather than just saying everything returns an i32 lol (in functions.ts)
 * move everything in functions towards getting functions by identifier

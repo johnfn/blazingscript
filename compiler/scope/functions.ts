@@ -363,7 +363,7 @@ export class Functions {
     }
 
     throw new Error(
-      `Failed to find function ref by class name ${this.scope.typeChecker.typeToString(type)} and method name ${methodName}`
+      `Failed to find function ref by class name ${ this.scope.typeChecker.typeToString(type) } and method name ${ methodName }`
     );
   }
 
