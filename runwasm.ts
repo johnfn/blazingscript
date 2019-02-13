@@ -1,3 +1,7 @@
+/** 
+ * Helpful script for debugging that will run a wat file on the command line.
+ */
+
 import fs from 'fs'
 
 var memory = new WebAssembly.Memory({
