@@ -68,7 +68,7 @@ export class BSArrowFunction extends BSNode {
     }
 
     this.declaration = S.Func({
-      name  : this.fn.fullyQualifiedName,
+      name  : this.fn.getFullyQualifiedName(),
       params: params,
       body  : [
         ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
@@ -78,7 +78,7 @@ export class BSArrowFunction extends BSNode {
 
     parentScope.functions.addCompiledFunctionNode(this);
 
-    return S.Const(this.fn.tableIndex);
+    return S.Const(this.fn.getTableIndex());
   }
 
   getDeclaration(): Sexpr {

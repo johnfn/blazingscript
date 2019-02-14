@@ -3,7 +3,6 @@ import { Type } from "typescript";
 import { Scope } from "./scope";
 
 export type Variable = {
-  tsType     : Type | undefined;
   wasmType   : WasmType;
   name       : string;
   isParameter: boolean;
@@ -28,7 +27,6 @@ export class Variables {
 
   add(variable: {
     name        : string,
-    tsType      : Type | undefined,
     wasmType    : "i32",
     isParameter : boolean,
   }): void {
@@ -44,7 +42,6 @@ export class Variables {
    */
   addOnce(
     name        : string,
-    tsType      : Type | undefined,
     wasmType    : "i32",
     isParameter = false
   ): void {
@@ -52,7 +49,7 @@ export class Variables {
       return;
     }
 
-    this.add({ name, tsType, wasmType, isParameter });
+    this.add({ name, wasmType, isParameter });
   }
 
   /**

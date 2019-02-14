@@ -5,12 +5,13 @@ import { BSStatement } from "./statement";
 import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
 import { flattenArray, assertNever, normalizeString as normalizeModuleName } from "../util";
 import { buildNodeArray } from "./nodeutil";
+import { flatten } from "../rewriter";
 
 export class BSSourceFile extends BSNode {
-  children   : BSNode[];
-  statements : BSStatement[];
-  moduleName : string;
-  node       : SourceFile;
+  children  : BSNode[];
+  statements: BSStatement[];
+  moduleName: string;
+  node      : SourceFile;
 
   constructor(scope: Scope, file: SourceFile, info: NodeInfo = defaultNodeInfo) {
     super(scope, file);
@@ -35,9 +36,11 @@ export class BSSourceFile extends BSNode {
     const functions = scope.topmostScope().functions.getAllNodes();
     scope.topmostScope().functions.clearAllNodes();
 
-    return functions.map(fn => {
-      return fn.getDeclaration(); 
-    });
+    return flatten(functions.map(fn => {
+      const decl = fn.getDeclaration();
+
+      return Array.isArray(decl) ? decl : [decl];
+    }));
   }
 
   readableName() {

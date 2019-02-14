@@ -11,7 +11,7 @@ export class BSStringLiteral extends BSNode {
     super(scope, node);
 
     this.text = node.text;
-    scope.variables.addOnce("string_temp", this.tsType, "i32");
+    scope.variables.addOnce("string_temp", "i32");
   }
 
   compile(scope: Scope): Sexpr {

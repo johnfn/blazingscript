@@ -1,5 +1,5 @@
 import { Scope } from "../scope/scope";
-import { CallExpression, TypeFlags } from "typescript";
+import { CallExpression, TypeFlags, SignatureKind, TypeParameterDeclaration, SymbolFlags } from "typescript";
 import { Sexpr, S, Sx, sexprToString } from "../sexpr";
 import { flatten } from "../rewriter";
 import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
@@ -21,9 +21,12 @@ export class BSCallExpression extends BSNode {
   children  : BSNode[];
   expression: BSExpression;
   arguments : BSExpression[];
+  node: CallExpression;
 
   constructor(scope: Scope, node: CallExpression, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);
+
+    this.node = node;
 
     this.children = flattenArray(
       this.expression = buildNode(scope, node.expression, { isLhs: true }),
@@ -36,6 +39,35 @@ export class BSCallExpression extends BSNode {
 
     if (special !== null) {
       return special;
+    }
+
+    const declaredParameterTypes = scope.typeChecker
+      .getSignaturesOfType(this.expression.tsType, SignatureKind.Call)[0]!
+      .parameters
+      .map(param => 
+        scope.typeChecker.getTypeOfSymbolAtLocation(param, this.node)
+    );
+
+    for (let i = 0; i < declaredParameterTypes.length; i++) {
+      const declaredType = declaredParameterTypes[i];
+      const actualType   = this.arguments[i].tsType;
+
+      if (declaredType.flags & TypeFlags.TypeParameter) {
+        let typeName: string;
+
+        if (actualType.flags & TypeFlags.StringLike) {
+          typeName = "string";
+        } else if (actualType.flags & TypeFlags.NumberLike) {
+          typeName = "number";
+        } else {
+          throw new Error("unhandled type for generic function");
+        }
+
+        scope.typeParams.add({ 
+          name           : declaredType.symbol.name,
+          substitutedType: typeName,
+        });
+      }
     }
 
     const sig = Functions.GetCallExpressionSignature(this);

@@ -117,8 +117,25 @@ export class Program {
       allContexts.push(scope);
     }
 
-    let functions = flatten(allContexts.map(scope => scope.functions.getAll())).sort((a, b) => a.tableIndex - b.tableIndex);
-    const namesToExport = [...new Set(functions.map(f => f.fullyQualifiedName)).values()];
+    let functions = flatten(allContexts.map(scope => scope.functions.getAll()));
+
+    // TODO - is this deduping even necessary?
+    const allUnduplicatedNames = flatten(functions.map(f => {
+      if (f.isGeneric) {
+        return f.supportedTypeParams.map(type => f.getFullyQualifiedName(type));
+      } else {
+        return [f.getFullyQualifiedName()];
+      }
+    }));
+
+    const namesToExport = [...new Set(allUnduplicatedNames).values()];
+
+    const functionTable = flatten(functions.map(fn => {
+      return fn.supportedTypeParams.map(param => ({
+        index : fn.getTableIndex(param),
+        fqname: fn.getFullyQualifiedName(param),
+      }));
+    })).sort((a, b) => a.index - b.index);
 
     const resultSexpr = S(
       "[]", "module",
@@ -148,8 +165,8 @@ export class Program {
 
       // build our function table
       S("[]", "elem\n", S.Const(0),
-        ...functions.map(fn => {
-          return `$${ fn.fullyQualifiedName } ;; ${ fn.tableIndex }\n`;
+        ...functionTable.map(fn => {
+          return `$${ fn.fqname } ;; ${ fn.index }\n`;
         })
       )
     );

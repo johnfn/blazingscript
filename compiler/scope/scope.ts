@@ -11,6 +11,7 @@ import { Modules } from "./modules";
 import { BSArrowFunction } from "../parsers/arrowfunction";
 import { BSSourceFile } from "../parsers/sourcefile";
 import { assertNever } from "../util";
+import { TypeParameters } from "./typeparameters";
 
 export enum InternalPropertyType {
   Value,
@@ -48,6 +49,7 @@ export class Scope {
   parent    : Scope | null;
   children  : Scope[];
   variables : Variables;
+  typeParams: TypeParameters;
   properties: Properties;
   functions : Functions;
   modules   : Modules;
@@ -78,6 +80,8 @@ export class Scope {
     this.functions   = new Functions(this);
     this.loops       = new Loops(this);
     this.modules     = new Modules(this);
+    this.typeParams  = new TypeParameters(this);
+
     this.children    = [];
 
     this.fileName = sourceFile.fileName;
@@ -158,6 +162,7 @@ export class Scope {
       if (
         (node.tsType.flags & TypeFlags.Number) ||
         (node.tsType.flags & TypeFlags.String) ||
+        (node.tsType.flags & TypeFlags.TypeParameter) ||
         isFunctionType(this, node.tsType)      ||
         isArrayType(this, node.tsType)
       ) {

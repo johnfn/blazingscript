@@ -97,5 +97,5 @@ WebAssembly.instantiate(
   console.log("");
 
   console.log(result.instance.exports)
-  console.log(result.instance.exports.test_simple_fat_arrow_fucntion())
+  console.log(result.instance.exports.testcontents__test_malloc())
 }).catch(e => console.log(e))

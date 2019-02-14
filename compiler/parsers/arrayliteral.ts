@@ -30,8 +30,8 @@ export class BSArrayLiteral extends BSNode {
       this.elements = buildNodeArray(scope, node.elements)
     );
 
-    scope.variables.addOnce("array_temp", this.tsType, "i32");
-    scope.variables.addOnce("array_content_temp", this.tsType, "i32");
+    scope.variables.addOnce("array_temp", "i32");
+    scope.variables.addOnce("array_content_temp", "i32");
   }
 
   compile(scope: Scope): Sexpr {

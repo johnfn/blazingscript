@@ -41,16 +41,20 @@ export type Function = {
    */
   name              : string;
 
+  isGeneric         : boolean;
+
   moduleName        : string;
+
+  supportedTypeParams    : string[];
 
   /**
    * Fully qualified name of the function, e.g. Array__indexOf
    */
-  fullyQualifiedName: string;
+  getFullyQualifiedName: (typeParam?: string) => string;
 
   className         : string | null;
   overload          : OperatorOverload | null;
-  tableIndex        : number;
+  getTableIndex     : (typeParam?: string) => number;
   signature         : WasmFunctionSignature;
 };
 
@@ -210,15 +214,21 @@ export class Functions {
       }
     }
 
+    const id = Functions.TableIndex;
+
     const fn: Function = {
-      name              : methodName,
-      fullyQualifiedName,
-      moduleName        : normalizePath(this.scope.sourceFile.fileName),
-      className         ,
-      overload          ,
-      tableIndex        : Functions.TableIndex++,
-      signature         : Functions.GetSignature(this.scope, type),
+      name                 : methodName,
+      getFullyQualifiedName: () => fullyQualifiedName,
+      supportedTypeParams  : [""],
+      moduleName           : normalizePath(this.scope.sourceFile.fileName),
+      className            ,
+      overload             ,
+      getTableIndex        : () => id,
+      signature            : Functions.GetSignature(this.scope, type),
+      isGeneric            : false,
     };
+
+    Functions.TableIndex++;
 
     this.scope.functions.list.push(fn);
 
@@ -231,11 +241,29 @@ export class Functions {
 
     if (node instanceof BSFunctionDeclaration && !node.name) { throw new Error("Dont support anonymous functions yet."); }
 
-    const id         = Functions.TableIndex++;
-    const signature  = Functions.GetSignature(this.scope, node.tsType);
+    // const typeParameters = this.scope.typeChecker.symbolToTypeParameterDeclarations(node.tsType.symbol);
+    const signatures = this.scope.typeChecker.getSignaturesOfType(node.tsType, SignatureKind.Call);
+
+    if (signatures.length > 1) { throw new Error("Dont support functions with > 1 signature yet."); }
+    const signature = signatures[0];
+
+    const id            = Functions.TableIndex;
+    const wasmSignature = Functions.GetSignature(this.scope, node.tsType);
+    const isGeneric     = signature.typeParameters ? signature.typeParameters.length > 0 : false;
     let name              : string;
     let fullyQualifiedName: string;
     let moduleName        : string;
+
+    /*
+    if (node.tsType.symbol.name === "genericfn") {
+      console.log(
+        node.tsType.symbol.name, 
+        node.tsType.aliasTypeArguments,
+        this.scope.typeChecker.typeToString(node.tsType),
+      );
+      console.log((sig[0].typeParameters || []).map(x => x.symbol.name));
+    }
+    */
 
     if (node instanceof BSFunctionDeclaration) {
       name               = node.name!; // i checked this above.
@@ -253,14 +281,20 @@ export class Functions {
       return assertNever(node);
     }
 
+    const supportedTypeParams = isGeneric ? ["string", "number"] : [""];
+
+    Functions.TableIndex += supportedTypeParams.length;
+
     fn = {
-      signature         ,
-      moduleName        ,
-      name              ,
-      fullyQualifiedName,
-      className         ,
-      tableIndex        : id,
-      overload          : null,
+      signature            : wasmSignature,
+      moduleName           ,
+      name                 ,
+      isGeneric            ,
+      getFullyQualifiedName: (typeName = "") => fullyQualifiedName + (typeName === "" ? "" : "__" + typeName),
+      supportedTypeParams  , 
+      className            ,
+      getTableIndex        : (typeName = "") => id + supportedTypeParams.indexOf(typeName),
+      overload             : null,
     };
 
     this.list.push(fn);
@@ -311,7 +345,7 @@ export class Functions {
     return S(
       "i32",
       "call",
-      "$" + fn.fullyQualifiedName,
+      "$" + fn.getFullyQualifiedName(),
       thisExpr,
       ...parseStatementListBS(this.scope, argExprs)
     );

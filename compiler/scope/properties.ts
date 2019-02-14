@@ -54,11 +54,8 @@ export class Properties {
     const relevantFunction  = relevantFunctions[0];
 
     if (relevantFunction) {
-      return S.Const(relevantFunction.tableIndex);
+      return S.Const(relevantFunction.getTableIndex());
     }
-
-    console.log(cls.toString());
-    console.log(cls.functions.list.map(x => x.fullyQualifiedName));
 
     throw new Error(`cant find property ${ name } in class ${ expr.fullText }`);
   }

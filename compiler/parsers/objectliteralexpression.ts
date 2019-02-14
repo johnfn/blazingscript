@@ -59,9 +59,9 @@ export class BSObjectLiteralExpression extends BSNode {
 
     this.createObjectType(scope);
 
-    scope.variables.addOnce("obj_temp", this.tsType, "i32");
-    scope.variables.addOnce("array_temp", this.tsType, "i32");
-    scope.variables.addOnce("array_content_temp", this.tsType, "i32");
+    scope.variables.addOnce("obj_temp", "i32");
+    scope.variables.addOnce("array_temp", "i32");
+    scope.variables.addOnce("array_content_temp", "i32");
   }
 
   static ObjectTypes: ObjectLiteralMapping[] = [];

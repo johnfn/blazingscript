@@ -519,3 +519,20 @@ function test_object_literal() {
 
   return x.a === 1 && x.b === 2 && x.c === 3;
 }
+
+function myGenericFn<T>(thing: T): T {
+  return thing;
+}
+
+function test_generic_fn() {
+  const abc = "abc";
+  const _123 = 123;
+
+  const str = myGenericFn(abc);
+  const num = myGenericFn(_123);
+
+  return (
+    str === "abc" &&
+    num === 123
+  )
+}

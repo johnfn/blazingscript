@@ -1,3 +1,16 @@
+* Before I do any serious object literals, I need Array<T> to handle T = String. Somehow.
+  Hmm. I would need to scan the entire code base to find Array<T> and duplicate the templated
+  code for every value of T.
+  * in function.ts, im hacking a fq name by appending __string or whatever.
+  
+* this basically means i need to abstract over tstypes and create my own - since i'm going to 
+  have to invent types for every T. Oh well, it was bound to happen eventually.
+  * remove check if its a type parameter in parameter.ts after this happens.
+    and scope.ts
+  * in callexpression, construct an actual type rather than a string.
+
+* use valueDeclaration, not declarations.
+
 * object literals
   * We need to do deduping of object literal types:
      * Typescript will accept { b: number, a: number } and { a: number, b: number } to be passed 

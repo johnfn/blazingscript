@@ -28,10 +28,11 @@ export class BSParameter extends BSNode {
     if (
       this.tsType.flags & TypeFlags.NumberLike ||
       this.tsType.flags & TypeFlags.StringLike ||
-      isFunctionType(scope, this.tsType)         ||
+      this.tsType.flags & TypeFlags.TypeParameter || 
+      isFunctionType(scope, this.tsType)       ||
       isArrayType(scope, this.tsType)
     ) {
-      scope.variables.add({ name: this.bindingName.text, tsType: this.tsType, wasmType: "i32", isParameter: true });
+      scope.variables.add({ name: this.bindingName.text, wasmType: "i32", isParameter: true });
     } else {
       throw new Error(`Do not know how to handle that type: ${ TypeFlags[this.tsType.flags] } for ${ this.fullText }`);
     }

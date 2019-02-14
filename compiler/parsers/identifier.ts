@@ -1,4 +1,4 @@
-import { Identifier } from "typescript";
+import { Identifier, SignatureKind } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
@@ -27,9 +27,20 @@ export class BSIdentifier extends BSNode {
     }
 
     const fn = scope.functions.getFunctionByName(this.text);
+    const signatures = scope.typeChecker.getSignaturesOfType(this.tsType, SignatureKind.Call);
+    if (signatures.length > 1) { throw new Error("Dont support functions with > 1 signature yet."); }
+    const signature = signatures[0];
+    const isGeneric = signature.typeParameters ? signature.typeParameters.length > 0 : false;
 
     if (fn) {
-      return S.Const(fn.tableIndex);
+      if (isGeneric) {
+        const typeParamName = signature.typeParameters![0].symbol.name;
+        const typeParamType = scope.typeParams.get(typeParamName);
+
+        return S.Const(fn.getTableIndex(typeParamType.substitutedType));
+      } else {
+        return S.Const(fn.getTableIndex());
+      }
     }
 
     console.log(this.text);
