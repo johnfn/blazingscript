@@ -10,6 +10,7 @@ interface Array<T> {
   concat(secondArray: number[]): number[];
   reverse(): number[];
   map(fn: (val: number) => number): number[];
+  generic_method<T>(x: T): T;
 }
 
 interface Boolean {

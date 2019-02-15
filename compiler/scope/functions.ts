@@ -42,6 +42,7 @@ export type Function = {
   name              : string;
 
   isGeneric         : boolean;
+  typeParamSig      : string[];
 
   moduleName        : string;
 
@@ -168,6 +169,7 @@ export class Functions {
     className         : string;
     methodName        : string;
     fullyQualifiedName: string;
+    classType         : Type;
   } {
     const methodName = scope.typeChecker.symbolToString(type.symbol);
     const sig = scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
@@ -186,6 +188,7 @@ export class Functions {
       className,
       methodName,
       fullyQualifiedName: `${ className }__${ methodName }`,
+      classType,
     };
   }
 
@@ -214,21 +217,36 @@ export class Functions {
       }
     }
 
+    const signatures = this.scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
+    if (signatures.length > 1) { throw new Error("Dont support functions with > 1 signature yet."); }
+    const signature = signatures[0];
+    const isGeneric = signature.typeParameters ? signature.typeParameters.length > 0 : false;
+    const supportedTypeParams = isGeneric ? ["string", "number"] : [""];
+    const typeParamSig = signature.typeParameters ? signature.typeParameters.map(x => x.symbol.name) : [];
     const id = Functions.TableIndex;
+
+    Functions.TableIndex += supportedTypeParams.length;
 
     const fn: Function = {
       name                 : methodName,
-      getFullyQualifiedName: () => fullyQualifiedName,
-      supportedTypeParams  : [""],
+      getFullyQualifiedName: (typeName = "") => fullyQualifiedName + (typeName === "" ? "" : "__" + typeName),
+      supportedTypeParams  ,
       moduleName           : normalizePath(this.scope.sourceFile.fileName),
       className            ,
       overload             ,
-      getTableIndex        : () => id,
-      signature            : Functions.GetSignature(this.scope, type),
-      isGeneric            : false,
-    };
+      typeParamSig         ,
+      getTableIndex        : (typeName = "") => {
+        const index = supportedTypeParams.indexOf(typeName);
 
-    Functions.TableIndex++;
+        if (index === -1) {
+          throw new Error(`Cant find type name: ${ typeName }`);
+        }
+
+        return id + supportedTypeParams.indexOf(typeName);
+      },
+      signature            : Functions.GetSignature(this.scope, type),
+      isGeneric            ,
+    };
 
     this.scope.functions.list.push(fn);
 
@@ -241,15 +259,15 @@ export class Functions {
 
     if (node instanceof BSFunctionDeclaration && !node.name) { throw new Error("Dont support anonymous functions yet."); }
 
-    // const typeParameters = this.scope.typeChecker.symbolToTypeParameterDeclarations(node.tsType.symbol);
     const signatures = this.scope.typeChecker.getSignaturesOfType(node.tsType, SignatureKind.Call);
 
     if (signatures.length > 1) { throw new Error("Dont support functions with > 1 signature yet."); }
     const signature = signatures[0];
 
+    const isGeneric     = signature.typeParameters ? signature.typeParameters.length > 0 : false;
     const id            = Functions.TableIndex;
     const wasmSignature = Functions.GetSignature(this.scope, node.tsType);
-    const isGeneric     = signature.typeParameters ? signature.typeParameters.length > 0 : false;
+    const typeParamSig  = signature.typeParameters ? signature.typeParameters.map(x => x.symbol.name) : [];
     let name              : string;
     let fullyQualifiedName: string;
     let moduleName        : string;
@@ -290,6 +308,7 @@ export class Functions {
       moduleName           ,
       name                 ,
       isGeneric            ,
+      typeParamSig         ,
       getFullyQualifiedName: (typeName = "") => fullyQualifiedName + (typeName === "" ? "" : "__" + typeName),
       supportedTypeParams  , 
       className            ,
@@ -381,24 +400,6 @@ export class Functions {
     }
 
     throw new Error(`Can't find function ${ identifier.text }`);
-  }
-
-  getMethodByName(type: Type, methodName: string): Function {
-    const cls = this.scope.getScopeForClass(type);
-
-    if (cls === null) {
-      throw new Error(`Cant find appropriate method`);
-    }
-
-    for (const fn of cls.functions.list) {
-      if (fn.name === methodName) {
-        return fn;
-      }
-    }
-
-    throw new Error(
-      `Failed to find function ref by class name ${ this.scope.typeChecker.typeToString(type) } and method name ${ methodName }`
-    );
   }
 
   getMethodByOperator(type: Type, operator: Operator): Function {

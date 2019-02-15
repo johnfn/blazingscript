@@ -54,7 +54,17 @@ export class Properties {
     const relevantFunction  = relevantFunctions[0];
 
     if (relevantFunction) {
-      return S.Const(relevantFunction.getTableIndex());
+      let typeParam = "";
+
+      if (relevantFunction.typeParamSig.length > 0) {
+        if (relevantFunction.typeParamSig.length > 1) {
+          throw new Error("Dont handle type param signatures > 1 length yet!");
+        }
+
+        typeParam = this.scope.typeParams.get(relevantFunction.typeParamSig[0]).substitutedType;
+      }
+
+      return S.Const(relevantFunction.getTableIndex(typeParam));
     }
 
     throw new Error(`cant find property ${ name } in class ${ expr.fullText }`);

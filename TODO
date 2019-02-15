@@ -3,11 +3,22 @@
   code for every value of T.
   * in function.ts, im hacking a fq name by appending __string or whatever.
   
+* instead of properties.get() which looks up a method by hunting down the class, i should 
+  be able to go directly from a symbol to a method. then i could rewrite methods so they could 
+  figure out their type parameters without a ton of hacking.
+  * basically the way i do method resolution right now is a GIANT HACK and i should just replace it entire.
+
+* function and method code is really similar:
+   * in scopes/functions
+   * in parser/(function|method)
+
 * this basically means i need to abstract over tstypes and create my own - since i'm going to 
   have to invent types for every T. Oh well, it was bound to happen eventually.
   * remove check if its a type parameter in parameter.ts after this happens.
     and scope.ts
   * in callexpression, construct an actual type rather than a string.
+
+* clear out T after we use it in call expression, so it doesn't linger around.
 
 * use valueDeclaration, not declarations.
 

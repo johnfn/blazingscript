@@ -100,4 +100,8 @@ export class ArrayImpl {
 
     return result;
   }
+
+  generic_method<T>(x: T): T {
+    return x;
+  }
 }

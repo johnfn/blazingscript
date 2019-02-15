@@ -1,4 +1,4 @@
-import { ClassDeclaration, MethodDeclaration } from "typescript";
+import { ClassDeclaration, MethodDeclaration, Type } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope, ScopeName } from "../scope/scope";
 import { Function, Functions } from "../scope/functions";
@@ -30,13 +30,15 @@ export class BSMethodDeclaration extends BSNode {
   name       : string | null;
 
   decorators : BSDecorator[];
-  declaration: Sexpr  | null = null;
+  declaration: Sexpr[] | null = null;
   scope      : Scope;
   methodInfo : {
     className         : string;
     methodName        : string;
     fullyQualifiedName: string;
+    classType         : Type;
   };
+  typeParams : string[];
 
   constructor(
     scope : Scope,
@@ -46,6 +48,7 @@ export class BSMethodDeclaration extends BSNode {
     super(scope, node);
 
     this.methodInfo = Functions.GetMethodTypeInfo(scope, this.tsType);
+    this.typeParams = node.typeParameters ? node.typeParameters.map(x => x.getText()) : [];
 
     this.scope = scope.addScopeFor({ type: ScopeName.Method, symbol: this.tsType.symbol });
     this.children = flattenArray(
@@ -69,28 +72,60 @@ export class BSMethodDeclaration extends BSNode {
 
     const ret = last && last.type === "i32" ? undefined : S.Const(0);
 
-    this.declaration = S.Func({
-      name: this.methodInfo.fullyQualifiedName,
-      params: [
-        {
-          name: THIS_NAME,
-          type: "i32"
-        },
-        ...params
-      ],
-      body: [
-        ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
-        ...sb,
-        ...(ret ? [ret] : [])
-      ]
-    });
+    this.declaration = [];
+
+    // TODO: Remove this hackery. 
+
+    const cls = this.scope.getScopeForClass(this.methodInfo.classType);
+    if (!cls) { throw new Error("this is a really bad error.") }
+    const fn = cls.functions.list.filter(fn => fn.name === this.name)[0];
+    if (!fn) { throw new Error("function not found...") }
+
+    if (fn.supportedTypeParams.length > 0) {
+      for (const type of fn.supportedTypeParams) {
+        this.scope.typeParams.add({ name: this.typeParams[0], substitutedType: type });
+
+        this.declaration.push(S.Func({
+          name: fn.getFullyQualifiedName(type),
+          params: [
+            {
+              name: THIS_NAME,
+              type: "i32"
+            },
+            ...params
+          ],
+          body: [
+            ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
+            ...sb,
+            ...(ret ? [ret] : [])
+          ]
+        }));
+      }
+    } else {
+      this.declaration = [S.Func({
+        name: fn.getFullyQualifiedName(""),
+        params: [
+          {
+            name: THIS_NAME,
+            type: "i32"
+          },
+          ...params
+        ],
+        body: [
+          ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
+          ...sb,
+          ...(ret ? [ret] : [])
+        ]
+      })];
+    }
+
 
     parentScope.functions.addCompiledFunctionNode(this);
 
     return S.Const(0);
   }
 
-  getDeclaration(): Sexpr {
+  getDeclaration(): Sexpr[] {
     if (this.declaration) {
       return this.declaration;
     }

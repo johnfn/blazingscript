@@ -41,6 +41,8 @@ export class BSPropertyAccessExpression extends BSNode {
     let expr: Sexpr;
 
     if (this.expression.tsType.symbol && this.expression.tsType.symbol.flags & SymbolFlags.ObjectLiteral) {
+      // Handle object literal properties.
+
       const objectType = BSObjectLiteralExpression.FindObjectTypeBySymbol(this.expression.tsType.symbol);
       const prop = objectType.propertyOffsets.find(({ name }) => name === this.name.text);
 
@@ -51,6 +53,8 @@ export class BSPropertyAccessExpression extends BSNode {
         prop.offset
       );
     } else {
+      // Handle class properties and functions.
+
       expr = scope.properties.get({ 
         expr      : this.expression, 
         exprScope: scope, 

@@ -520,7 +520,7 @@ function test_object_literal() {
   return x.a === 1 && x.b === 2 && x.c === 3;
 }
 
-function myGenericFn<T>(thing: T): T {
+function simpleGenericFn<T>(thing: T): T {
   return thing;
 }
 
@@ -528,11 +528,28 @@ function test_generic_fn() {
   const abc = "abc";
   const _123 = 123;
 
-  const str = myGenericFn(abc);
-  const num = myGenericFn(_123);
+  const str = simpleGenericFn(abc);
+  const num = simpleGenericFn(_123);
 
   return (
     str === "abc" &&
     num === 123
-  )
+  );
+}
+
+function test_generic_method() {
+  const abc = "abc";
+  const _123 = 123;
+  const dummy: number[] = [];
+
+  const str = dummy.generic_method(abc);
+  const num = dummy.generic_method(_123);
+
+  log(str);
+  log(num);
+
+  return (
+    str === "abc" &&
+    num === 123
+  );
 }
