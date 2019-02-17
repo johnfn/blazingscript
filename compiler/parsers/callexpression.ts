@@ -21,7 +21,7 @@ export class BSCallExpression extends BSNode {
   children  : BSNode[];
   expression: BSExpression;
   arguments : BSExpression[];
-  node: CallExpression;
+  node      : CallExpression;
 
   constructor(scope: Scope, node: CallExpression, info: NodeInfo = defaultNodeInfo) {
     super(scope, node);

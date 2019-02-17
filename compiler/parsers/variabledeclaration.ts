@@ -28,7 +28,7 @@ export class BSVariableDeclaration extends BSNode {
       (this.tsType.symbol && this.tsType.symbol.flags & SymbolFlags.ObjectLiteral) ||
       isArrayType(scope, this.tsType)
     ) {
-      scope.variables.add({ name: this.nameNode.text, tsType: this.tsType, wasmType: "i32", isParameter: false });
+      scope.variables.add({ name: this.nameNode.text, wasmType: "i32", isParameter: false });
     } else {
       throw new Error(`Do not know how to handle that type: ${ TypeFlags[this.tsType.flags] } for ${ this.fullText }`);
     }

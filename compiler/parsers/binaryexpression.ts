@@ -159,12 +159,14 @@ export class BSBinaryExpression extends BSNode {
             type    : this.left.tsType,
             opName  : Operator.TripleEquals,
             thisExpr: this.left,
+            scope   : scope,
             argExprs: [this.right]
           });
         case SyntaxKind.ExclamationEqualsEqualsToken:
           return scope.functions.callMethodByOperator({
             type    : this.left.tsType,
             opName  : Operator.NotEquals,
+            scope   : scope,
             thisExpr: this.left,
             argExprs: [this.right]
           });
@@ -172,6 +174,7 @@ export class BSBinaryExpression extends BSNode {
           return scope.functions.callMethodByOperator({
             type    : this.left.tsType,
             opName  : Operator.Add,
+            scope   : scope,
             thisExpr: this.left,
             argExprs: [this.right]
           });

@@ -1,6 +1,6 @@
 import { BSMethodDeclaration } from "../parsers/method";
 import { BSFunctionDeclaration } from "../parsers/function";
-import { Type, idText, TypeFlags, SignatureKind, Signature, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration } from "typescript";
+import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration } from "typescript";
 import { BSExpression } from "../parsers/expression";
 import { Sexpr, S, WasmType } from "../sexpr";
 import { parseStatementListBS } from "../parsers/statementlist";
@@ -39,14 +39,14 @@ export type Function = {
   /**
    * Name of the function, e.g. indexOf
    */
-  name              : string;
+  name               : string;
 
-  isGeneric         : boolean;
-  typeParamSig      : string[];
+  isGeneric          : boolean;
+  typeParamSig       : string[];
 
-  moduleName        : string;
+  moduleName         : string;
 
-  supportedTypeParams    : string[];
+  supportedTypeParams: string[];
 
   /**
    * Fully qualified name of the function, e.g. Array__indexOf
@@ -272,17 +272,6 @@ export class Functions {
     let fullyQualifiedName: string;
     let moduleName        : string;
 
-    /*
-    if (node.tsType.symbol.name === "genericfn") {
-      console.log(
-        node.tsType.symbol.name, 
-        node.tsType.aliasTypeArguments,
-        this.scope.typeChecker.typeToString(node.tsType),
-      );
-      console.log((sig[0].typeParameters || []).map(x => x.symbol.name));
-    }
-    */
-
     if (node instanceof BSFunctionDeclaration) {
       name               = node.name!; // i checked this above.
       fullyQualifiedName = normalizePath(this.scope.sourceFile.fileName) + "__" + node.name;
@@ -332,10 +321,7 @@ export class Functions {
   getAll(scope: Scope | null = null): Function[] {
     if (scope === null) { scope = this.scope; }
 
-    const scopes = this.scope.getAllScopes(scope);
-    const functions = ([] as Function[]).concat(...scopes.map(x => x.functions.list));
-
-    return functions;
+    return scope.functions.list;
   }
 
   getAllNodes(): CompileableFunctionNode[] {
@@ -349,13 +335,14 @@ export class Functions {
   callMethodByOperator(props: {
     type     : Type;
     opName   : Operator;
+    scope    : Scope;
     thisExpr : BSExpression;
     argExprs : BSNode[];
   }): Sexpr {
-    const { type, thisExpr: thisNode, opName, argExprs } = props;
+    const { type, thisExpr: thisNode, opName, argExprs, scope } = props;
 
     const fn       = this.getMethodByOperator(type, opName);
-    const thisExpr = thisNode.compile(this.scope);
+    const thisExpr = thisNode.compile(scope);
 
     if (!thisExpr) {
       throw new Error("wanted nonnull");
@@ -366,7 +353,7 @@ export class Functions {
       "call",
       "$" + fn.getFullyQualifiedName(),
       thisExpr,
-      ...parseStatementListBS(this.scope, argExprs)
+      ...parseStatementListBS(scope, argExprs)
     );
   }
 
@@ -386,35 +373,21 @@ export class Functions {
     return null;
   }
 
-  getFunctionByIdentifier(identifier: BSIdentifier): Function {
-    let currScope: Scope | null = this.scope;
-
-    while (currScope !== null) {
-      for (const fn of currScope.functions.list) {
-        if (fn.name === identifier.text) {
-          return fn;
-        }
-      }
-
-      currScope = currScope.parent;
-    }
-
-    throw new Error(`Can't find function ${ identifier.text }`);
-  }
-
   getMethodByOperator(type: Type, operator: Operator): Function {
-    const cls = this.scope.getScopeForClass(type);
+    const obj = this.scope.getScopeForClass(type);
 
-    if (cls === null) {
+    if (obj === null) {
       throw new Error(`Cant find appropriate method by operator`);
     }
 
+    const { cls, className } = obj;
     const functions = cls.functions.list;
 
     for (const fn of functions) {
       if (
         fn.overload &&
-        fn.overload.operator === operator
+        fn.overload.operator === operator &&
+        fn.className === className
       ) {
         return fn;
       }

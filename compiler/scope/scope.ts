@@ -77,7 +77,7 @@ export class Scope {
 
     this.variables   = new Variables(this);
     this.properties  = new Properties(this);
-    this.functions   = new Functions(this);
+    this.functions   = parent ? parent.functions : new Functions(this);
     this.loops       = new Loops(this);
     this.modules     = new Modules(this);
     this.typeParams  = new TypeParameters(this);
@@ -176,7 +176,7 @@ export class Scope {
     });
   }
 
-  getScopeForClass(type: Type): Scope | null {
+  getScopeForClass(type: Type): { className: string, cls: Scope } | null {
     let classNameToFind = "";
 
     // console.log("Looking for scope for", type.symbol);
@@ -215,7 +215,10 @@ export class Scope {
       console.log("Found too many classes! Not really a problem but i should fix this at some point.");
     }
 
-    return relevantClasses[0];
+    return {
+      className: classNameToFind,
+      cls      : relevantClasses[0],
+    };
   }
 
   toString(indent = ""): string {
@@ -227,7 +230,7 @@ export class Scope {
       string += "\n";
 
       if (this.variables.count() > 0) { string += `${ indent }  Variables: ${ this.variables.toString() }\n` ; }
-      if (this.functions.count() > 0) { string += `${ indent }  Functions: ${ this.functions.toString() }\n` ; }
+      if (this.functions.count() > 0) { string += `${ indent }  Functions: [all fns] \n` ; }
     }
 
     for (const scope of Object.keys(this.children).map(k => this.children[Number(k)])) {

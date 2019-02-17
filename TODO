@@ -1,3 +1,15 @@
+* things that would make my debugging life easier:
+   * the frustrating thing is it still COMPILES the whole program, and the bug is often in the compilation step.
+   * the proper way to do this is probably to separate out into individual jest functions. im worried it would be slow, tho
+   * ACTUAL stack traces. So I can tell when i have a mem access exception.
+
+the way that properties get methods is kind of a hack and should go through functions when i get functions working again.
+getScopeForClass is no good vvvvvvvvv
+* remove getScopeForClass.
+* I'm going to refactor the functions scope thing before I do generic classes for Array<T>.
+* I think that eventually everything should be moved off scopes and into mapped lookups by symbols.
+   - step 1: the only way we get functions should be by symbol.
+
 * Before I do any serious object literals, I need Array<T> to handle T = String. Somehow.
   Hmm. I would need to scan the entire code base to find Array<T> and duplicate the templated
   code for every value of T.
@@ -37,8 +49,8 @@
   * probably a better approach would just be to have a generic "type schema" deliverer that would produce or fetch type
     schemas on the fly given a specific symbol or type...
 
-* objects with index signatures...
 
+* objects with index signatures...
 
 * handle i64 - note that this will require arrays to double their elem size.
 

@@ -32,11 +32,13 @@ export class Properties {
     name     : string
   }): Sexpr {
     // TODO: I could store the properties directly on the class node itself, so that i dont have to go hunting them down later.
-    const cls = this.scope.getScopeForClass(expr.tsType);
+    const obj = this.scope.getScopeForClass(expr.tsType);
 
-    if (cls === null) {
+    if (obj === null) {
       throw new Error(`Cant find appropriate scope for ${ name } on ${ expr.fullText } which is a ${ this.scope.typeChecker.typeToString(expr.tsType) }`);
     }
+
+    const { className, cls } = obj;
 
     const relevantProperties = cls.properties.getAll().filter(prop => prop.name === name);
     const relevantProperty = relevantProperties[0];
@@ -50,8 +52,14 @@ export class Properties {
       return res;
     }
 
-    const relevantFunctions = cls.functions.list.filter(fn => fn.name === name);
+    const relevantFunctions = cls.functions.list.filter(fn => {
+      return fn.name === name && fn.className === className;
+    });
     const relevantFunction  = relevantFunctions[0];
+
+    if (relevantFunctions.length > 1) {
+      throw new Error("Too many relevant functions!");
+    }
 
     if (relevantFunction) {
       let typeParam = "";

@@ -9,6 +9,16 @@ import { malloc } from "./malloc"
 
 // implementations specially provided by the BlazingScript compiler
 
+function test_only_indexOf() {
+  const a = "testing blah foo";
+
+  return (
+    a.indexOf("test") === 0 &&
+    a.indexOf("blah") === 8 &&
+    a.indexOf("foo")  === 13
+  );
+}
+
 function test_malloc() {
   const x = malloc(5);
   const y = malloc(5);
@@ -230,16 +240,6 @@ function test_continue() {
   }
 
   return sum === 5;
-}
-
-function test_indexOf() {
-  const a = "testing blah foo";
-
-  return (
-    a.indexOf("test") === 0 &&
-    a.indexOf("blah") === 8 &&
-    a.indexOf("foo") === 13
-  );
 }
 
 function test_statement_then_if() {
@@ -476,16 +476,16 @@ function test_string_endsWith() {
 }
 
 function test_string_includes() {
-  const test = "Abcde";
+  const testString = "Abcde";
 
   return (
-    test.includes("bc") &&
-    test.includes("Abc") &&
-    test.includes("de") &&
-    test.includes("b") &&
-    test.includes("") &&
-    !test.includes("f") &&
-    !test.includes("Abcdefg")
+    testString.includes("bc") &&
+    testString.includes("Abc") &&
+    testString.includes("de") &&
+    testString.includes("b") &&
+    testString.includes("") &&
+    !testString.includes("f") &&
+    !testString.includes("Abcdefg")
   );
 }
 
@@ -544,9 +544,6 @@ function test_generic_method() {
 
   const str = dummy.generic_method(abc);
   const num = dummy.generic_method(_123);
-
-  log(str);
-  log(num);
 
   return (
     str === "abc" &&

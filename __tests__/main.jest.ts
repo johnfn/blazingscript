@@ -131,14 +131,27 @@ async function runProgram(str: string): Promise<{ [test: string]: number }> {
 
   await WebAssembly.instantiate(buff, importObject)
     .then(result => {
-      for (const fn in result.instance.exports) {
-        currentTest = fn;
+      const allTests = Object.keys(result.instance.exports).filter(x => x.startsWith("test_"));
+      const testOnly = allTests.filter(x => x.startsWith("test_only_"));
 
-        if (!fn.includes("test_")) {
-          continue;
+      if (testOnly.length > 0) {
+        if (testOnly.length > 1) {
+          throw new Error("more than 1 test with test_only_");
         }
 
-        results[fn] = result.instance.exports[fn]();
+        const name = testOnly[0];
+
+        results[name] = result.instance.exports[name]();
+      } else {
+        for (const fn in result.instance.exports) {
+          currentTest = fn;
+
+          if (!fn.includes("test_")) {
+            continue;
+          }
+
+          results[fn] = result.instance.exports[fn]();
+        }
       }
     })
     .catch(e => {

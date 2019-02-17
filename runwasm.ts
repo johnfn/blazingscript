@@ -97,5 +97,5 @@ WebAssembly.instantiate(
   console.log("");
 
   console.log(result.instance.exports)
-  console.log(result.instance.exports.testcontents__test_malloc())
+  console.log(result.instance.exports.testcontents__test_indexOf())
 }).catch(e => console.log(e))

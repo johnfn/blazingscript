@@ -46,6 +46,7 @@ export class BSElementAccessExpression extends BSNode {
     const expr = scope.functions.callMethodByOperator({
       type    : arrayType,
       opName  : Operator.ArrayIndex,
+      scope   : scope,
       thisExpr: this.array,
       argExprs: [this.index],
     });

@@ -76,9 +76,13 @@ export class BSMethodDeclaration extends BSNode {
 
     // TODO: Remove this hackery. 
 
-    const cls = this.scope.getScopeForClass(this.methodInfo.classType);
-    if (!cls) { throw new Error("this is a really bad error.") }
-    const fn = cls.functions.list.filter(fn => fn.name === this.name)[0];
+    const obj = this.scope.getScopeForClass(this.methodInfo.classType);
+
+    if (!obj) { throw new Error("this is a really bad error.") }
+
+    const { className, cls } = obj;
+
+    const fn = cls.functions.list.filter(fn => fn.name === this.name && fn.className === className)[0];
     if (!fn) { throw new Error("function not found...") }
 
     if (fn.supportedTypeParams.length > 0) {
