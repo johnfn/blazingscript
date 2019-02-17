@@ -26,8 +26,9 @@ export class Properties {
     return this.properties;
   }
 
-  get({ expr, exprScope, name }: {
+  get({ expr, exprScope, fnExpr, name }: {
     expr     : BSExpression,
+    fnExpr   : BSExpression;
     exprScope: Scope,
     name     : string
   }): Sexpr {
@@ -52,14 +53,7 @@ export class Properties {
       return res;
     }
 
-    const relevantFunctions = cls.functions.list.filter(fn => {
-      return fn.name === name && fn.className === className;
-    });
-    const relevantFunction  = relevantFunctions[0];
-
-    if (relevantFunctions.length > 1) {
-      throw new Error("Too many relevant functions!");
-    }
+    const relevantFunction = cls.functions.getFunctionByType(fnExpr.tsType);
 
     if (relevantFunction) {
       let typeParam = "";

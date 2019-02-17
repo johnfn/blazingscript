@@ -1,6 +1,6 @@
 import { BSMethodDeclaration } from "../parsers/method";
 import { BSFunctionDeclaration } from "../parsers/function";
-import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration, SourceFile } from "typescript";
+import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration, SourceFile, TypeFlags, SymbolFlags, Identifier, DeclarationStatement, MethodSignature, SymbolDisplayPartKind, InterfaceDeclaration } from "typescript";
 import { BSExpression } from "../parsers/expression";
 import { Sexpr, S, WasmType } from "../sexpr";
 import { parseStatementListBS } from "../parsers/statementlist";
@@ -12,6 +12,8 @@ import { BSPropertyAccessExpression } from "../parsers/propertyaccess";
 import { BSArrowFunction } from "../parsers/arrowfunction";
 import { assertNever, normalizeString as normalizePath } from "../util";
 import { BSImportSpecifier } from "../parsers/importspecifier";
+import { Constants } from "../constants";
+import { isArrayType } from "../parsers/arrayliteral";
 
 export enum Operator {
   TripleEquals = "===",
@@ -61,7 +63,8 @@ export type Function = {
 
   id: {
     start     : number;
-    sourceFile: SourceFile;
+    sourceFile: string;
+    name      : string;
   }
 };
 
@@ -78,7 +81,7 @@ export class Functions {
    */
   public static AllSignatures: { [key: string]: WasmFunctionSignature } = {};
 
-  list: Function[];
+  private list: Function[];
   functionNodes: (BSMethodDeclaration | BSFunctionDeclaration | BSArrowFunction)[];
   scope: Scope;
 
@@ -253,8 +256,9 @@ export class Functions {
       signature            : Functions.GetSignature(this.scope, type),
       isGeneric            ,
       id: {
-        start: type.symbol.valueDeclaration.getStart(),
-        sourceFile: type.symbol.valueDeclaration.getSourceFile(),
+        start     : type.symbol.valueDeclaration.getStart(),
+        sourceFile: type.symbol.valueDeclaration.getSourceFile().fileName,
+        name      : methodName,
       },
     };
 
@@ -314,8 +318,9 @@ export class Functions {
       getTableIndex        : (typeName = "") => id + supportedTypeParams.indexOf(typeName),
       overload             : null,
       id: {
-        start: node.tsType.symbol.valueDeclaration.getStart(),
-        sourceFile: node.tsType.symbol.valueDeclaration.getSourceFile(),
+        start     : node.tsType.symbol.valueDeclaration.getStart(),
+        sourceFile: node.tsType.symbol.valueDeclaration.getSourceFile().fileName,
+        name      : name,
       },
     };
 
@@ -346,14 +351,163 @@ export class Functions {
     this.functionNodes = [];
   }
 
+  /** 
+   * Attempts to find the Function for the provided type. If we haven't added it
+   * yet, then we do so now as well.
+   */
   getFunctionByType(type: Type): Function | null {
-    for (const fn of this.list) {
-      if (fn.id.sourceFile === type.symbol.valueDeclaration.getSourceFile() && fn.id.start === type.symbol.valueDeclaration.getStart()) {
-        return fn;
+    /*
+
+    TODO: This is a fairly exhaustive way of getting names of nodes that might come in handy, eventually.
+
+    let name: string;
+    const declaration = type.symbol.valueDeclaration;
+
+    if (type.symbol.valueDeclaration.kind === SyntaxKind.FunctionDeclaration) {
+      const fd = declaration as FunctionDeclaration;
+
+      name = fd.name ? fd.name.text : "anonymous_function";
+    } else if (type.symbol.valueDeclaration.kind === SyntaxKind.MethodDeclaration) {
+      const md = declaration as MethodDeclaration;
+      const propIdentifier = md.name;
+
+      if (propIdentifier.kind === SyntaxKind.Identifier) {
+        const identifier = propIdentifier as Identifier;
+
+        name = identifier.text;
+      } else {
+        throw new Error("I don't handle methods with weird name types.");
+      }
+    } else if (type.symbol.valueDeclaration.kind === SyntaxKind.DeclareKeyword) {
+      const decl = declaration as DeclarationStatement;
+      const declIdentifier = decl.name;
+
+      if (declIdentifier && declIdentifier.kind === SyntaxKind.Identifier) {
+        const identifier = declIdentifier as Identifier;
+
+        name = identifier.text;
+      } else {
+        throw new Error("I don't handle declarations with weird name types.");
+      }
+    } else if (type.symbol.valueDeclaration.kind === SyntaxKind.MethodSignature) {
+      const md = declaration as MethodSignature;
+      const propIdentifier = md.name;
+
+      if (propIdentifier.kind === SyntaxKind.Identifier) {
+        const identifier = propIdentifier as Identifier;
+
+        name = identifier.text;
+      } else {
+        throw new Error("I don't handle methods with weird name types.");
+      }
+    } else {
+      console.log(type.symbol.valueDeclaration.kind);
+      console.log(type.symbol.valueDeclaration.getText());
+
+      throw new Error("Couldnt get name of that function.");
+    }
+    */
+
+    let decl: {
+      type      : "normal declaration"
+      sourceFile: string;
+      start     : number;
+    } | {
+      type      : "library declaration";
+      sourceFile: string;
+      fnName    : string;
+    };
+
+    decl = {
+      type      : "normal declaration",
+      sourceFile: type.symbol.valueDeclaration.getSourceFile().fileName,
+      start     : type.symbol.valueDeclaration.getStart(),
+    };
+
+    /** 
+     * TypeScript declarations will lead the definitions of our standard library
+     * functions to our library definition file, which, while accurate, is not
+     * very helpful for us when we want to get the actual locations of those
+     * files. So we rewrite the declaration locations to be in the right place
+     * for those functions.
+     */
+    if (type.symbol.valueDeclaration.getSourceFile().fileName === Constants.LIB_FILE) {
+      if (type.symbol.valueDeclaration.kind === SyntaxKind.MethodSignature) {
+        /**
+         * Get method name.
+         */
+
+        const md = type.symbol.valueDeclaration as MethodSignature;
+        const propIdentifier = md.name;
+        let fnName: string;
+
+        if (propIdentifier.kind === SyntaxKind.Identifier) {
+          const identifier = propIdentifier as Identifier;
+
+          fnName = identifier.text;
+        } else {
+          throw new Error("I don't handle methods with weird name types.");
+        }
+
+        /**
+         * Get method source file.
+         */
+
+        const parent = type.symbol.valueDeclaration.parent;
+        let sourceFile: string;
+
+        if (parent.kind === SyntaxKind.InterfaceDeclaration) {
+          const interfaceNode = parent as InterfaceDeclaration;
+
+          if (interfaceNode.name.text === "String") {
+            sourceFile = Constants.STRING_LIB_FILE;
+          } else if (interfaceNode.name.text === "Array") {
+            sourceFile = Constants.ARRAY_LIB_FILE;
+          } else {
+            console.log(type.symbol.valueDeclaration.getText());
+
+            throw new Error("Unhandled library function interface name (expected String or Array).");
+          }
+        } else {
+          throw new Error("Unhandled library function parent type.");
+        }
+
+        decl = {
+          type      : "library declaration",
+          sourceFile,
+          fnName    ,
+        }
+      } else {
+        throw new Error("Unhandled library function child type.");
       }
     }
 
-    return null;
+    for (const fn of this.list) {
+      if (decl.type === "normal declaration") {
+        if (
+          fn.id.sourceFile === decl.sourceFile && 
+          fn.id.start      === decl.start
+        ) {
+          return fn;
+        }
+      } else if (decl.type === "library declaration") {
+        if (
+          fn.id.sourceFile === decl.sourceFile && 
+          fn.id.name       === decl.fnName
+        ) {
+          return fn;
+        }
+      }
+    }
+
+    console.log(type.symbol.name);
+    // console.log(this.list.map(x => x.name));
+    console.log(type.symbol.declarations.length);
+    console.log(type.symbol.valueDeclaration.getSourceFile().fileName);
+    console.log(type.symbol.valueDeclaration.getStart());
+    console.log(decl);
+
+    throw new Error("Can't find function for type")
   }
 
   getMethodByOperator(type: Type, operator: Operator): Function {

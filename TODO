@@ -1,7 +1,6 @@
-* things that would make my debugging life easier:
-   * the frustrating thing is it still COMPILES the whole program, and the bug is often in the compilation step.
-   * the proper way to do this is probably to separate out into individual jest functions. im worried it would be slow, tho
-   * ACTUAL stack traces. So I can tell when i have a mem access exception.
+* The whole thing about adding functions specifically when we see classes is dumb. we should add them 
+  whenever we see them.
+  * need to change addFunction to take at ype in order to do this.
 
 the way that properties get methods is kind of a hack and should go through functions when i get functions working again.
 getScopeForClass is no good vvvvvvvvv
@@ -9,6 +8,11 @@ getScopeForClass is no good vvvvvvvvv
 * I'm going to refactor the functions scope thing before I do generic classes for Array<T>.
 * I think that eventually everything should be moved off scopes and into mapped lookups by symbols.
    - step 1: the only way we get functions should be by symbol.
+
+* things that would make my debugging life easier:
+   * the frustrating thing is it still COMPILES the whole program, and the bug is often in the compilation step.
+   * the proper way to do this is probably to separate out into individual jest functions. im worried it would be slow, tho
+   * ACTUAL stack traces. So I can tell when i have a mem access exception.
 
 * is className required in Function? Is it for methods, or what?
 * i should be able to generate S.Call from a Function. - see elementaccess
