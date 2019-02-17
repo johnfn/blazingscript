@@ -1,6 +1,6 @@
 import { BSMethodDeclaration } from "../parsers/method";
 import { BSFunctionDeclaration } from "../parsers/function";
-import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration } from "typescript";
+import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration, SourceFile } from "typescript";
 import { BSExpression } from "../parsers/expression";
 import { Sexpr, S, WasmType } from "../sexpr";
 import { parseStatementListBS } from "../parsers/statementlist";
@@ -16,7 +16,7 @@ import { BSImportSpecifier } from "../parsers/importspecifier";
 export enum Operator {
   TripleEquals = "===",
   NotEquals    = "!==",
-  Add          = "+",
+  Plus         = "+",
   ArrayIndex   = "[]",
 };
 
@@ -48,8 +48,9 @@ export type Function = {
 
   supportedTypeParams: string[];
 
-  /**
-   * Fully qualified name of the function, e.g. Array__indexOf
+  /** 
+   * Fully qualified name of the function, e.g. Array__indexOf, that we will
+   * refer to this function by in the generated wasm
    */
   getFullyQualifiedName: (typeParam?: string) => string;
 
@@ -57,6 +58,11 @@ export type Function = {
   overload          : OperatorOverload | null;
   getTableIndex     : (typeParam?: string) => number;
   signature         : WasmFunctionSignature;
+
+  id: {
+    start     : number;
+    sourceFile: SourceFile;
+  }
 };
 
 export type CompileableFunctionNode =
@@ -246,6 +252,10 @@ export class Functions {
       },
       signature            : Functions.GetSignature(this.scope, type),
       isGeneric            ,
+      id: {
+        start: type.symbol.valueDeclaration.getStart(),
+        sourceFile: type.symbol.valueDeclaration.getSourceFile(),
+      },
     };
 
     this.scope.functions.list.push(fn);
@@ -303,6 +313,10 @@ export class Functions {
       className            ,
       getTableIndex        : (typeName = "") => id + supportedTypeParams.indexOf(typeName),
       overload             : null,
+      id: {
+        start: node.tsType.symbol.valueDeclaration.getStart(),
+        sourceFile: node.tsType.symbol.valueDeclaration.getSourceFile(),
+      },
     };
 
     this.list.push(fn);
@@ -332,42 +346,11 @@ export class Functions {
     this.functionNodes = [];
   }
 
-  callMethodByOperator(props: {
-    type     : Type;
-    opName   : Operator;
-    scope    : Scope;
-    thisExpr : BSExpression;
-    argExprs : BSNode[];
-  }): Sexpr {
-    const { type, thisExpr: thisNode, opName, argExprs, scope } = props;
-
-    const fn       = this.getMethodByOperator(type, opName);
-    const thisExpr = thisNode.compile(scope);
-
-    if (!thisExpr) {
-      throw new Error("wanted nonnull");
-    }
-
-    return S(
-      "i32",
-      "call",
-      "$" + fn.getFullyQualifiedName(),
-      thisExpr,
-      ...parseStatementListBS(scope, argExprs)
-    );
-  }
-
-  getFunctionByName(name: string): Function | null {
-    let currScope: Scope | null = this.scope;
-
-    while (currScope !== null) {
-      for (const fn of currScope.functions.list) {
-        if (fn.name === name) {
-          return fn;
-        }
+  getFunctionByType(type: Type): Function | null {
+    for (const fn of this.list) {
+      if (fn.id.sourceFile === type.symbol.valueDeclaration.getSourceFile() && fn.id.start === type.symbol.valueDeclaration.getStart()) {
+        return fn;
       }
-
-      currScope = currScope.parent;
     }
 
     return null;

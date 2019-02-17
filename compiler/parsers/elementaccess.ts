@@ -7,6 +7,7 @@ import { flattenArray } from "../util";
 import { buildNode } from "./nodeutil";
 import { isArrayType } from "./arrayliteral";
 import { Operator } from "../scope/functions";
+import { parseStatementListBS } from "./statementlist";
 
 /**
  * e.g. const x = myArray[5];
@@ -43,14 +44,12 @@ export class BSElementAccessExpression extends BSNode {
       }
     }
 
-    const expr = scope.functions.callMethodByOperator({
-      type    : arrayType,
-      opName  : Operator.ArrayIndex,
-      scope   : scope,
-      thisExpr: this.array,
-      argExprs: [this.index],
-    });
+    const fn = scope.functions.getMethodByOperator(arrayType, Operator.ArrayIndex);
+    const thisExpr = this.array.compile(scope);
+    const indexExpr = this.index.compile(scope);
 
+    const expr = S.CallWithThis(fn, thisExpr, indexExpr);
+    
     if (
       isArrayType(scope, this.array.tsType)
     ) {

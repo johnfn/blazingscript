@@ -8,6 +8,7 @@ import {
 } from "typescript";
 import { Sexpr, S, sexprToString } from "../sexpr";
 import { Scope } from "../scope/scope";
+import { Function } from "../scope/functions";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSIdentifier } from "./identifier";
 import { flattenArray } from "../util";
@@ -153,34 +154,23 @@ export class BSBinaryExpression extends BSNode {
       this.left.tsType.flags  & TypeFlags.StringLike &&
       this.right.tsType.flags & TypeFlags.StringLike
     ) {
+      let fn: Function;
+
       switch (this.operatorToken.kind) {
-        case SyntaxKind.EqualsEqualsEqualsToken:
-          return scope.functions.callMethodByOperator({
-            type    : this.left.tsType,
-            opName  : Operator.TripleEquals,
-            thisExpr: this.left,
-            scope   : scope,
-            argExprs: [this.right]
-          });
-        case SyntaxKind.ExclamationEqualsEqualsToken:
-          return scope.functions.callMethodByOperator({
-            type    : this.left.tsType,
-            opName  : Operator.NotEquals,
-            scope   : scope,
-            thisExpr: this.left,
-            argExprs: [this.right]
-          });
+        case SyntaxKind.EqualsEqualsEqualsToken: 
+          fn = scope.functions.getMethodByOperator(this.left.tsType, Operator.TripleEquals);
+          break;
+        case SyntaxKind.ExclamationEqualsEqualsToken: 
+          fn = scope.functions.getMethodByOperator(this.left.tsType, Operator.NotEquals);
+          break;
         case SyntaxKind.PlusToken:
-          return scope.functions.callMethodByOperator({
-            type    : this.left.tsType,
-            opName  : Operator.Add,
-            scope   : scope,
-            thisExpr: this.left,
-            argExprs: [this.right]
-          });
+          fn = scope.functions.getMethodByOperator(this.left.tsType, Operator.Plus);
+          break;
         default:
           throw new Error(`unsupported binary expression ${this.fullText}`);
       }
+
+      return S.CallWithThis(fn, this.left.compile(scope), this.right.compile(scope));
     }
 
     throw new Error(`unhandled types for binary expression ${this.fullText} ${ TypeFlags[this.left.tsType.flags] }.`);

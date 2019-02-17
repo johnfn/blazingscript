@@ -160,8 +160,8 @@ export class BSClassDeclaration extends BSNode {
 
               if (opName === Operator.NotEquals) {
                 return { operator: Operator.NotEquals };
-              } else if (opName === Operator.Add) {
-                return { operator: Operator.Add };
+              } else if (opName === Operator.Plus) {
+                return { operator: Operator.Plus };
               } else if (opName === Operator.TripleEquals) {
                 return { operator: Operator.TripleEquals };
               } else if (opName === Operator.ArrayIndex) {

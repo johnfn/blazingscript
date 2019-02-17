@@ -1,4 +1,5 @@
 import { Variable } from "./scope/variables";
+import { Function } from "./scope/functions";
 
 export type WasmType = "i32" | "f32" | "i64" | "f64" | "[]";
 
@@ -124,6 +125,25 @@ S.Func = ({
   S("[]", "result", "i32"),
   ...body
 );
+
+S.Call = (fn: Function, ...args: Sexpr[]) => {
+  return S(
+    "i32",
+    "call",
+    "$" + fn.getFullyQualifiedName(),
+    ...args,
+  );
+}
+
+S.CallWithThis = (fn: Function, thisExpr: Sexpr, ...args: Sexpr[]) => {
+  return S(
+    "i32",
+    "call",
+    "$" + fn.getFullyQualifiedName(),
+    thisExpr,
+    ...args,
+  );
+}
 
 /**
  * Reminder: dont use this function! use scope.getVariable instead.

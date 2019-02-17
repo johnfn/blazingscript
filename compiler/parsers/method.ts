@@ -9,11 +9,7 @@ import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
 import { BSDecorator } from "./decorator";
-import { BSCallExpression } from "./callexpression";
-import { BSIdentifier } from "./identifier";
-import { BSStringLiteral } from "./stringliteral";
 import { buildNode, buildNodeArray } from "./nodeutil";
-import { BSClassDeclaration } from "./class";
 
 /**
  * e.g. class Foo { method() { } }
