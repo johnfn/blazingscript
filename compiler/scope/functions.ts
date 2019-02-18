@@ -1,6 +1,6 @@
 import { BSMethodDeclaration } from "../parsers/method";
 import { BSFunctionDeclaration } from "../parsers/function";
-import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration, SourceFile, TypeFlags, SymbolFlags, Identifier, DeclarationStatement, MethodSignature, SymbolDisplayPartKind, InterfaceDeclaration } from "typescript";
+import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration, SourceFile, TypeFlags, SymbolFlags, Identifier, DeclarationStatement, MethodSignature, SymbolDisplayPartKind, InterfaceDeclaration, ClassDeclaration } from "typescript";
 import { BSExpression } from "../parsers/expression";
 import { Sexpr, S, WasmType } from "../sexpr";
 import { parseStatementListBS } from "../parsers/statementlist";
@@ -65,7 +65,7 @@ export type Function = {
     start     : number;
     sourceFile: string;
     name      : string;
-  }
+  };
 };
 
 export type CompileableFunctionNode =
@@ -358,7 +358,7 @@ export class Functions {
   getFunctionByType(type: Type): Function | null {
     /*
 
-    TODO: This is a fairly exhaustive way of getting names of nodes that might come in handy, eventually.
+    TODO: This is a fairly exhaustive way of getting names of nodes that might come in handy someday.
 
     let name: string;
     const declaration = type.symbol.valueDeclaration;
@@ -510,21 +510,37 @@ export class Functions {
     throw new Error("Can't find function for type")
   }
 
-  getMethodByOperator(type: Type, operator: Operator): Function {
-    const obj = this.scope.getScopeForClass(type);
-
-    if (obj === null) {
-      throw new Error(`Cant find appropriate method by operator`);
+  private getParentTypeOfMethod(type: Type): string {
+    if (type.flags & TypeFlags.StringLike) {
+      return "StringImpl";
     }
 
-    const { cls, className } = obj;
-    const functions = cls.functions.list;
+    if (isArrayType(this.scope, type)) {
+      return "ArrayImpl";
+    }
 
-    for (const fn of functions) {
+    const methodDecl = type.symbol.valueDeclaration;
+    const parent = methodDecl.parent;
+
+    if (parent.kind === SyntaxKind.ClassDeclaration) {
+      const classDecl = parent as ClassDeclaration;
+
+      if (!classDecl.name) { throw new Error("Anonymous classes not supported."); }
+
+      return classDecl.name.text;
+    } else {
+      throw new Error("couldn't find a class for provided type. it might not be a method.");
+    }
+  }
+
+  getMethodByOperator(type: Type, operator: Operator): Function {
+    const parentName = this.getParentTypeOfMethod(type);
+
+    for (const fn of this.list) {
       if (
         fn.overload &&
         fn.overload.operator === operator &&
-        fn.className === className
+        fn.className         === parentName
       ) {
         return fn;
       }

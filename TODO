@@ -1,3 +1,8 @@
+* Remove getScopeForClass. Just look up the function directly by type.
+
+* can i get a better type return for getParentTypeOfMethod
+   * merge it with GetMethodTypeInfo?
+
 * The whole thing about adding functions specifically when we see classes is dumb. we should add them 
   whenever we see them.
   * need to change addFunction to take at ype in order to do this.
