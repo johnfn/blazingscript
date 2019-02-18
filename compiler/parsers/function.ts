@@ -18,7 +18,6 @@ export class BSFunctionDeclaration extends BSNode {
   parameters : BSParameter[];
   body       : BSBlock | null;
   name       : string | null;
-  fn         : Function;
   fileName   : string;
   scope      : Scope;
   typeParams : string[];
@@ -38,10 +37,11 @@ export class BSFunctionDeclaration extends BSNode {
       this.parameters = buildNodeArray(this.scope, node.parameters),
     );
 
-    this.fn = parentScope.functions.addFunction(this.tsType);
   }
 
   compile(parentScope: Scope): Sexpr {
+    const fn = parentScope.functions.getFunctionByType(this.tsType);
+
     const params     = this.scope.getParameters(this.parameters);
     const statements = parseStatementListBS(this.scope, this.body!.children);
     let lastStatement: Sexpr | null = null;
@@ -54,13 +54,13 @@ export class BSFunctionDeclaration extends BSNode {
 
     this.declaration = [];
 
-    if (this.fn.supportedTypeParams.length > 0) {
-      for (const type of this.fn.supportedTypeParams) {
+    if (fn.supportedTypeParams.length > 0) {
+      for (const type of fn.supportedTypeParams) {
         this.scope.typeParams.add({ name: this.typeParams[0], substitutedType: type });
 
         this.declaration.push(
           S.Func({
-            name  : this.fn.getFullyQualifiedName(type),
+            name  : fn.getFullyQualifiedName(type),
             params: params,
             body  : [
               ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
@@ -73,7 +73,7 @@ export class BSFunctionDeclaration extends BSNode {
     } else {
       this.declaration = [
         S.Func({
-          name  : this.fn.getFullyQualifiedName(),
+          name  : fn.getFullyQualifiedName(),
           params: params,
           body  : [
             ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),

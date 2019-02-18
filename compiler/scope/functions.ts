@@ -439,7 +439,7 @@ export class Functions {
   /** 
    * Attempts to find the Function for the provided type.
    */
-  getFunctionByType(type: Type): Function | null {
+  getFunctionByType(type: Type): Function {
     const id = this.getFunctionId(type);
 
     for (const fn of this.list) {
@@ -448,14 +448,7 @@ export class Functions {
       }
     }
 
-    console.log(type.symbol.name);
-    console.log(this.list.map(x => x.id));
-    console.log(type.symbol.declarations.length);
-    console.log(type.symbol.valueDeclaration.getSourceFile().fileName);
-    console.log(type.symbol.valueDeclaration.getStart());
-    console.log(id);
-
-    throw new Error("Can't find function for type")
+    return this.addFunction(type);
   }
 
   private getFunctionId(type: Type): FunctionId {

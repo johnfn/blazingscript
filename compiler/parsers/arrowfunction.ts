@@ -19,7 +19,6 @@ export class BSArrowFunction extends BSNode {
   parameters : BSParameter[];
   body       : BSBlock | BSExpression | null;
   declaration: Sexpr | null = null;
-  fn         : Function;
   scope : Scope;
 
   constructor(parentScope: Scope, node: ArrowFunction, info: NodeInfo = defaultNodeInfo) {
@@ -32,8 +31,6 @@ export class BSArrowFunction extends BSNode {
       : buildNode(this.scope, node.body as Expression);
     this.parameters = buildNodeArray(this.scope, node.parameters);
     this.children   = flattenArray(this.parameters, this.body);
-
-    this.fn = parentScope.functions.addFunction(this.tsType);
   }
 
   readableName(): string {
@@ -41,6 +38,8 @@ export class BSArrowFunction extends BSNode {
   }
 
   compile(parentScope: Scope): Sexpr {
+    const fn = parentScope.functions.getFunctionByType(this.tsType);
+
     // TODO - this is copied from function
 
     const params = this.scope.getParameters(this.parameters);
@@ -68,7 +67,7 @@ export class BSArrowFunction extends BSNode {
     }
 
     this.declaration = S.Func({
-      name  : this.fn.getFullyQualifiedName(),
+      name  : fn.getFullyQualifiedName(),
       params: params,
       body  : [
         ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
@@ -78,7 +77,7 @@ export class BSArrowFunction extends BSNode {
 
     parentScope.functions.addCompiledFunctionNode(this);
 
-    return S.Const(this.fn.getTableIndex());
+    return S.Const(fn.getTableIndex());
   }
 
   getDeclaration(): Sexpr {
