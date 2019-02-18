@@ -35,7 +35,7 @@ export class BSImportSpecifier extends BSNode {
     const type = scope.typeChecker.getTypeAtLocation(node);
 
     if (isFunctionType(scope, type)) {
-      scope.functions.addFunction(this);
+      scope.functions.addFunction(this.tsType);
     } else {
       const importedClassScope = scope.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
 

@@ -33,7 +33,7 @@ export class BSArrowFunction extends BSNode {
     this.parameters = buildNodeArray(this.scope, node.parameters);
     this.children   = flattenArray(this.parameters, this.body);
 
-    this.fn = parentScope.functions.addFunction(this);
+    this.fn = parentScope.functions.addFunction(this.tsType);
   }
 
   readableName(): string {

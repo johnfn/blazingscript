@@ -13,19 +13,6 @@ import { BSSourceFile } from "../parsers/sourcefile";
 import { assertNever } from "../util";
 import { TypeParameters } from "./typeparameters";
 
-export enum InternalPropertyType {
-  Value,
-  Array,
-}
-
-export type Property = {
-  tsType   : ts.Type | undefined;
-  wasmType : WasmType;
-  name     : string;
-  offset   : number;
-  type     : InternalPropertyType;
-};
-
 export enum ScopeName {
   Global,
   SourceFile,

@@ -38,7 +38,7 @@ export class BSFunctionDeclaration extends BSNode {
       this.parameters = buildNodeArray(this.scope, node.parameters),
     );
 
-    this.fn = parentScope.functions.addFunction(this);
+    this.fn = parentScope.functions.addFunction(this.tsType);
   }
 
   compile(parentScope: Scope): Sexpr {

@@ -1,4 +1,5 @@
 * Remove getScopeForClass. Just look up the function directly by type.
+* if i only include functions when they're actually used, i get tree shaking for free.
 
 * can i get a better type return for getParentTypeOfMethod
    * merge it with GetMethodTypeInfo?

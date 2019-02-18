@@ -28,12 +28,6 @@ export class BSMethodDeclaration extends BSNode {
   decorators : BSDecorator[];
   declaration: Sexpr[] | null = null;
   scope      : Scope;
-  methodInfo : {
-    className         : string;
-    methodName        : string;
-    fullyQualifiedName: string;
-    classType         : Type;
-  };
   typeParams : string[];
 
   constructor(
@@ -43,7 +37,6 @@ export class BSMethodDeclaration extends BSNode {
   ) {
     super(scope, node);
 
-    this.methodInfo = Functions.GetMethodTypeInfo(scope, this.tsType);
     this.typeParams = node.typeParameters ? node.typeParameters.map(x => x.getText()) : [];
 
     this.scope = scope.addScopeFor({ type: ScopeName.Method, symbol: this.tsType.symbol });

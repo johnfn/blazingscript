@@ -1,11 +1,12 @@
 import { PropertyDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { Scope, InternalPropertyType } from "../scope/scope";
+import { Scope } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSDecorator } from "./decorator";
 import { buildNodeArray, buildNode } from "./nodeutil";
 import { flattenArray, assertNever } from "../util";
 import { BSPropertyName } from "./expression";
+import { InternalPropertyType } from "../scope/properties";
 
 export type PropertyType =
   | { type: InternalPropertyType.Value, offset: number }

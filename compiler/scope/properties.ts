@@ -1,7 +1,20 @@
-import { Property, Scope, InternalPropertyType } from "./scope";
+import { Scope } from "./scope";
 import { Type } from "typescript";
 import { WasmType, Sexpr, S, sexprToString } from "../sexpr";
 import { BSExpression } from "../parsers/expression";
+
+export type Property = {
+  tsType   : Type;
+  wasmType : WasmType;
+  name     : string;
+  offset   : number;
+  type     : InternalPropertyType;
+};
+
+export enum InternalPropertyType {
+  Value,
+  Array,
+};
 
 export class Properties {
   properties: Property[];

@@ -1,6 +1,6 @@
 import { BSMethodDeclaration } from "../parsers/method";
 import { BSFunctionDeclaration } from "../parsers/function";
-import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration, SourceFile, TypeFlags, SymbolFlags, Identifier, DeclarationStatement, MethodSignature, SymbolDisplayPartKind, InterfaceDeclaration, ClassDeclaration } from "typescript";
+import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration, SourceFile, TypeFlags, SymbolFlags, Identifier, DeclarationStatement, MethodSignature, SymbolDisplayPartKind, InterfaceDeclaration, ClassDeclaration, ImportSpecifier, ImportDeclaration, StringLiteral } from "typescript";
 import { BSExpression } from "../parsers/expression";
 import { Sexpr, S, WasmType } from "../sexpr";
 import { parseStatementListBS } from "../parsers/statementlist";
@@ -60,12 +60,18 @@ export type Function = {
   overload          : OperatorOverload | null;
   getTableIndex     : (typeParam?: string) => number;
   signature         : WasmFunctionSignature;
+  id                : FunctionId;
+};
 
-  id: {
-    start     : number;
-    sourceFile: string;
-    name      : string;
-  };
+type FunctionId = {
+  type      : "normal declaration"
+  fnName    : string;
+  sourceFile: string;
+  start     : number;
+} | {
+  type      : "library declaration";
+  sourceFile: string;
+  fnName    : string;
 };
 
 export type CompileableFunctionNode =
@@ -174,7 +180,7 @@ export class Functions {
     return Functions.AllSignatures[name];
   }
 
-  public static GetMethodTypeInfo(scope: Scope, type: Type): {
+  private getMethodTypeInfo(scope: Scope, type: Type): {
     className         : string;
     methodName        : string;
     fullyQualifiedName: string;
@@ -214,7 +220,7 @@ export class Functions {
       className,
       methodName,
       fullyQualifiedName,
-    } = Functions.GetMethodTypeInfo(this.scope, type);
+    } = this.getMethodTypeInfo(this.scope, type);
 
     /** 
      * If we've already seen this function in a different file, don't add it
@@ -255,11 +261,7 @@ export class Functions {
       },
       signature            : Functions.GetSignature(this.scope, type),
       isGeneric            ,
-      id: {
-        start     : type.symbol.valueDeclaration.getStart(),
-        sourceFile: type.symbol.valueDeclaration.getSourceFile().fileName,
-        name      : methodName,
-      },
+      id: this.getFunctionId(type),
     };
 
     this.scope.functions.list.push(fn);
@@ -267,39 +269,43 @@ export class Functions {
     return fn;
   }
 
-  addFunction(node: BSFunctionDeclaration | BSArrowFunction | BSImportSpecifier): Function {
+  addFunction(type: Type): Function {
     let className: string | null = null;
-    let fn: Function;
+    let fn       : Function;
 
-    if (node instanceof BSFunctionDeclaration && !node.name) { throw new Error("Dont support anonymous functions yet."); }
+    let name             = this.getNameOfFunctionLike(type);
+    const decl           = type.symbol.valueDeclaration;
+    const sourceFileName = decl.getSourceFile().fileName;
 
-    const signatures = this.scope.typeChecker.getSignaturesOfType(node.tsType, SignatureKind.Call);
+    // TODO: Throw errors about anonymous functions, or something.
+
+    const signatures = this.scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
 
     if (signatures.length > 1) { throw new Error("Dont support functions with > 1 signature yet."); }
-    const signature = signatures[0];
 
+    const signature     = signatures[0];
     const isGeneric     = signature.typeParameters ? signature.typeParameters.length > 0 : false;
     const id            = Functions.TableIndex;
-    const wasmSignature = Functions.GetSignature(this.scope, node.tsType);
+    const wasmSignature = Functions.GetSignature(this.scope, type);
     const typeParamSig  = signature.typeParameters ? signature.typeParameters.map(x => x.symbol.name) : [];
-    let name              : string;
     let fullyQualifiedName: string;
     let moduleName        : string;
 
-    if (node instanceof BSFunctionDeclaration) {
-      name               = node.name!; // i checked this above.
-      fullyQualifiedName = normalizePath(this.scope.sourceFile.fileName) + "__" + node.name;
-      moduleName         = normalizePath(this.scope.sourceFile.fileName);
-    } else if (node instanceof BSArrowFunction) {
-      name               = `arrow_${ id }`;
+    if (decl.kind === SyntaxKind.FunctionDeclaration) {
+      fullyQualifiedName = normalizePath(sourceFileName) + "__" + name;
+      moduleName         = normalizePath(sourceFileName);
+    } else if (decl.kind === SyntaxKind.ArrowFunction) {
+      name               = name + String(id);
       fullyQualifiedName = name;
-      moduleName         = normalizePath(this.scope.sourceFile.fileName);
-    } else if (node instanceof BSImportSpecifier) {
-      name               = node.name.text;
-      moduleName         = normalizePath(node.moduleName);
+      moduleName         = normalizePath(sourceFileName);
+    } else if (decl.kind === SyntaxKind.ImportSpecifier) {
+      const impSpec = decl as ImportSpecifier;
+      const impDecl = impSpec.parent.parent.parent as ImportDeclaration;
+
+      moduleName         = normalizePath((impDecl.moduleSpecifier as StringLiteral).text);
       fullyQualifiedName = normalizePath(moduleName) + "__" + name;
     } else {
-      return assertNever(node);
+      throw new Error("Unhandled function type!")
     }
 
     const supportedTypeParams = isGeneric ? ["string", "number"] : [""];
@@ -317,11 +323,7 @@ export class Functions {
       className            ,
       getTableIndex        : (typeName = "") => id + supportedTypeParams.indexOf(typeName),
       overload             : null,
-      id: {
-        start     : node.tsType.symbol.valueDeclaration.getStart(),
-        sourceFile: node.tsType.symbol.valueDeclaration.getSourceFile().fileName,
-        name      : name,
-      },
+      id                   : this.getFunctionId(type),
     };
 
     this.list.push(fn);
@@ -351,22 +353,15 @@ export class Functions {
     this.functionNodes = [];
   }
 
-  /** 
-   * Attempts to find the Function for the provided type. If we haven't added it
-   * yet, then we do so now as well.
-   */
-  getFunctionByType(type: Type): Function | null {
-    /*
-
-    TODO: This is a fairly exhaustive way of getting names of nodes that might come in handy someday.
-
-    let name: string;
+  private getNameOfFunctionLike(type: Type) {
     const declaration = type.symbol.valueDeclaration;
 
     if (type.symbol.valueDeclaration.kind === SyntaxKind.FunctionDeclaration) {
       const fd = declaration as FunctionDeclaration;
 
-      name = fd.name ? fd.name.text : "anonymous_function";
+      return fd.name ? fd.name.text : "anonymous_function";
+    } else if (type.symbol.valueDeclaration.kind === SyntaxKind.ArrowFunction) {
+      return "arrow_function";
     } else if (type.symbol.valueDeclaration.kind === SyntaxKind.MethodDeclaration) {
       const md = declaration as MethodDeclaration;
       const propIdentifier = md.name;
@@ -374,7 +369,7 @@ export class Functions {
       if (propIdentifier.kind === SyntaxKind.Identifier) {
         const identifier = propIdentifier as Identifier;
 
-        name = identifier.text;
+        return identifier.text;
       } else {
         throw new Error("I don't handle methods with weird name types.");
       }
@@ -385,7 +380,7 @@ export class Functions {
       if (declIdentifier && declIdentifier.kind === SyntaxKind.Identifier) {
         const identifier = declIdentifier as Identifier;
 
-        name = identifier.text;
+        return identifier.text;
       } else {
         throw new Error("I don't handle declarations with weird name types.");
       }
@@ -396,7 +391,7 @@ export class Functions {
       if (propIdentifier.kind === SyntaxKind.Identifier) {
         const identifier = propIdentifier as Identifier;
 
-        name = identifier.text;
+        return identifier.text;
       } else {
         throw new Error("I don't handle methods with weird name types.");
       }
@@ -406,22 +401,71 @@ export class Functions {
 
       throw new Error("Couldnt get name of that function.");
     }
-    */
+  }
 
-    let decl: {
-      type      : "normal declaration"
-      sourceFile: string;
-      start     : number;
-    } | {
-      type      : "library declaration";
-      sourceFile: string;
-      fnName    : string;
-    };
+  private functionIdsEq(id1: FunctionId, id2: FunctionId): boolean {
+    if (id1.type === "normal declaration" && id2.type === "normal declaration") {
+      return (
+        id1.sourceFile === id2.sourceFile && 
+        id1.start      === id2.start
+      );
+    } 
+    
+    if (id1.type === "library declaration" && id2.type === "library declaration") {
+      return (
+        id1.sourceFile === id2.sourceFile && 
+        id1.fnName     === id2.fnName
+      );
+    }
+
+    if (
+      (id1.type === "library declaration" && id2.type === "normal declaration") ||
+      (id1.type === "normal declaration"  && id2.type === "library declaration")
+    ) {
+      // written in stupid way to appease type checker.
+
+      const lib = (id1.type === "library declaration" ? id1 : (id2.type === "library declaration" ? id2 : undefined))!;
+      const nor = (id1.type === "normal declaration"  ? id1 : (id2.type === "normal declaration" ? id2 : undefined))!;
+
+      return (
+        lib.fnName     === nor.fnName && 
+        lib.sourceFile === nor.sourceFile
+      );
+    }
+
+    return false;
+  }
+
+  /** 
+   * Attempts to find the Function for the provided type.
+   */
+  getFunctionByType(type: Type): Function | null {
+    const id = this.getFunctionId(type);
+
+    for (const fn of this.list) {
+      if (this.functionIdsEq(id, fn.id)) {
+        return fn;
+      }
+    }
+
+    console.log(type.symbol.name);
+    console.log(this.list.map(x => x.id));
+    console.log(type.symbol.declarations.length);
+    console.log(type.symbol.valueDeclaration.getSourceFile().fileName);
+    console.log(type.symbol.valueDeclaration.getStart());
+    console.log(id);
+
+    throw new Error("Can't find function for type")
+  }
+
+  private getFunctionId(type: Type): FunctionId {
+    let decl: FunctionId;
 
     decl = {
       type      : "normal declaration",
       sourceFile: type.symbol.valueDeclaration.getSourceFile().fileName,
       start     : type.symbol.valueDeclaration.getStart(),
+      fnName    : this.getNameOfFunctionLike(type),
     };
 
     /** 
@@ -482,32 +526,7 @@ export class Functions {
       }
     }
 
-    for (const fn of this.list) {
-      if (decl.type === "normal declaration") {
-        if (
-          fn.id.sourceFile === decl.sourceFile && 
-          fn.id.start      === decl.start
-        ) {
-          return fn;
-        }
-      } else if (decl.type === "library declaration") {
-        if (
-          fn.id.sourceFile === decl.sourceFile && 
-          fn.id.name       === decl.fnName
-        ) {
-          return fn;
-        }
-      }
-    }
-
-    console.log(type.symbol.name);
-    // console.log(this.list.map(x => x.name));
-    console.log(type.symbol.declarations.length);
-    console.log(type.symbol.valueDeclaration.getSourceFile().fileName);
-    console.log(type.symbol.valueDeclaration.getStart());
-    console.log(decl);
-
-    throw new Error("Can't find function for type")
+    return decl;
   }
 
   private getParentTypeOfMethod(type: Type): string {

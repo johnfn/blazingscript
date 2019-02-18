@@ -12,7 +12,7 @@ import {
   SymbolFlags,
   NumericLiteral
 } from "typescript";
-import { Scope, InternalPropertyType, ScopeName } from "../scope/scope";
+import { Scope, ScopeName } from "../scope/scope";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSMethodDeclaration } from "./method";
 import { BSPropertyDeclaration, PropertyType } from "./propertydeclaration";
@@ -20,6 +20,7 @@ import { BSDecorator } from "./decorator";
 import { buildNodeArray } from "./nodeutil";
 import { flattenArray, assertNever } from "../util";
 import { OperatorOverload, Operator } from "../scope/functions";
+import { InternalPropertyType } from "../scope/properties";
 
 /**
  * e.g. class MyClass { ... }
