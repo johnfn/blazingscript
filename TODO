@@ -1,6 +1,3 @@
-* pull out FunctionId
-   - getNameOfFunctionLike can go on it.
-
 * Remove getScopeForClass. Just look up the function directly by type.
 * i can make getParentClassOfMethod deal with classes now
 * abstract out FunctionId stuff.

@@ -11,6 +11,7 @@ import { Constants } from "../constants";
 import { isArrayType } from "../parsers/arrayliteral";
 import { BSClassDeclaration } from "../parsers/class";
 import { NativeClasses } from "../program";
+import { FunctionId } from "./functionid";
 
 /**
  * Note: Written this way so we can do an easy `in` check.
@@ -55,17 +56,6 @@ export type Function = {
   className         : string | null;
   overload          : Operator | null;
   id                : FunctionId;
-};
-
-type FunctionId = {
-  type      : "normal declaration"
-  fnName    : string;
-  sourceFile: string;
-  start     : number;
-} | {
-  type      : "library declaration";
-  sourceFile: string;
-  fnName    : string;
 };
 
 export type CompileableFunctionNode =
@@ -251,7 +241,6 @@ export class Functions {
     const { type } = props;
     const {
       className,
-      methodName,
       fullyQualifiedName,
     } = this.getMethodTypeInfo(this.checker, type);
     const methodDeclaration = this.getDeclaration(type);
@@ -284,7 +273,7 @@ export class Functions {
       },
       signature            : Functions.GetSignature(this.checker, type),
       isGeneric            ,
-      id                   : this.getFunctionId(type),
+      id                   : new FunctionId(type),
     };
 
     this.list.push(fn);
@@ -302,8 +291,8 @@ export class Functions {
     let className: string | null = null;
     let fn       : Function;
 
-    const functionId     = this.getFunctionId(type);
-    let name             = functionId.fnName;
+    const functionId     = new FunctionId(type);
+    let name             = functionId.id.fnName;
     const decl           = type.symbol.valueDeclaration;
     const sourceFileName = decl.getSourceFile().fileName;
 
@@ -383,97 +372,14 @@ export class Functions {
     this.functionNodes = [];
   }
 
-  private getNameOfFunctionLike(type: Type): string {
-    const declaration = type.symbol.valueDeclaration;
-
-    if (type.symbol.valueDeclaration.kind === SyntaxKind.FunctionDeclaration) {
-      const fd = declaration as FunctionDeclaration;
-
-      return fd.name ? fd.name.text : "anonymous_function";
-    } else if (type.symbol.valueDeclaration.kind === SyntaxKind.ArrowFunction) {
-      return "arrow_function";
-    } else if (type.symbol.valueDeclaration.kind === SyntaxKind.MethodDeclaration) {
-      const md = declaration as MethodDeclaration;
-      const propIdentifier = md.name;
-
-      if (propIdentifier.kind === SyntaxKind.Identifier) {
-        const identifier = propIdentifier as Identifier;
-
-        return identifier.text;
-      } else {
-        throw new Error("I don't handle methods with weird name types.");
-      }
-    } else if (type.symbol.valueDeclaration.kind === SyntaxKind.DeclareKeyword) {
-      const decl = declaration as DeclarationStatement;
-      const declIdentifier = decl.name;
-
-      if (declIdentifier && declIdentifier.kind === SyntaxKind.Identifier) {
-        const identifier = declIdentifier as Identifier;
-
-        return identifier.text;
-      } else {
-        throw new Error("I don't handle declarations with weird name types.");
-      }
-    } else if (type.symbol.valueDeclaration.kind === SyntaxKind.MethodSignature) {
-      const md = declaration as MethodSignature;
-      const propIdentifier = md.name;
-
-      if (propIdentifier.kind === SyntaxKind.Identifier) {
-        const identifier = propIdentifier as Identifier;
-
-        return identifier.text;
-      } else {
-        throw new Error("I don't handle methods with weird name types.");
-      }
-    } else {
-      console.log(type.symbol.valueDeclaration.kind);
-      console.log(type.symbol.valueDeclaration.getText());
-
-      throw new Error("Couldnt get name of that function.");
-    }
-  }
-
-  private functionIdsEq(id1: FunctionId, id2: FunctionId): boolean {
-    if (id1.type === "normal declaration" && id2.type === "normal declaration") {
-      return (
-        id1.sourceFile === id2.sourceFile && 
-        id1.start      === id2.start
-      );
-    } 
-    
-    if (id1.type === "library declaration" && id2.type === "library declaration") {
-      return (
-        id1.sourceFile === id2.sourceFile && 
-        id1.fnName     === id2.fnName
-      );
-    }
-
-    if (
-      (id1.type === "library declaration" && id2.type === "normal declaration") ||
-      (id1.type === "normal declaration"  && id2.type === "library declaration")
-    ) {
-      // written in stupid way to appease type checker.
-
-      const lib = (id1.type === "library declaration" ? id1 : (id2.type === "library declaration" ? id2 : undefined))!;
-      const nor = (id1.type === "normal declaration"  ? id1 : (id2.type === "normal declaration" ? id2 : undefined))!;
-
-      return (
-        lib.fnName     === nor.fnName && 
-        lib.sourceFile === nor.sourceFile
-      );
-    }
-
-    return false;
-  }
-
   /** 
    * Attempts to find the Function for the provided type.
    */
   getByType(type: Type): Function {
-    const id = this.getFunctionId(type);
+    const id = new FunctionId(type);
 
     for (const fn of this.list) {
-      if (this.functionIdsEq(id, fn.id)) {
+      if (id.eq(fn.id)) {
         return fn;
       }
     }
@@ -483,78 +389,6 @@ export class Functions {
     } else {
       throw new Error("Unhandled type in Function#getByType");
     }
-  }
-
-  private getFunctionId(type: Type): FunctionId {
-    let decl: FunctionId;
-
-    decl = {
-      type      : "normal declaration",
-      sourceFile: type.symbol.valueDeclaration.getSourceFile().fileName,
-      start     : type.symbol.valueDeclaration.getStart(),
-      fnName    : this.getNameOfFunctionLike(type),
-    };
-
-    /** 
-     * TypeScript declarations will lead the definitions of our standard library
-     * functions to our library definition file, which, while accurate, is not
-     * very helpful for us when we want to get the actual locations of those
-     * files. So we rewrite the declaration locations to be where the functions
-     * are actually implemented.
-     */
-    if (type.symbol.valueDeclaration.getSourceFile().fileName === Constants.LIB_FILE) {
-      if (type.symbol.valueDeclaration.kind === SyntaxKind.MethodSignature) {
-
-        /**
-         * Get method name.
-         */
-
-        const md = type.symbol.valueDeclaration as MethodSignature;
-        const propIdentifier = md.name;
-        let fnName: string;
-
-        if (propIdentifier.kind === SyntaxKind.Identifier) {
-          const identifier = propIdentifier as Identifier;
-
-          fnName = identifier.text;
-        } else {
-          throw new Error("I don't handle methods with weird name types.");
-        }
-
-        /**
-         * Get method source file.
-         */
-
-        const parent = type.symbol.valueDeclaration.parent;
-        let sourceFile: string;
-
-        if (parent.kind === SyntaxKind.InterfaceDeclaration) {
-          const interfaceNode = parent as InterfaceDeclaration;
-
-          if (interfaceNode.name.text === "String") {
-            sourceFile = Constants.STRING_LIB_FILE;
-          } else if (interfaceNode.name.text === "Array") {
-            sourceFile = Constants.ARRAY_LIB_FILE;
-          } else {
-            console.log(type.symbol.valueDeclaration.getText());
-
-            throw new Error("Unhandled library function interface name (expected String or Array).");
-          }
-        } else {
-          throw new Error("Unhandled library function parent type.");
-        }
-
-        decl = {
-          type      : "library declaration",
-          sourceFile,
-          fnName    ,
-        }
-      } else {
-        throw new Error("Unhandled library function child type.");
-      }
-    }
-
-    return decl;
   }
 
   private getParentClassOfMethod(type: Type): string {
