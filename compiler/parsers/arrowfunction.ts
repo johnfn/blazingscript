@@ -1,10 +1,10 @@
 import { Block, BreakStatement, ArrowFunction, SyntaxKind, Expression } from "typescript";
-import { Sexpr, S } from "../sexpr";
+import { Sexpr, S, sexprToString } from "../sexpr";
 import { Scope, ScopeName } from "../scope/scope";
 import { Function } from "../scope/functions";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { buildNode, buildNodeArray } from "./nodeutil";
-import { flattenArray } from "../util";
+import { flattenArray, Util } from "../util";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
 import { BSExpression } from "./expression";
@@ -37,17 +37,15 @@ export class BSArrowFunction extends BSNode {
     return "Arrow function";
   }
 
-  compile(parentScope: Scope): Sexpr {
-    const fn = parentScope.functions.getByType(this.tsType);
-
+  private buildDeclaration(fn: Function): void {
     // TODO - this is copied from function
 
     const params = this.scope.getParameters(this.parameters);
     let content  : Sexpr[];
 
     if (this.body instanceof BSBlock) {
-      const statements  = parseStatementListBS(this.scope, this.body.children);
-      let lastStatement : Sexpr | null = null;
+      const statements = parseStatementListBS(this.scope, this.body.children);
+      let lastStatement: Sexpr | null = null;
 
       if (statements.length > 0) {
         lastStatement = statements[statements.length - 1];
@@ -66,16 +64,22 @@ export class BSArrowFunction extends BSNode {
       }
     }
 
-    this.declaration = S.Func({
+    this.declaration = Object.freeze(S.Func({
       name  : fn.getFullyQualifiedName(),
       params: params,
       body  : [
         ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
         ...content,
       ]
-    });
+    }));
+  }
 
-    parentScope.functions.addCompiledFunctionNode(this);
+  compile(parentScope: Scope): Sexpr {
+    const fn = parentScope.functions.getByType(this.tsType);
+
+    if (!this.declaration) {
+      this.buildDeclaration(fn);
+    }
 
     return S.Const(fn.getTableIndex());
   }

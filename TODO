@@ -3,6 +3,7 @@
 * abstract out FunctionId stuff.
 * sweep the code for ArrayImpl, StringImpl
 * remove addCompiledFunctionNode
+* im creating an arrow function node twice.
 
 * when i finish all this function craziness, i should do a similar sort of thing for classes.
 * then remove activeScope parameter of Functions.

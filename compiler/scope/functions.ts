@@ -58,11 +58,6 @@ export type Function = {
   id                : FunctionId;
 };
 
-export type CompileableFunctionNode =
-  | BSMethodDeclaration
-  | BSFunctionDeclaration
-  | BSArrowFunction
-
 export class Functions {
   private static TableIndex = 0;
 
@@ -72,7 +67,7 @@ export class Functions {
   public static AllSignatures: { [key: string]: WasmFunctionSignature } = {};
 
   private list: Function[];
-  functionNodes: (BSMethodDeclaration | BSFunctionDeclaration | BSArrowFunction)[];
+  functionExprs: Sexpr[][];
   checker      : TypeChecker;
   private nativeClasses: NativeClasses;
 
@@ -81,7 +76,7 @@ export class Functions {
 
   constructor(checker: TypeChecker, nativeClasses: NativeClasses) {
     this.list          = [];
-    this.functionNodes = [];
+    this.functionExprs = [];
     this.checker       = checker;
     this.nativeClasses = nativeClasses;
   }
@@ -196,8 +191,8 @@ export class Functions {
     };
   }
 
-  addCompiledFunctionNode(node: BSMethodDeclaration | BSFunctionDeclaration | BSArrowFunction): void {
-    this.functionNodes.push(node);
+  addCompiledFunctionNode(expr: Sexpr[]): void {
+    this.functionExprs.push(expr);
   }
 
   private getDeclaration(type: Type): MethodDeclaration | FunctionDeclaration {
@@ -282,7 +277,7 @@ export class Functions {
 
     const node = new BSMethodDeclaration(this.activeScope, methodDeclaration as MethodDeclaration);
     node.compile(this.activeScope);
-    this.addCompiledFunctionNode(node);
+    this.addCompiledFunctionNode(node.getDeclaration());
 
     return fn;
   }
@@ -317,6 +312,7 @@ export class Functions {
       name               = name + String(id);
       fullyQualifiedName = name;
       moduleName         = normalizePath(sourceFileName);
+
     } else if (decl.kind === SyntaxKind.ImportSpecifier) {
       const impSpec = decl as ImportSpecifier;
       const impDecl = impSpec.parent.parent.parent as ImportDeclaration;
@@ -349,6 +345,18 @@ export class Functions {
 
     this.list.push(fn);
 
+    if (decl.kind === SyntaxKind.ArrowFunction) {
+      const node = new BSArrowFunction(this.activeScope, decl as ArrowFunction);
+
+      node.compile(this.activeScope);
+      this.addCompiledFunctionNode([node.getDeclaration()]);
+    } else if (decl.kind === SyntaxKind.FunctionDeclaration) {
+      const node = new BSFunctionDeclaration(this.activeScope, decl as FunctionDeclaration);
+
+      node.compile(this.activeScope);
+      this.addCompiledFunctionNode(node.getDeclaration());
+    }
+
     return fn;
   }
 
@@ -364,12 +372,8 @@ export class Functions {
     return this.list;
   }
 
-  getAllNodes(): CompileableFunctionNode[] {
-    return this.functionNodes;
-  }
-
-  clearAllNodes(): void {
-    this.functionNodes = [];
+  getAllNodes(): Sexpr[][] {
+    return this.functionExprs;
   }
 
   /** 

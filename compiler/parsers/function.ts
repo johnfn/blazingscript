@@ -83,8 +83,6 @@ export class BSFunctionDeclaration extends BSNode {
         })
       ];
     }
-    
-    parentScope.functions.addCompiledFunctionNode(this);
 
     return S.Const(0);
   }

@@ -65,3 +65,11 @@ export function normalizeString(str: string): string {
 
   return result;
 }
+
+export class Util {
+  public static PrintStackTrace() {
+    const e = new Error();
+
+    console.log(e.stack);
+  }
+}

@@ -28,19 +28,12 @@ export class BSSourceFile extends BSNode {
     return this.node.getLineAndCharacterOfPosition(pos);
   }
 
-  compile(scope: Scope): Sexpr[] {
+  compile(scope: Scope): Sexpr {
     for (const statement of this.statements) {
       statement.compile(scope);
     }
 
-    const functions = scope.topmostScope().functions.getAllNodes();
-    scope.topmostScope().functions.clearAllNodes();
-
-    return flatten(functions.map(fn => {
-      const decl = fn.getDeclaration();
-
-      return Array.isArray(decl) ? decl : [decl];
-    }));
+    return S.Const(0);
   }
 
   readableName() {

@@ -165,9 +165,8 @@ export class Program {
 
       scope.addNativeClasses(nativeClasses);
 
-      const sourceFile = new BSSourceFile(scope, source)
+      new BSSourceFile(scope, source).compile(scope);
 
-      allFiles.push(sourceFile.compile(scope));
       allContexts.push(scope);
     }
 
@@ -212,7 +211,7 @@ export class Program {
         );
       }),
 
-      ...flatten(allFiles),
+      ...flatten(allFunctions.getAllNodes()),
       ...namesToExport.map(fqname => S.Export(fqname)),
 
       // build our function table
