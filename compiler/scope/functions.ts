@@ -231,9 +231,10 @@ export class Functions {
     }
   }
 
-  // called by addFunction.
-  private addMethod(props: { type: Type }): Function {
-    const { type } = props;
+  /**
+   * This is a helper method for addFunction. It should not be called directly.
+   */
+  private addMethod(type: Type): Function {
     const {
       className,
       fullyQualifiedName,
@@ -320,7 +321,7 @@ export class Functions {
       moduleName         = normalizePath((impDecl.moduleSpecifier as StringLiteral).text);
       fullyQualifiedName = normalizePath(moduleName) + "__" + name;
     } else if (decl.kind === SyntaxKind.MethodDeclaration || decl.kind === SyntaxKind.MethodSignature) {
-      return this.addMethod({ type });
+      return this.addMethod(type);
     } else {
       console.log(decl.kind);
 
