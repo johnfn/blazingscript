@@ -40,7 +40,7 @@ export class BSFunctionDeclaration extends BSNode {
   }
 
   compile(parentScope: Scope): Sexpr {
-    const fn = parentScope.functions.getFunctionByType(this.tsType);
+    const fn = parentScope.functions.getByType(this.tsType);
 
     const params     = this.scope.getParameters(this.parameters);
     const statements = parseStatementListBS(this.scope, this.body!.children);

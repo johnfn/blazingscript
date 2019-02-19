@@ -1,25 +1,25 @@
 import { BSMethodDeclaration } from "../parsers/method";
 import { BSFunctionDeclaration } from "../parsers/function";
-import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration, SourceFile, TypeFlags, SymbolFlags, Identifier, DeclarationStatement, MethodSignature, SymbolDisplayPartKind, InterfaceDeclaration, ClassDeclaration, ImportSpecifier, ImportDeclaration, StringLiteral } from "typescript";
-import { BSExpression } from "../parsers/expression";
+import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration, SourceFile, TypeFlags, SymbolFlags, Identifier, DeclarationStatement, MethodSignature, SymbolDisplayPartKind, InterfaceDeclaration, ClassDeclaration, ImportSpecifier, ImportDeclaration, StringLiteral, Declaration, TypeChecker } from "typescript";
 import { Sexpr, S, WasmType } from "../sexpr";
-import { parseStatementListBS } from "../parsers/statementlist";
-import { BSNode } from "../parsers/bsnode";
-import { Scope } from "./scope";
-import { BSIdentifier } from "../parsers/identifier";
+import { Scope, ScopeName } from "./scope";
 import { BSCallExpression } from "../parsers/callexpression";
 import { BSPropertyAccessExpression } from "../parsers/propertyaccess";
 import { BSArrowFunction } from "../parsers/arrowfunction";
 import { assertNever, normalizeString as normalizePath } from "../util";
-import { BSImportSpecifier } from "../parsers/importspecifier";
 import { Constants } from "../constants";
 import { isArrayType } from "../parsers/arrayliteral";
+import { BSClassDeclaration } from "../parsers/class";
+import { NativeClasses } from "../program";
 
+/**
+ * Note: Written this way so we can do an easy `in` check.
+ */
 export enum Operator {
-  TripleEquals = "===",
-  NotEquals    = "!==",
-  Plus         = "+",
-  ArrayIndex   = "[]",
+  "===" = "===",
+  "!==" = "!==",
+  "+"   = "+"  ,
+  "[]"  = "[]" ,
 };
 
 export type OperatorOverload = {
@@ -38,15 +38,8 @@ export type WasmFunctionSignature = {
 
 // TODO should probably rename this as to not clash with Function the js type
 export type Function = {
-  /**
-   * Name of the function, e.g. indexOf
-   */
-  name               : string;
-
   isGeneric          : boolean;
   typeParamSig       : string[];
-
-  moduleName         : string;
 
   supportedTypeParams: string[];
 
@@ -56,10 +49,11 @@ export type Function = {
    */
   getFullyQualifiedName: (typeParam?: string) => string;
 
-  className         : string | null;
-  overload          : OperatorOverload | null;
   getTableIndex     : (typeParam?: string) => number;
   signature         : WasmFunctionSignature;
+
+  className         : string | null;
+  overload          : Operator | null;
   id                : FunctionId;
 };
 
@@ -89,12 +83,17 @@ export class Functions {
 
   private list: Function[];
   functionNodes: (BSMethodDeclaration | BSFunctionDeclaration | BSArrowFunction)[];
-  scope: Scope;
+  checker      : TypeChecker;
+  private nativeClasses: NativeClasses;
 
-  constructor(scope: Scope) {
+  /** TODO: Remove this. */
+  activeScope!: Scope;
+
+  constructor(checker: TypeChecker, nativeClasses: NativeClasses) {
     this.list          = [];
     this.functionNodes = [];
-    this.scope         = scope;
+    this.checker       = checker;
+    this.nativeClasses = nativeClasses;
   }
 
   static GetCallExpressionSignature(node: BSCallExpression): WasmFunctionSignature {
@@ -124,10 +123,10 @@ export class Functions {
     return Functions.AllSignatures[name];
   }
 
-  static GetSignature(scope: Scope, type: Type): WasmFunctionSignature {
-    const sigs = scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
+  static GetSignature(checker: TypeChecker, type: Type): WasmFunctionSignature {
+    const sigs = checker.getSignaturesOfType(type, SignatureKind.Call);
     const sig  = sigs[0];
-    let params: WasmType[] = [];
+    let params : WasmType[] = [];
 
     if (sigs.length > 1) {
       throw new Error("Do not handle functions with > 1 signature yet!");
@@ -136,7 +135,7 @@ export class Functions {
     if (sig.declaration && sig.declaration.kind === SyntaxKind.FunctionDeclaration) {
       const decl = sig.declaration as FunctionDeclaration;
       for (const p of decl.parameters) {
-        const type = scope.typeChecker.getTypeAtLocation(p);
+        const type = checker.getTypeAtLocation(p);
 
         params.push(TsTypeToWasmType(type));
       }
@@ -145,7 +144,7 @@ export class Functions {
     if (sig.declaration && sig.declaration.kind === SyntaxKind.ArrowFunction) {
       const decl = sig.declaration as ArrowFunction;
       for (const p of decl.parameters) {
-        const type = scope.typeChecker.getTypeAtLocation(p);
+        const type = checker.getTypeAtLocation(p);
 
         params.push(TsTypeToWasmType(type));
       }
@@ -158,7 +157,7 @@ export class Functions {
       params.push("i32");
 
       for (const p of decl.parameters) {
-        const type = scope.typeChecker.getTypeAtLocation(p);
+        const type = checker.getTypeAtLocation(p);
 
         params.push(TsTypeToWasmType(type));
       }
@@ -180,21 +179,21 @@ export class Functions {
     return Functions.AllSignatures[name];
   }
 
-  private getMethodTypeInfo(scope: Scope, type: Type): {
+  private getMethodTypeInfo(checker: TypeChecker, type: Type): {
     className         : string;
     methodName        : string;
     fullyQualifiedName: string;
     classType         : Type;
   } {
-    const methodName = scope.typeChecker.symbolToString(type.symbol);
-    const sig = scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
+    const methodName = checker.symbolToString(type.symbol);
+    const sig = checker.getSignaturesOfType(type, SignatureKind.Call);
 
     if (sig.length > 1) { throw new Error("Dont handle methods with multiple signatures!"); }
     if (sig.length === 0) { throw new Error("Method declaration could not find signature."); }
 
     const classDecl = (sig[0].declaration as MethodDeclaration).parent;
-    const classType = scope.typeChecker.getTypeAtLocation(classDecl);
-    const className = scope.typeChecker.symbolToString(classType.symbol);
+    const classType = checker.getTypeAtLocation(classDecl);
+    const className = checker.symbolToString(classType.symbol);
 
     if (!methodName) { throw new Error("anonymous methods not supported yet!"); }
     if (!className) { throw new Error("anonymous classes not supported yet!"); }
@@ -208,31 +207,57 @@ export class Functions {
   }
 
   addCompiledFunctionNode(node: BSMethodDeclaration | BSFunctionDeclaration | BSArrowFunction): void {
-    this.scope.topmostScope().functions.functionNodes.push(node);
+    this.functionNodes.push(node);
   }
 
-  addMethod(props: {
-    type    : Type;
-    overload: OperatorOverload | null;
-  }): Function {
-    const { type, overload } = props;
+  private getDeclaration(type: Type): MethodDeclaration | FunctionDeclaration {
+    const declaration = type.symbol.valueDeclaration;
+
+    if (declaration.kind === SyntaxKind.FunctionDeclaration) {
+      return declaration as FunctionDeclaration;
+    } else if (declaration.kind === SyntaxKind.MethodDeclaration) {
+      return declaration as MethodDeclaration;
+    } else if (declaration.kind === SyntaxKind.MethodSignature) {
+      const parent = declaration.parent;
+
+      if (parent.kind === SyntaxKind.InterfaceDeclaration) {
+        const interfaceDecl = parent as InterfaceDeclaration;
+        const name = interfaceDecl.name.text;
+        const classDecl = this.nativeClasses[name];
+        const instanceType = this.checker.getTypeAtLocation(classDecl);
+        const properties = this.checker.getPropertiesOfType(instanceType);
+
+        for (const prop of properties) {
+          const decl = prop.valueDeclaration;
+
+          if (prop.flags & SymbolFlags.Method) {
+            if (prop.name === type.symbol.name) {
+              return decl as MethodDeclaration;
+            }
+          }
+        }
+
+        throw new Error("Method not found on class.");
+      } else {
+        throw new Error("unhandled parent type (not interace)");
+      }
+    } else {
+      throw new Error("Unknown method type.");
+    }
+  }
+
+  // called by addFunction.
+  private addMethod(props: { type: Type }): Function {
+    const { type } = props;
     const {
       className,
       methodName,
       fullyQualifiedName,
-    } = this.getMethodTypeInfo(this.scope, type);
+    } = this.getMethodTypeInfo(this.checker, type);
+    const methodDeclaration = this.getDeclaration(type);
+    const overload = BSClassDeclaration.GetOverloadType(methodDeclaration);
 
-    /** 
-     * If we've already seen this function in a different file, don't add it
-     * again.
-     */
-    for (const fn of this.getAll(this.scope.topmostScope())) {
-      if (fn.name === methodName && fn.className === className) { // TODO: Check module name too.
-        return fn;
-      }
-    }
-
-    const signatures = this.scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
+    const signatures = this.checker.getSignaturesOfType(type, SignatureKind.Call);
     if (signatures.length > 1) { throw new Error("Dont support functions with > 1 signature yet."); }
     const signature = signatures[0];
     const isGeneric = signature.typeParameters ? signature.typeParameters.length > 0 : false;
@@ -243,10 +268,8 @@ export class Functions {
     Functions.TableIndex += supportedTypeParams.length;
 
     const fn: Function = {
-      name                 : methodName,
       getFullyQualifiedName: (typeName = "") => fullyQualifiedName + (typeName === "" ? "" : "__" + typeName),
       supportedTypeParams  ,
-      moduleName           : normalizePath(this.scope.sourceFile.fileName),
       className            ,
       overload             ,
       typeParamSig         ,
@@ -259,34 +282,41 @@ export class Functions {
 
         return id + supportedTypeParams.indexOf(typeName);
       },
-      signature            : Functions.GetSignature(this.scope, type),
+      signature            : Functions.GetSignature(this.checker, type),
       isGeneric            ,
-      id: this.getFunctionId(type),
+      id                   : this.getFunctionId(type),
     };
 
-    this.scope.functions.list.push(fn);
+    this.list.push(fn);
+
+    // TODO - only point here is to add the node, a bit silly.
+
+    const node = new BSMethodDeclaration(this.activeScope, methodDeclaration as MethodDeclaration);
+    node.compile(this.activeScope);
+    this.addCompiledFunctionNode(node);
 
     return fn;
   }
 
-  addFunction(type: Type): Function {
+  private addFunction(type: Type): Function {
     let className: string | null = null;
     let fn       : Function;
 
-    let name             = this.getNameOfFunctionLike(type);
+    const functionId     = this.getFunctionId(type);
+    let name             = functionId.fnName;
     const decl           = type.symbol.valueDeclaration;
     const sourceFileName = decl.getSourceFile().fileName;
 
     // TODO: Throw errors about anonymous functions, or something.
 
-    const signatures = this.scope.typeChecker.getSignaturesOfType(type, SignatureKind.Call);
+    const signatures = this.checker.getSignaturesOfType(type, SignatureKind.Call);
 
     if (signatures.length > 1) { throw new Error("Dont support functions with > 1 signature yet."); }
 
     const signature     = signatures[0];
     const isGeneric     = signature.typeParameters ? signature.typeParameters.length > 0 : false;
     const id            = Functions.TableIndex;
-    const wasmSignature = Functions.GetSignature(this.scope, type);
+    const wasmSignature = Functions.GetSignature(this.checker, type);
     const typeParamSig  = signature.typeParameters ? signature.typeParameters.map(x => x.symbol.name) : [];
     let fullyQualifiedName: string;
     let moduleName        : string;
@@ -304,8 +334,12 @@ export class Functions {
 
       moduleName         = normalizePath((impDecl.moduleSpecifier as StringLiteral).text);
       fullyQualifiedName = normalizePath(moduleName) + "__" + name;
+    } else if (decl.kind === SyntaxKind.MethodDeclaration || decl.kind === SyntaxKind.MethodSignature) {
+      return this.addMethod({ type });
     } else {
-      throw new Error("Unhandled function type!")
+      console.log(decl.kind);
+
+      throw new Error("Unhandled function type!");
     }
 
     const supportedTypeParams = isGeneric ? ["string", "number"] : [""];
@@ -314,8 +348,6 @@ export class Functions {
 
     fn = {
       signature            : wasmSignature,
-      moduleName           ,
-      name                 ,
       isGeneric            ,
       typeParamSig         ,
       getFullyQualifiedName: (typeName = "") => fullyQualifiedName + (typeName === "" ? "" : "__" + typeName),
@@ -323,7 +355,7 @@ export class Functions {
       className            ,
       getTableIndex        : (typeName = "") => id + supportedTypeParams.indexOf(typeName),
       overload             : null,
-      id                   : this.getFunctionId(type),
+      id                   : functionId,
     };
 
     this.list.push(fn);
@@ -336,13 +368,11 @@ export class Functions {
   }
 
   toString(): string {
-    return this.list.map(x => x.name).join(", ");
+    return this.list.map(x => x.getFullyQualifiedName("")).join(", ");
   }
 
-  getAll(scope: Scope | null = null): Function[] {
-    if (scope === null) { scope = this.scope; }
-
-    return scope.functions.list;
+  getAll(): Function[] {
+    return this.list;
   }
 
   getAllNodes(): CompileableFunctionNode[] {
@@ -353,7 +383,7 @@ export class Functions {
     this.functionNodes = [];
   }
 
-  private getNameOfFunctionLike(type: Type) {
+  private getNameOfFunctionLike(type: Type): string {
     const declaration = type.symbol.valueDeclaration;
 
     if (type.symbol.valueDeclaration.kind === SyntaxKind.FunctionDeclaration) {
@@ -439,7 +469,7 @@ export class Functions {
   /** 
    * Attempts to find the Function for the provided type.
    */
-  getFunctionByType(type: Type): Function {
+  getByType(type: Type): Function {
     const id = this.getFunctionId(type);
 
     for (const fn of this.list) {
@@ -448,7 +478,11 @@ export class Functions {
       }
     }
 
-    return this.addFunction(type);
+    if (type.symbol.flags & SymbolFlags.Method || type.symbol.flags & SymbolFlags.Function) {
+      return this.addFunction(type);
+    } else {
+      throw new Error("Unhandled type in Function#getByType");
+    }
   }
 
   private getFunctionId(type: Type): FunctionId {
@@ -465,11 +499,12 @@ export class Functions {
      * TypeScript declarations will lead the definitions of our standard library
      * functions to our library definition file, which, while accurate, is not
      * very helpful for us when we want to get the actual locations of those
-     * files. So we rewrite the declaration locations to be in the right place
-     * for those functions.
+     * files. So we rewrite the declaration locations to be where the functions
+     * are actually implemented.
      */
     if (type.symbol.valueDeclaration.getSourceFile().fileName === Constants.LIB_FILE) {
       if (type.symbol.valueDeclaration.kind === SyntaxKind.MethodSignature) {
+
         /**
          * Get method name.
          */
@@ -522,12 +557,12 @@ export class Functions {
     return decl;
   }
 
-  private getParentTypeOfMethod(type: Type): string {
+  private getParentClassOfMethod(type: Type): string {
     if (type.flags & TypeFlags.StringLike) {
       return "StringImpl";
     }
 
-    if (isArrayType(this.scope, type)) {
+    if (isArrayType(type)) {
       return "ArrayImpl";
     }
 
@@ -546,20 +581,45 @@ export class Functions {
   }
 
   getMethodByOperator(type: Type, operator: Operator): Function {
-    const parentName = this.getParentTypeOfMethod(type);
+    const parentName = this.getParentClassOfMethod(type);
 
     for (const fn of this.list) {
       if (
         fn.overload &&
-        fn.overload.operator === operator &&
-        fn.className         === parentName
+        fn.overload  === operator &&
+        fn.className === parentName
       ) {
         return fn;
       }
     }
 
-    throw new Error(
-      `Failed to find function ref by class name ${ this.scope.typeChecker.typeToString(type) } and operator name ${operator}`
-    );
+    let className = "";
+
+    if (type.flags & TypeFlags.StringLike) {
+      className = Constants.NATIVE_STRING;
+    } else if (isArrayType(type)) {
+      className = Constants.NATIVE_ARRAY;
+    } else {
+      throw new Error("operator override not found for type!");
+    }
+
+    const classDecl    = this.nativeClasses[className];
+    const instanceType = this.checker.getTypeAtLocation(classDecl);
+    const properties   = this.checker.getPropertiesOfType(instanceType);
+
+    for (const prop of properties) {
+      const propDecl = prop.valueDeclaration;
+      const propType = this.checker.getTypeAtLocation(propDecl);
+
+      if (prop.flags & SymbolFlags.Method) {
+        const propOperatorType = BSClassDeclaration.GetOverloadType(propDecl);
+
+        if (propOperatorType && propOperatorType === operator) {
+          return this.addFunction(propType);
+        }
+      }
+    }
+
+    throw new Error(`Could not find overload for ${ className } and ${ operator }`);
   }
 }

@@ -57,7 +57,7 @@ export class BSPropertyAccessExpression extends BSNode {
 
       expr = scope.properties.get({ 
         expr      : this.expression, 
-        exprScope: scope, 
+        exprScope : scope, 
         fnExpr    : this,
         name      : this.name.text,
       });

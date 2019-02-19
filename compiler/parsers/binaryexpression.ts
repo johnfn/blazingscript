@@ -158,13 +158,13 @@ export class BSBinaryExpression extends BSNode {
 
       switch (this.operatorToken.kind) {
         case SyntaxKind.EqualsEqualsEqualsToken: 
-          fn = scope.functions.getMethodByOperator(this.left.tsType, Operator.TripleEquals);
+          fn = scope.functions.getMethodByOperator(this.left.tsType, Operator["==="]);
           break;
         case SyntaxKind.ExclamationEqualsEqualsToken: 
-          fn = scope.functions.getMethodByOperator(this.left.tsType, Operator.NotEquals);
+          fn = scope.functions.getMethodByOperator(this.left.tsType, Operator["!=="]);
           break;
         case SyntaxKind.PlusToken:
-          fn = scope.functions.getMethodByOperator(this.left.tsType, Operator.Plus);
+          fn = scope.functions.getMethodByOperator(this.left.tsType, Operator["+"]);
           break;
         default:
           throw new Error(`unsupported binary expression ${this.fullText}`);

@@ -10,7 +10,7 @@ import { BSPropertyAccessExpression } from "./propertyaccess";
 import { BSStringLiteral } from "./stringliteral";
 import { buildNode, buildNodeArray } from "./nodeutil";
 import { flattenArray } from "../util";
-import { BSArrayLiteral, isArrayType } from "./arrayliteral";
+import { BSArrayLiteral } from "./arrayliteral";
 import { TsTypeToWasmType, Functions } from "../scope/functions";
 
 /**

@@ -1,5 +1,5 @@
 import { Scope } from "../scope/scope";
-import { ArrayLiteralExpression, Type, SignatureKind, TypeFlags } from "typescript";
+import { ArrayLiteralExpression, Type, SignatureKind, TypeFlags, TypeChecker } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
 import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
@@ -94,11 +94,10 @@ export class BSArrayLiteral extends BSNode {
   }
 }
 
-export function isArrayType(scope: Scope, type: Type) {
+export function isArrayType(type: Type) {
   return (
     (type.symbol && type.symbol.name === "Array") ||
-    (type.symbol && type.symbol.name === "ArrayImpl") ||
-    (type.symbol && type.symbol.name === scope.getNativeTypeName("Array"))
+    (type.symbol && type.symbol.name === "ArrayImpl")
   );
 }
 

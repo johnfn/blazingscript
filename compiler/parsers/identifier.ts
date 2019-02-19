@@ -26,7 +26,7 @@ export class BSIdentifier extends BSNode {
       return asVariable;
     }
 
-    const fn = scope.functions.getFunctionByType(this.tsType);
+    const fn = scope.functions.getByType(this.tsType);
     const signatures = scope.typeChecker.getSignaturesOfType(this.tsType, SignatureKind.Call);
     if (signatures.length > 1) { throw new Error("Dont support functions with > 1 signature yet."); }
     if (signatures.length === 0) { 

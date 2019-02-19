@@ -1,11 +1,13 @@
-import ts, { Node, ModuleKind, ScriptTarget } from "typescript";
+import ts, { Node, ModuleKind, ScriptTarget, SourceFile, SyntaxKind, ClassDeclaration, CallExpression, Identifier, StringLiteral } from "typescript";
 import fs from "fs";
-import path from "path";
+import path, { parse } from "path";
 import { sexprToString, Sexpr, S } from "./sexpr";
 import { Scope, ScopeName } from "./scope/scope";
 import { BSSourceFile } from "./parsers/sourcefile";
-import { Functions } from "./scope/functions";
+import { Functions, Operator } from "./scope/functions";
 import { flatten } from "./rewriter";
+
+export type NativeClasses = { [key: string]: ClassDeclaration };
 
 export const THIS_NAME = "__this";
 
@@ -90,37 +92,87 @@ export class Program {
     this.typeChecker = this.program.getTypeChecker();
   }
 
-  parse(): string {
-    const allFiles   : Sexpr[][] = [];
-    const allContexts: Scope[] = [];
+  /**
+   * returns the declarations of StringImpl, ArrayImpl etc.
+   */
+  private findAllNativeClassImplementations(sourceFiles: SourceFile[]): NativeClasses {
+    const result: { [key: string]: ClassDeclaration } = {};
 
-    for (const path of this.paths) {
-      const source = this.program.getSourceFile(path);
+    for (const file of sourceFiles) {
+      for (const statement of file.statements) {
+        if (statement.kind === SyntaxKind.ClassDeclaration) {
+          const classDecl = statement as ClassDeclaration;
+          const decorators = classDecl.decorators;
 
-      if (!source) {
-        throw new Error("source undefined, something has gone horribly wrong!!!");
+          if (!decorators) { continue; }
+
+          for (const deco of decorators) {
+            if (deco.expression.kind === SyntaxKind.CallExpression) {
+              const callExpr = deco.expression as CallExpression;
+
+              if (callExpr.expression.kind === SyntaxKind.Identifier) {
+                const fnNameIdentifier = callExpr.expression as Identifier;
+
+                if (fnNameIdentifier.text === "jsType") {
+                  const firstArgument = callExpr.arguments[0];
+
+                  if (firstArgument.kind === SyntaxKind.StringLiteral) {
+                    const firstArgumentStr = firstArgument as StringLiteral;
+                    const overrideType     = firstArgumentStr.text;
+
+                    result[overrideType] = classDecl;
+                  } else {
+                    throw new Error("Um, this should never happen!!!");
+                  }
+                }
+              }
+            }
+          }
+        }
       }
+    }
 
+    return result;
+  }
+
+  parse(): string {
+    const allFiles       : Sexpr[][] = [];
+    const allContexts    : Scope[] = [];
+    const allSourceFiles = this.paths.map(x => {
+      const res = this.program.getSourceFile(x);
+
+      if (!res) { throw new Error("Source file not found! BAD!"); }
+
+      return res;
+    });
+
+    const nativeClasses = this.findAllNativeClassImplementations(allSourceFiles);
+
+    // Find all implementations of library methods up front.
+
+    const allFunctions = new Functions(this.typeChecker, nativeClasses)
+
+    for (const source of allSourceFiles) {
       const scope = new Scope({
         tc        : this.typeChecker, 
         sourceFile: source, 
+        functions : allFunctions,
         parent    : null, 
         scopeType : { type: ScopeName.SourceFile, sourceFile: source },
       });
 
-      scope.addJsTypes({
-        "String": "StringImpl",
-        "Array" : "ArrayImpl",
-      });
+      allFunctions.activeScope = scope;
 
-      allFiles.push(new BSSourceFile(scope, source).compile(scope));
+      scope.addNativeClasses(nativeClasses);
+
+      const sourceFile = new BSSourceFile(scope, source)
+
+      allFiles.push(sourceFile.compile(scope));
       allContexts.push(scope);
     }
 
-    let functions = flatten(allContexts.map(scope => scope.functions.getAll()));
-
     // TODO - is this deduping even necessary?
-    const allUnduplicatedNames = flatten(functions.map(f => {
+    const allUnduplicatedNames = flatten(allFunctions.getAll().map(f => {
       if (f.isGeneric) {
         return f.supportedTypeParams.map(type => f.getFullyQualifiedName(type));
       } else {
@@ -130,7 +182,7 @@ export class Program {
 
     const namesToExport = [...new Set(allUnduplicatedNames).values()];
 
-    const functionTable = flatten(functions.map(fn => {
+    const functionTable = flatten(allFunctions.getAll().map(fn => {
       return fn.supportedTypeParams.map(param => ({
         index : fn.getTableIndex(param),
         fqname: fn.getFullyQualifiedName(param),
@@ -140,7 +192,7 @@ export class Program {
     const resultSexpr = S(
       "[]", "module",
       S("[]", "import", '"js"', '"mem"', S("[]", "memory", "1")),
-      S("[]", "import", '"js"', '"table"', S("[]", "table", String(functions.length), "anyfunc")),
+      S("[]", "import", '"js"', '"table"', S("[]", "table", String(allFunctions.getAll().length), "anyfunc")),
       S("[]", "import", '"c"', '"log"',
         S("[]", "func", "$log", ...[...Array(12).keys()].map(_ => S("[]", "param", "i32")))
       ),

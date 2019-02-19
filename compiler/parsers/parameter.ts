@@ -30,7 +30,7 @@ export class BSParameter extends BSNode {
       this.tsType.flags & TypeFlags.StringLike ||
       this.tsType.flags & TypeFlags.TypeParameter || 
       isFunctionType(scope, this.tsType)       ||
-      isArrayType(scope, this.tsType)
+      isArrayType(this.tsType)
     ) {
       scope.variables.add({ name: this.bindingName.text, wasmType: "i32", isParameter: true });
     } else {

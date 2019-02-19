@@ -38,7 +38,7 @@ export class BSArrowFunction extends BSNode {
   }
 
   compile(parentScope: Scope): Sexpr {
-    const fn = parentScope.functions.getFunctionByType(this.tsType);
+    const fn = parentScope.functions.getByType(this.tsType);
 
     // TODO - this is copied from function
 

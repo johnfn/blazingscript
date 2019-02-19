@@ -1,4 +1,4 @@
-import ts, { Symbol, TypeFlags, Type, SourceFile, TypeChecker, SymbolFlags } from "typescript";
+import ts, { Symbol, TypeFlags, Type, SourceFile, TypeChecker, SymbolFlags, ClassDeclaration } from "typescript";
 import { Param, WasmType } from "../sexpr";
 import { BSParameter } from "../parsers/parameter";
 import { BSForStatement } from "../parsers/for";
@@ -43,18 +43,25 @@ export class Scope {
   loops     : Loops;
   scopeType : ScopeType;
 
-  typeChecker: TypeChecker;
-  sourceFile : SourceFile;
-  fileName   : string;
-  jsTypes    : { [jsType: string]: string } = {};
+  typeChecker  : TypeChecker;
+  sourceFile   : SourceFile;
+  fileName     : string;
+
+  /** 
+   * This is a mapping from the name of JS builtin types - like String - to
+   * their class definitions found in the BlazingScript standard library. It is
+   * built by searching for @jsType annotations on classes.
+   */
+  nativeClasses: { [jsType: string]: ClassDeclaration } = {};
 
   constructor(props: {
     tc        : ts.TypeChecker,
     sourceFile: SourceFile,
     scopeType : ScopeType,
+    functions : Functions,
     parent    : Scope | null,
   }) {
-    const { tc, sourceFile, scopeType, parent } = props;
+    const { tc, sourceFile, scopeType, parent, functions } = props;
 
     this.typeChecker = tc;
     this.sourceFile  = sourceFile;
@@ -64,7 +71,7 @@ export class Scope {
 
     this.variables   = new Variables(this);
     this.properties  = new Properties(this);
-    this.functions   = parent ? parent.functions : new Functions(this);
+    this.functions   = functions;
     this.loops       = new Loops(this);
     this.modules     = new Modules(this);
     this.typeParams  = new TypeParameters(this);
@@ -74,14 +81,8 @@ export class Scope {
     this.fileName = sourceFile.fileName;
   }
 
-  // TODO: Somehow i want to ensure that this is actually targetting js
-  // names... but im not sure how??? There are so many.
-  addJsTypes(jsTypes: { [jsType: string]: string }): void {
-    this.jsTypes = jsTypes;
-  }
-
-  getNativeTypeName(jsTypeName: string): string {
-    return this.topmostScope().jsTypes[jsTypeName];
+  addNativeClasses(nativeClasses: { [key: string]: ClassDeclaration }): void {
+    this.nativeClasses = nativeClasses;
   }
 
   scopesEqual(one: ScopeType, two: ScopeType): boolean {
@@ -104,10 +105,11 @@ export class Scope {
   }
 
   addScopeFor(scopeType: ScopeType): Scope {
-    const scope = new Scope({ 
+    const scope = new Scope({
       tc        : this.typeChecker, 
       sourceFile: scopeType.type === ScopeName.SourceFile ? scopeType.sourceFile : this.sourceFile, 
       scopeType : scopeType, 
+      functions : this.functions,
       parent    : this, 
     });
 
@@ -151,7 +153,7 @@ export class Scope {
         (node.tsType.flags & TypeFlags.String) ||
         (node.tsType.flags & TypeFlags.TypeParameter) ||
         isFunctionType(this, node.tsType)      ||
-        isArrayType(this, node.tsType)
+        isArrayType(node.tsType)
       ) {
         return {
           name: node.bindingName.text,
@@ -166,19 +168,17 @@ export class Scope {
   getScopeForClass(type: Type): { className: string, cls: Scope } | null {
     let classNameToFind = "";
 
-    // console.log("Looking for scope for", type.symbol);
-
     if (
       type.flags & TypeFlags.StringLike ||
-      type.symbol.name === this.getNativeTypeName("String") // for this types
+      type.symbol.name === "StringImpl" // for this types
     ) {
-      classNameToFind = this.getNativeTypeName("String");
+      classNameToFind = "StringImpl";
     }
 
     if (
-      isArrayType(this, type)
+      isArrayType(type)
     ) {
-      classNameToFind = this.getNativeTypeName("Array");
+      classNameToFind = "ArrayImpl";
     }
 
     if (!classNameToFind) {

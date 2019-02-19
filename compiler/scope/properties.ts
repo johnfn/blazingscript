@@ -66,7 +66,7 @@ export class Properties {
       return res;
     }
 
-    const relevantFunction = cls.functions.getFunctionByType(fnExpr.tsType);
+    const relevantFunction = cls.functions.getByType(fnExpr.tsType);
 
     if (relevantFunction) {
       let typeParam = "";

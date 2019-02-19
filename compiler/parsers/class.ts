@@ -91,20 +91,17 @@ export class BSClassDeclaration extends BSNode {
       throw new Error("Functions#addClass called on something which is not a class.")
     }
 
-    const decls        = symbol.getDeclarations() || [];
-    const instanceType = checker.getTypeAtLocation(decls[0]);
+    const decls        = symbol.valueDeclaration;
+    const instanceType = checker.getTypeAtLocation(decls);
     const properties   = checker.getPropertiesOfType(instanceType);
 
     for (const prop of properties) {
       const propType = checker.getTypeOfSymbolAtLocation(prop, scope.sourceFile);
       const decl     = prop.getDeclarations()![0];
 
-      if (prop.flags & SymbolFlags.Method) {
-        scope.functions.addMethod({
-          type    : propType,
-          overload: BSClassDeclaration.GetOverloadType(decl),
-        });
-      } else if (prop.flags & SymbolFlags.Property) {
+     if (prop.flags & SymbolFlags.Method) {
+       // no assert error pls
+     } else if (prop.flags & SymbolFlags.Property) {
         const propInfo = BSClassDeclaration.GetPropertyType(decl);
 
         if (propInfo) {
@@ -138,7 +135,7 @@ export class BSClassDeclaration extends BSNode {
     }
   }
 
-  public static GetOverloadType(declaration: Declaration): OperatorOverload | null {
+  public static GetOverloadType(declaration: Declaration): Operator | null {
     const decorators = declaration.decorators;
 
     if (!decorators) {
@@ -159,16 +156,10 @@ export class BSClassDeclaration extends BSNode {
               const firstArgumentStr = firstArgument as StringLiteral;
               const opName = firstArgumentStr.text as Operator;
 
-              if (opName === Operator.NotEquals) {
-                return { operator: Operator.NotEquals };
-              } else if (opName === Operator.Plus) {
-                return { operator: Operator.Plus };
-              } else if (opName === Operator.TripleEquals) {
-                return { operator: Operator.TripleEquals };
-              } else if (opName === Operator.ArrayIndex) {
-                return { operator: Operator.ArrayIndex };
+              if (opName in Operator) {
+                return opName
               } else {
-                assertNever(opName);
+                throw new Error(`Invalid operator overload ${ opName }`);
               }
             }
           }

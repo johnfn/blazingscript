@@ -44,14 +44,14 @@ export class BSElementAccessExpression extends BSNode {
       }
     }
 
-    const fn = scope.functions.getMethodByOperator(arrayType, Operator.ArrayIndex);
+    const fn = scope.functions.getMethodByOperator(arrayType, Operator["[]"]);
     const thisExpr = this.array.compile(scope);
     const indexExpr = this.index.compile(scope);
 
     const expr = S.CallWithThis(fn, thisExpr, indexExpr);
     
     if (
-      isArrayType(scope, this.array.tsType)
+      isArrayType(this.array.tsType)
     ) {
       if (this.isLhs) {
         return expr;

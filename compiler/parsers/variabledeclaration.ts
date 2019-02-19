@@ -26,7 +26,7 @@ export class BSVariableDeclaration extends BSNode {
       this.tsType.flags & TypeFlags.StringLike ||
       isFunctionType(scope, this.tsType)       ||
       (this.tsType.symbol && this.tsType.symbol.flags & SymbolFlags.ObjectLiteral) ||
-      isArrayType(scope, this.tsType)
+      isArrayType(this.tsType)
     ) {
       scope.variables.add({ name: this.nameNode.text, wasmType: "i32", isParameter: false });
     } else {

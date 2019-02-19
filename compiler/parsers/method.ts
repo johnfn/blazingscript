@@ -63,7 +63,7 @@ export class BSMethodDeclaration extends BSNode {
 
     this.declaration = [];
 
-    const fn = parentScope.functions.getFunctionByType(this.tsType);
+    const fn = parentScope.functions.getByType(this.tsType);
 
     if (!fn) { throw new Error("this is a really bad error."); }
 
@@ -104,9 +104,6 @@ export class BSMethodDeclaration extends BSNode {
         ]
       })];
     }
-
-
-    parentScope.functions.addCompiledFunctionNode(this);
 
     return S.Const(0);
   }
