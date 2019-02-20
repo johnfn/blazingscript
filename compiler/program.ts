@@ -121,8 +121,6 @@ export class Program {
   }
 
   parse(): string {
-    const allFiles       : Sexpr[][] = [];
-    const allContexts    : Scope[] = [];
     const allSourceFiles = this.paths.map(x => {
       const res = this.program.getSourceFile(x);
 
@@ -151,8 +149,6 @@ export class Program {
       scope.addNativeClasses(nativeClasses);
 
       new BSSourceFile(scope, source).compile(scope);
-
-      allContexts.push(scope);
     }
 
     // TODO - is this deduping even necessary?

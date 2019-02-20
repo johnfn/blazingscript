@@ -1,4 +1,4 @@
-import { Type, TypeFlags, SyntaxKind, ClassDeclaration, CallExpression, Identifier, StringLiteral, Declaration } from "typescript";
+import { Type, TypeFlags, SyntaxKind, ClassDeclaration, CallExpression, Identifier, StringLiteral, Declaration, MethodDeclaration, FunctionDeclaration, InterfaceDeclaration, SymbolFlags, TypeChecker } from "typescript";
 import { isArrayType } from "./parsers/arrayliteral";
 import { NativeClasses } from "./program";
 import { Constants } from "./constants";
@@ -37,4 +37,41 @@ export class AstUtil {
       throw new Error("couldn't find a class for provided type. it might not be a method.");
     }
   }
+
+  public static GetFunctionDeclaration(type: Type, checker: TypeChecker, nativeClasses: NativeClasses): MethodDeclaration | FunctionDeclaration {
+    const declaration = type.symbol.valueDeclaration;
+
+    if (declaration.kind === SyntaxKind.FunctionDeclaration) {
+      return declaration as FunctionDeclaration;
+    } else if (declaration.kind === SyntaxKind.MethodDeclaration) {
+      return declaration as MethodDeclaration;
+    } else if (declaration.kind === SyntaxKind.MethodSignature) {
+      const parent = declaration.parent;
+
+      if (parent.kind === SyntaxKind.InterfaceDeclaration) {
+        const interfaceDecl = parent as InterfaceDeclaration;
+        const name = interfaceDecl.name.text;
+        const classDecl = nativeClasses[name];
+        const instanceType = checker.getTypeAtLocation(classDecl);
+        const properties = checker.getPropertiesOfType(instanceType);
+
+        for (const prop of properties) {
+          const decl = prop.valueDeclaration;
+
+          if (prop.flags & SymbolFlags.Method) {
+            if (prop.name === type.symbol.name) {
+              return decl as MethodDeclaration;
+            }
+          }
+        }
+
+        throw new Error("Method not found on class.");
+      } else {
+        throw new Error("unhandled parent type (not interace)");
+      }
+    } else {
+      throw new Error("Unknown method type.");
+    }
+  }
+
 }

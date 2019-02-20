@@ -211,13 +211,12 @@ export class Scope {
   toString(indent = ""): string {
     let string = this.localToString();
 
-    if (this.variables.count() === 0 && this.functions.count() === 0) {
+    if (this.variables.count() === 0) {
       string += "(Empty)\n";
     } else {
       string += "\n";
 
       if (this.variables.count() > 0) { string += `${ indent }  Variables: ${ this.variables.toString() }\n` ; }
-      if (this.functions.count() > 0) { string += `${ indent }  Functions: [all fns] \n` ; }
     }
 
     for (const scope of Object.keys(this.children).map(k => this.children[Number(k)])) {
