@@ -6,6 +6,7 @@ import { Scope, ScopeName } from "./scope/scope";
 import { BSSourceFile } from "./parsers/sourcefile";
 import { Functions, Operator } from "./scope/functions";
 import { flatten } from "./rewriter";
+import { DecoratorUtil } from "./decoratorutil";
 
 export type NativeClasses = { [key: string]: ClassDeclaration };
 
@@ -102,31 +103,15 @@ export class Program {
       for (const statement of file.statements) {
         if (statement.kind === SyntaxKind.ClassDeclaration) {
           const classDecl = statement as ClassDeclaration;
-          const decorators = classDecl.decorators;
+          const decorators = DecoratorUtil.GetDecorators(this.typeChecker.getTypeAtLocation(statement));
+          const firstDecorator = decorators[0];
 
-          if (!decorators) { continue; }
-
-          for (const deco of decorators) {
-            if (deco.expression.kind === SyntaxKind.CallExpression) {
-              const callExpr = deco.expression as CallExpression;
-
-              if (callExpr.expression.kind === SyntaxKind.Identifier) {
-                const fnNameIdentifier = callExpr.expression as Identifier;
-
-                if (fnNameIdentifier.text === "jsType") {
-                  const firstArgument = callExpr.arguments[0];
-
-                  if (firstArgument.kind === SyntaxKind.StringLiteral) {
-                    const firstArgumentStr = firstArgument as StringLiteral;
-                    const overrideType     = firstArgumentStr.text;
-
-                    result[overrideType] = classDecl;
-                  } else {
-                    throw new Error("Um, this should never happen!!!");
-                  }
-                }
-              }
-            }
+          if (
+            firstDecorator && 
+            firstDecorator.name === "jsType" && 
+            firstDecorator.arguments[0].type === "string"
+          ) {
+            result[firstDecorator.arguments[0].value] = classDecl;
           }
         }
       }

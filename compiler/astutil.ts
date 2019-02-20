@@ -1,7 +1,18 @@
-import { Type, TypeFlags, SyntaxKind, ClassDeclaration } from "typescript";
+import { Type, TypeFlags, SyntaxKind, ClassDeclaration, CallExpression, Identifier, StringLiteral, Declaration } from "typescript";
 import { isArrayType } from "./parsers/arrayliteral";
 import { NativeClasses } from "./program";
 import { Constants } from "./constants";
+import { Operator } from "./scope/functions";
+
+export type DecoratorArgument = {
+  type : "string";
+  value: string;
+};
+
+export type Decorator = {
+  name     : string;
+  arguments: DecoratorArgument[];
+};
 
 export class AstUtil {
   public static GetParentClassOfMethod(type: Type, nativeClasses: NativeClasses): ClassDeclaration {
@@ -26,5 +37,4 @@ export class AstUtil {
       throw new Error("couldn't find a class for provided type. it might not be a method.");
     }
   }
-
 }

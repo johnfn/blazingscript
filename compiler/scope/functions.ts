@@ -13,6 +13,7 @@ import { BSClassDeclaration } from "../parsers/class";
 import { NativeClasses } from "../program";
 import { FunctionId } from "./functionid";
 import { AstUtil } from "../astutil";
+import { DecoratorUtil } from "../decoratorutil";
 
 /**
  * Note: Written this way so we can do an easy `in` check.
@@ -237,7 +238,7 @@ export class Functions {
       fullyQualifiedName,
     } = this.getMethodTypeInfo(this.checker, type);
     const methodDeclaration = this.getFunctionDeclaration(type);
-    const overload = BSClassDeclaration.GetOverloadType(methodDeclaration);
+    const overload = DecoratorUtil.GetOverloadType(type);
 
     const signatures = this.checker.getSignaturesOfType(type, SignatureKind.Call);
     if (signatures.length > 1) { throw new Error("Dont support functions with > 1 signature yet."); }
@@ -390,7 +391,7 @@ export class Functions {
     }
   }
 
-  getMethodByOperator(type: Type, operator: Operator): Function {
+  getByOperator(type: Type, operator: Operator): Function {
     const parent = AstUtil.GetParentClassOfMethod(type, this.nativeClasses);
 
     for (const fn of this.list) {
@@ -422,9 +423,10 @@ export class Functions {
       const propType = this.checker.getTypeAtLocation(propDecl);
 
       if (prop.flags & SymbolFlags.Method) {
-        const propOperatorType = BSClassDeclaration.GetOverloadType(propDecl);
+        const decorators = DecoratorUtil.GetDecorators(propType);
+        const firstDecorator = decorators[0];
 
-        if (propOperatorType && propOperatorType === operator) {
+        if (firstDecorator && firstDecorator.name === "operator" && firstDecorator.arguments[0].value === operator) {
           return this.addFunction(propType);
         }
       }

@@ -135,42 +135,6 @@ export class BSClassDeclaration extends BSNode {
     }
   }
 
-  public static GetOverloadType(declaration: Declaration): Operator | null {
-    const decorators = declaration.decorators;
-
-    if (!decorators) {
-      return null;
-    }
-
-    for (const deco of decorators) {
-      if (deco.expression.kind === SyntaxKind.CallExpression) {
-        const callExpr = deco.expression as CallExpression;
-
-        if (callExpr.expression.kind === SyntaxKind.Identifier) {
-          const fnNameIdentifier = callExpr.expression as Identifier;
-
-          if (fnNameIdentifier.text === "operator") {
-            const firstArgument = callExpr.arguments[0];
-
-            if (firstArgument.kind === SyntaxKind.StringLiteral) {
-              const firstArgumentStr = firstArgument as StringLiteral;
-              const opName = firstArgumentStr.text as Operator;
-
-              if (opName in Operator) {
-                return opName
-              } else {
-                throw new Error(`Invalid operator overload ${ opName }`);
-              }
-            }
-          }
-        }
-      }
-
-    }
-
-    return null;
-  }
-
   public static GetPropertyType(declaration: Declaration): PropertyType | null {
     const decorators = declaration.decorators;
 
