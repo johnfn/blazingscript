@@ -281,10 +281,9 @@ export class Functions {
   }
 
   private addFunction(type: Type): Function {
-    let fn       : Function;
+    let fn: Function;
 
     const functionId     = new FunctionId(type);
-    let name             = functionId.id.fnName;
     const decl           = type.symbol.valueDeclaration;
     const sourceFileName = decl.getSourceFile().fileName;
 
@@ -303,11 +302,10 @@ export class Functions {
     let moduleName        : string;
 
     if (decl.kind === SyntaxKind.FunctionDeclaration) {
-      fullyQualifiedName = normalizePath(sourceFileName) + "__" + name;
+      fullyQualifiedName = normalizePath(sourceFileName) + "__" + functionId.id.fnName;
       moduleName         = normalizePath(sourceFileName);
     } else if (decl.kind === SyntaxKind.ArrowFunction) {
-      name               = name + String(id);
-      fullyQualifiedName = name;
+      fullyQualifiedName = functionId.id.fnName + String(id);
       moduleName         = normalizePath(sourceFileName);
 
     } else if (decl.kind === SyntaxKind.ImportSpecifier) {
