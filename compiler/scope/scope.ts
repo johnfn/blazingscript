@@ -47,13 +47,6 @@ export class Scope {
   sourceFile   : SourceFile;
   fileName     : string;
 
-  /** 
-   * This is a mapping from the name of JS builtin types - like String - to
-   * their class definitions found in the BlazingScript standard library. It is
-   * built by searching for @jsType annotations on classes.
-   */
-  nativeClasses: { [jsType: string]: ClassDeclaration } = {};
-
   constructor(props: {
     tc        : ts.TypeChecker,
     sourceFile: SourceFile,
@@ -79,29 +72,6 @@ export class Scope {
     this.children    = [];
 
     this.fileName = sourceFile.fileName;
-  }
-
-  addNativeClasses(nativeClasses: { [key: string]: ClassDeclaration }): void {
-    this.nativeClasses = nativeClasses;
-  }
-
-  scopesEqual(one: ScopeType, two: ScopeType): boolean {
-    switch (two.type) {
-      case ScopeName.ArrowFunction:
-        return one.type === ScopeName.ArrowFunction && one.node === two.node;
-      case ScopeName.For:
-        return one.type === ScopeName.For && one.node === two.node;
-      case ScopeName.Global:
-        return one.type === ScopeName.Global;
-      case ScopeName.SourceFile:
-        return one.type === two.type && one.sourceFile.fileName === two.sourceFile.fileName;
-      case ScopeName.Method:
-      case ScopeName.Class:
-      case ScopeName.Function:
-        return one.type === two.type && one.symbol.name === two.symbol.name;
-      default:
-        return assertNever(two);
-    }
   }
 
   addScopeFor(scopeType: ScopeType): Scope {

@@ -146,8 +146,6 @@ export class Program {
 
       allFunctions.activeScope = scope;
 
-      scope.addNativeClasses(nativeClasses);
-
       new BSSourceFile(scope, source).compile(scope);
     }
 

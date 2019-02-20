@@ -52,7 +52,7 @@ export class Properties {
       throw new Error(`Cant find appropriate scope for ${ name } on ${ expr.fullText } which is a ${ this.scope.typeChecker.typeToString(expr.tsType) }`);
     }
 
-    const { className, cls } = obj;
+    const { cls } = obj;
 
     const relevantProperties = cls.properties.getAll().filter(prop => prop.name === name);
     const relevantProperty = relevantProperties[0];
