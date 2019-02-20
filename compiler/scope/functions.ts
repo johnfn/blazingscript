@@ -1,6 +1,6 @@
 import { BSMethodDeclaration } from "../parsers/method";
 import { BSFunctionDeclaration } from "../parsers/function";
-import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration, SourceFile, TypeFlags, SymbolFlags, Identifier, DeclarationStatement, MethodSignature, SymbolDisplayPartKind, InterfaceDeclaration, ClassDeclaration, ImportSpecifier, ImportDeclaration, StringLiteral, Declaration, TypeChecker } from "typescript";
+import { Type, SignatureKind, SyntaxKind, FunctionDeclaration, ArrowFunction, MethodDeclaration, SourceFile, TypeFlags, SymbolFlags, Identifier, DeclarationStatement, MethodSignature, SymbolDisplayPartKind, InterfaceDeclaration, ClassDeclaration, ImportSpecifier, ImportDeclaration, StringLiteral, Declaration, TypeChecker, ClassExpression, ObjectLiteralExpression } from "typescript";
 import { Sexpr, S, WasmType } from "../sexpr";
 import { Scope, ScopeName } from "./scope";
 import { BSCallExpression } from "../parsers/callexpression";
@@ -12,6 +12,7 @@ import { isArrayType } from "../parsers/arrayliteral";
 import { BSClassDeclaration } from "../parsers/class";
 import { NativeClasses } from "../program";
 import { FunctionId } from "./functionid";
+import { AstUtil } from "../astutil";
 
 /**
  * Note: Written this way so we can do an easy `in` check.
@@ -53,7 +54,7 @@ export type Function = {
   getTableIndex     : (typeParam?: string) => number;
   signature         : WasmFunctionSignature;
 
-  className         : string | null;
+  classDecl         : ClassDeclaration | ClassExpression | ObjectLiteralExpression | null;
   overload          : Operator | null;
   id                : FunctionId;
 };
@@ -165,10 +166,10 @@ export class Functions {
   }
 
   private getMethodTypeInfo(checker: TypeChecker, type: Type): {
-    className         : string;
     methodName        : string;
     fullyQualifiedName: string;
     classType         : Type;
+    classDecl         : ClassDeclaration | ClassExpression | ObjectLiteralExpression;
   } {
     const methodName = checker.symbolToString(type.symbol);
     const sig = checker.getSignaturesOfType(type, SignatureKind.Call);
@@ -184,18 +185,14 @@ export class Functions {
     if (!className) { throw new Error("anonymous classes not supported yet!"); }
 
     return {
-      className,
+      classDecl,
       methodName,
       fullyQualifiedName: `${ className }__${ methodName }`,
       classType,
     };
   }
 
-  addCompiledFunctionNode(expr: Sexpr[]): void {
-    this.functionExprs.push(expr);
-  }
-
-  private getDeclaration(type: Type): MethodDeclaration | FunctionDeclaration {
+  private getFunctionDeclaration(type: Type): MethodDeclaration | FunctionDeclaration {
     const declaration = type.symbol.valueDeclaration;
 
     if (declaration.kind === SyntaxKind.FunctionDeclaration) {
@@ -236,10 +233,10 @@ export class Functions {
    */
   private addMethod(type: Type): Function {
     const {
-      className,
+      classDecl,
       fullyQualifiedName,
     } = this.getMethodTypeInfo(this.checker, type);
-    const methodDeclaration = this.getDeclaration(type);
+    const methodDeclaration = this.getFunctionDeclaration(type);
     const overload = BSClassDeclaration.GetOverloadType(methodDeclaration);
 
     const signatures = this.checker.getSignaturesOfType(type, SignatureKind.Call);
@@ -255,7 +252,7 @@ export class Functions {
     const fn: Function = {
       getFullyQualifiedName: (typeName = "") => fullyQualifiedName + (typeName === "" ? "" : "__" + typeName),
       supportedTypeParams  ,
-      className            ,
+      classDecl            ,
       overload             ,
       typeParamSig         ,
       getTableIndex        : (typeName = "") => {
@@ -278,13 +275,12 @@ export class Functions {
 
     const node = new BSMethodDeclaration(this.activeScope, methodDeclaration as MethodDeclaration);
     node.compile(this.activeScope);
-    this.addCompiledFunctionNode(node.getDeclaration());
+    this.functionExprs.push(node.getDeclaration());
 
     return fn;
   }
 
   private addFunction(type: Type): Function {
-    let className: string | null = null;
     let fn       : Function;
 
     const functionId     = new FunctionId(type);
@@ -338,7 +334,7 @@ export class Functions {
       typeParamSig         ,
       getFullyQualifiedName: (typeName = "") => fullyQualifiedName + (typeName === "" ? "" : "__" + typeName),
       supportedTypeParams  , 
-      className            ,
+      classDecl            : null,
       getTableIndex        : (typeName = "") => id + supportedTypeParams.indexOf(typeName),
       overload             : null,
       id                   : functionId,
@@ -350,12 +346,12 @@ export class Functions {
       const node = new BSArrowFunction(this.activeScope, decl as ArrowFunction);
 
       node.compile(this.activeScope);
-      this.addCompiledFunctionNode([node.getDeclaration()]);
+      this.functionExprs.push([node.getDeclaration()]);
     } else if (decl.kind === SyntaxKind.FunctionDeclaration) {
       const node = new BSFunctionDeclaration(this.activeScope, decl as FunctionDeclaration);
 
       node.compile(this.activeScope);
-      this.addCompiledFunctionNode(node.getDeclaration());
+      this.functionExprs.push(node.getDeclaration());
     }
 
     return fn;
@@ -396,37 +392,14 @@ export class Functions {
     }
   }
 
-  private getParentClassOfMethod(type: Type): string {
-    if (type.flags & TypeFlags.StringLike) {
-      return "StringImpl";
-    }
-
-    if (isArrayType(type)) {
-      return "ArrayImpl";
-    }
-
-    const methodDecl = type.symbol.valueDeclaration;
-    const parent = methodDecl.parent;
-
-    if (parent.kind === SyntaxKind.ClassDeclaration) {
-      const classDecl = parent as ClassDeclaration;
-
-      if (!classDecl.name) { throw new Error("Anonymous classes not supported."); }
-
-      return classDecl.name.text;
-    } else {
-      throw new Error("couldn't find a class for provided type. it might not be a method.");
-    }
-  }
-
   getMethodByOperator(type: Type, operator: Operator): Function {
-    const parentName = this.getParentClassOfMethod(type);
+    const parent = AstUtil.GetParentClassOfMethod(type, this.nativeClasses);
 
     for (const fn of this.list) {
       if (
         fn.overload &&
         fn.overload  === operator &&
-        fn.className === parentName
+        fn.classDecl === parent
       ) {
         return fn;
       }

@@ -1,9 +1,13 @@
 * Remove getScopeForClass. Just look up the function directly by type.
 * i can make getParentClassOfMethod deal with classes now
-* abstract out FunctionId stuff.
 * sweep the code for ArrayImpl, StringImpl
 * remove addCompiledFunctionNode
 * im creating an arrow function node twice.
+
+* the sad thing is, im going to have to move towards building my own AST on top of the TS AST - 
+  because there's too much information that i'll need to add to completely use the typechecker API. 
+
+  i'll have to replace the checker with my own thing.
 
 * when i finish all this function craziness, i should do a similar sort of thing for classes.
 * then remove activeScope parameter of Functions.
