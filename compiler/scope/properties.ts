@@ -1,15 +1,24 @@
-import { Scope } from "./scope";
-import { Type } from "typescript";
+import { Symbol, Type, TypeChecker, ClassDeclaration, PropertySignature, Declaration, PropertyAccessEntityNameExpression, PropertyAccessExpression, PropertyDeclaration } from "typescript";
 import { WasmType, Sexpr, S, sexprToString } from "../sexpr";
-import { BSExpression } from "../parsers/expression";
+import { BSClassDeclaration } from "../parsers/class";
+import { AstUtil } from "../astutil";
 
 export type Property = {
   tsType   : Type;
   wasmType : WasmType;
-  name     : string;
   offset   : number;
   type     : InternalPropertyType;
+  decl     : PropertyDeclaration;
 };
+
+export type PropertyGroup = {
+  properties: Property[];
+  id        : PropertyGroupId;
+}
+
+type PropertyGroupId = {
+  classDecl: ClassDeclaration;
+}
 
 export enum InternalPropertyType {
   Value,
@@ -17,71 +26,77 @@ export enum InternalPropertyType {
 };
 
 export class Properties {
-  properties: Property[];
-  scope     : Scope;
+  groups : PropertyGroup[];
+  checker: TypeChecker;
 
-  constructor(scope: Scope) {
-    this.scope      = scope;
-    this.properties = [];
+  constructor(checker: TypeChecker) {
+    this.checker    = checker;
+    this.groups = [];
   }
 
-  add(prop: {
-    name    : string;
-    offset  : number;
-    tsType  : Type;
-    type    : InternalPropertyType;
-    wasmType: WasmType;
-  }): void {
-    this.properties.push(prop);
-  }
+  add(node: PropertyAccessExpression): Property {
+    const propDecl  = AstUtil.GetPropertyDeclaration(this.checker, node);
+    const classDecl = AstUtil.GetClassDeclarationOfType(
+      this.checker.getTypeAtLocation(node.expression)
+    );
+    const propInfo  = BSClassDeclaration.GetPropertyType(propDecl);
+    const type      = this.checker.getTypeAtLocation(node);
 
-  getAll(): Property[] {
-    return this.properties;
-  }
+    if (propInfo === null) { throw new Error(`Property ${ propDecl.getText() } does not have decorators. No good!`); }
 
-  get({ expr, exprScope, fnExpr, name }: {
-    expr     : BSExpression,
-    fnExpr   : BSExpression;
-    exprScope: Scope,
-    name     : string
-  }): Sexpr {
-    // TODO: I could store the properties directly on the class node itself, so that i dont have to go hunting them down later.
-    const obj = this.scope.getScopeForClass(expr.tsType);
+    const prop: Property = {
+      tsType  : type,
+      wasmType: "i32",
+      decl    : propDecl,
+      offset  : propInfo.offset,
+      type    : propInfo.type,
+    };
 
-    if (obj === null) {
-      throw new Error(`Cant find appropriate scope for ${ name } on ${ expr.fullText } which is a ${ this.scope.typeChecker.typeToString(expr.tsType) }`);
+    let group = this.groups.find(group => group.id.classDecl === classDecl);
+
+    if (!group) {
+      group = {
+        properties: [],
+        id        : { classDecl: classDecl },
+      };
+
+      this.groups.push(group);
     }
 
-    const { cls } = obj;
+    group.properties.push(prop);
 
-    const relevantProperties = cls.properties.getAll().filter(prop => prop.name === name);
-    const relevantProperty = relevantProperties[0];
+    return prop;
+  }
 
-    if (relevantProperty) {
-      const res = S.Add(
-        expr.compile(exprScope),
-        relevantProperty.offset
-      );
+  getByNode(node: PropertyAccessExpression): Property | null {
+    const propDecl  = AstUtil.GetPropertyDeclaration(this.checker, node);
+    const classDecl = AstUtil.GetClassDeclarationOfType(
+      this.checker.getTypeAtLocation(node.expression)
+    );
+    const relevantGroup = this.groups.find(group => group.id.classDecl === classDecl);
 
-      return res;
-    }
+    if (relevantGroup) {
+      const relevantProperty = relevantGroup.properties.find(prop => prop.decl === propDecl);
 
-    const relevantFunction = cls.functions.getByType(fnExpr.tsType);
-
-    if (relevantFunction) {
-      let typeParam = "";
-
-      if (relevantFunction.typeParamSig.length > 0) {
-        if (relevantFunction.typeParamSig.length > 1) {
-          throw new Error("Dont handle type param signatures > 1 length yet!");
-        }
-
-        typeParam = this.scope.typeParams.get(relevantFunction.typeParamSig[0]).substitutedType;
+      if (relevantProperty) { 
+        return relevantProperty;
       }
-
-      return S.Const(relevantFunction.getTableIndex(typeParam));
     }
 
-    throw new Error(`cant find property ${ name } in class ${ expr.fullText }`);
+    return this.add(node);
+  }
+
+  toString(): string {
+    let str = "";
+
+    for (const group of this.groups) {
+      const decl = group.id.classDecl;
+
+      str += decl.name!.text + "\n";
+      str += group.properties.map(prop => prop.decl.getText()).join("\n");
+      str += "=================================";
+    }
+
+    return str;
   }
 }

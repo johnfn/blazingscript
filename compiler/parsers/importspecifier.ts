@@ -31,16 +31,6 @@ export class BSImportSpecifier extends BSNode {
     this.children = [
       this.name  = buildNode(scope, node.name),
     ];
-
-    const type = scope.typeChecker.getTypeAtLocation(node);
-
-    if (isFunctionType(scope, type)) {
-      // TODO: nothing to be done !!!!!!!!!!!!!!!!!!
-    } else {
-      const importedClassScope = scope.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
-
-      BSClassDeclaration.AddClassToScope({ scope: importedClassScope, symbol: this.tsType.symbol });
-    }
   }
 
   compile(scope: Scope): Sexpr {

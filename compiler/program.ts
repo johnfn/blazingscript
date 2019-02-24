@@ -1,4 +1,4 @@
-import ts, { Node, ModuleKind, ScriptTarget, SourceFile, SyntaxKind, ClassDeclaration, CallExpression, Identifier, StringLiteral } from "typescript";
+import ts, { Node, ModuleKind, ScriptTarget, SourceFile, SyntaxKind, ClassDeclaration, CallExpression, Identifier, StringLiteral, TypeChecker } from "typescript";
 import fs from "fs";
 import path, { parse } from "path";
 import { sexprToString, Sexpr, S } from "./sexpr";
@@ -7,12 +7,16 @@ import { BSSourceFile } from "./parsers/sourcefile";
 import { Functions, Operator } from "./scope/functions";
 import { flatten } from "./rewriter";
 import { DecoratorUtil } from "./decoratorutil";
+import { Properties } from "./scope/properties";
 
 export type NativeClasses = { [key: string]: ClassDeclaration };
 
 export const THIS_NAME = "__this";
 
 export class Program {
+  public static NativeClasses: NativeClasses;
+  public static Checker      : TypeChecker;
+
   typeChecker: ts.TypeChecker;
   program    : ts.Program;
   paths      : string[];
@@ -91,6 +95,7 @@ export class Program {
 
 
     this.typeChecker = this.program.getTypeChecker();
+    Program.Checker = this.typeChecker;
   }
 
   /**
@@ -129,17 +134,20 @@ export class Program {
       return res;
     });
 
-    const nativeClasses = this.findAllNativeClassImplementations(allSourceFiles);
+    Program.NativeClasses = this.findAllNativeClassImplementations(allSourceFiles);
 
     // Find all implementations of library methods up front.
 
-    const allFunctions = new Functions(this.typeChecker, nativeClasses)
+    const allFunctions  = new Functions(this.typeChecker);
+    const allProperties = new Properties(this.typeChecker)
 
     for (const source of allSourceFiles) {
       const scope = new Scope({
+        functions : allFunctions,
+        properties: allProperties,
+
         tc        : this.typeChecker, 
         sourceFile: source, 
-        functions : allFunctions,
         parent    : null, 
         scopeType : { type: ScopeName.SourceFile, sourceFile: source },
       });

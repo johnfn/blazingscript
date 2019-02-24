@@ -52,9 +52,10 @@ export class Scope {
     sourceFile: SourceFile,
     scopeType : ScopeType,
     functions : Functions,
+    properties: Properties,
     parent    : Scope | null,
   }) {
-    const { tc, sourceFile, scopeType, parent, functions } = props;
+    const { tc, sourceFile, scopeType, parent, functions, properties } = props;
 
     this.typeChecker = tc;
     this.sourceFile  = sourceFile;
@@ -63,7 +64,7 @@ export class Scope {
     this.parent      = parent;
 
     this.variables   = new Variables(this);
-    this.properties  = new Properties(this);
+    this.properties  = properties;
     this.functions   = functions;
     this.loops       = new Loops(this);
     this.modules     = new Modules(this);
@@ -80,6 +81,7 @@ export class Scope {
       sourceFile: scopeType.type === ScopeName.SourceFile ? scopeType.sourceFile : this.sourceFile, 
       scopeType : scopeType, 
       functions : this.functions,
+      properties: this.properties,
       parent    : this, 
     });
 
@@ -133,49 +135,6 @@ export class Scope {
 
       throw new Error("Unsupported parameter type!");
     });
-  }
-
-  getScopeForClass(type: Type): { className: string, cls: Scope } | null {
-    let classNameToFind = "";
-
-    if (
-      type.flags & TypeFlags.StringLike ||
-      type.symbol.name === "StringImpl" // for this types
-    ) {
-      classNameToFind = "StringImpl";
-    }
-
-    if (
-      isArrayType(type)
-    ) {
-      classNameToFind = "ArrayImpl";
-    }
-
-    if (!classNameToFind) {
-      throw new Error(`Dont know the type of that class - looking for ${ this.typeChecker.typeToString(type) }`);
-    }
-
-    const allClasses = this.getAllClasses();
-
-    const relevantClasses = allClasses.filter(cls => 
-      cls.scopeType.type === ScopeName.Class && 
-      cls.scopeType.symbol.name === classNameToFind
-    );
-
-    if (relevantClasses.length === 0) {
-      console.log("class name to find is", classNameToFind)
-
-      throw new Error("Couldnt find that class");
-    }
-
-    if (relevantClasses.length > 1) {
-      console.log("Found too many classes! Not really a problem but i should fix this at some point.");
-    }
-
-    return {
-      className: classNameToFind,
-      cls      : relevantClasses[0],
-    };
   }
 
   toString(indent = ""): string {

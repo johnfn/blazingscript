@@ -9,8 +9,7 @@ import { BSArrowFunction } from "../parsers/arrowfunction";
 import { assertNever, normalizeString as normalizePath } from "../util";
 import { Constants } from "../constants";
 import { isArrayType } from "../parsers/arrayliteral";
-import { BSClassDeclaration } from "../parsers/class";
-import { NativeClasses } from "../program";
+import { NativeClasses, Program } from "../program";
 import { FunctionId } from "./functionid";
 import { AstUtil } from "../astutil";
 import { DecoratorUtil } from "../decoratorutil";
@@ -71,16 +70,14 @@ export class Functions {
   private list: Function[];
   functionExprs: Sexpr[][];
   checker      : TypeChecker;
-  private nativeClasses: NativeClasses;
 
   /** TODO: Remove this. */
   activeScope!: Scope;
 
-  constructor(checker: TypeChecker, nativeClasses: NativeClasses) {
+  constructor(checker: TypeChecker) {
     this.list          = [];
     this.functionExprs = [];
     this.checker       = checker;
-    this.nativeClasses = nativeClasses;
   }
 
   static GetCallExpressionSignature(node: BSCallExpression): WasmFunctionSignature {
@@ -201,7 +198,7 @@ export class Functions {
       classDecl,
       fullyQualifiedName,
     } = this.getMethodTypeInfo(this.checker, type);
-    const methodDeclaration = AstUtil.GetFunctionDeclaration(type, this.checker, this.nativeClasses);
+    const methodDeclaration = AstUtil.GetFunctionDeclaration(type, this.checker);
     const overload          = DecoratorUtil.GetOverloadType(type);
 
     const signatures = this.checker.getSignaturesOfType(type, SignatureKind.Call);
@@ -356,7 +353,7 @@ export class Functions {
   }
 
   getByOperator(type: Type, operator: Operator): Function {
-    const parent = AstUtil.GetParentClassOfMethod(type, this.nativeClasses);
+    const parent = AstUtil.GetClassDeclarationOfType(type);
 
     for (const fn of this.list) {
       if (
@@ -378,7 +375,7 @@ export class Functions {
       throw new Error("operator override not found for type!");
     }
 
-    const classDecl    = this.nativeClasses[className];
+    const classDecl    = Program.NativeClasses[className];
     const instanceType = this.checker.getTypeAtLocation(classDecl);
     const properties   = this.checker.getPropertiesOfType(instanceType);
 

@@ -43,10 +43,6 @@ export class BSClassDeclaration extends BSNode {
     }
 
     this.scope = parentScope.addScopeFor({ type: ScopeName.Class, symbol: this.tsType.symbol });
-    BSClassDeclaration.AddClassToScope({
-      scope : this.scope,
-      symbol: this.tsType.symbol,
-    });
 
     this.decorators = buildNodeArray(this.scope, node.decorators);
     this.members = [...node.members].map(mem => {
@@ -82,58 +78,6 @@ export class BSClassDeclaration extends BSNode {
   }
 
   // TODO: interfaces - https://stackoverflow.com/questions/50526710/typescript-compiler-api-get-type-of-imported-names
-
-  public static AddClassToScope(props: { scope: Scope; symbol: Symbol }): void {
-    const { symbol, scope } = props;
-    const checker = scope.typeChecker;
-
-    if (!(symbol.flags & SymbolFlags.Class)) {
-      throw new Error("Functions#addClass called on something which is not a class.")
-    }
-
-    const decls        = symbol.valueDeclaration;
-    const instanceType = checker.getTypeAtLocation(decls);
-    const properties   = checker.getPropertiesOfType(instanceType);
-
-    for (const prop of properties) {
-      const propType = checker.getTypeOfSymbolAtLocation(prop, scope.sourceFile);
-      const decl     = prop.getDeclarations()![0];
-
-     if (prop.flags & SymbolFlags.Method) {
-       // no assert error pls
-     } else if (prop.flags & SymbolFlags.Property) {
-        const propInfo = BSClassDeclaration.GetPropertyType(decl);
-
-        if (propInfo) {
-          if (propInfo.type === InternalPropertyType.Value) {
-            scope.properties.add({
-              name    : prop.name,
-              offset  : propInfo.offset,
-              tsType  : propType,
-              type    : InternalPropertyType.Value,
-              wasmType: "i32",
-            });
-          } else if (propInfo.type === InternalPropertyType.Array) {
-            scope.properties.add({
-              name    : prop.name,
-              offset  : propInfo.offset,
-              tsType  : propType,
-              type    : InternalPropertyType.Array,
-              wasmType: "i32",
-            });
-          } else {
-            assertNever(propInfo);
-          }
-        } else {
-          console.log(decl.getText());
-
-          throw new Error("All properties must be annotated currently!");
-        }
-      } else {
-        throw new Error("got unhandled thing in a class!");
-      }
-    }
-  }
 
   public static GetPropertyType(declaration: Declaration): PropertyType | null {
     const decorators = declaration.decorators;
