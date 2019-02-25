@@ -50,10 +50,8 @@ export type Function = {
    * refer to this function by in the generated wasm
    */
   getFullyQualifiedName: (typeParam?: string) => string;
-
   getTableIndex     : (typeParam?: string) => number;
   signature         : WasmFunctionSignature;
-
   classDecl         : ClassDeclaration | ClassExpression | ObjectLiteralExpression | null;
   overload          : Operator | null;
   id                : FunctionId;

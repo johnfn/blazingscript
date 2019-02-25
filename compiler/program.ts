@@ -14,6 +14,9 @@ export type NativeClasses = { [key: string]: ClassDeclaration };
 export const THIS_NAME = "__this";
 
 export class Program {
+  /**
+   * Maps e.g. the string "Array" to the class definition "ArrayImpl".
+   */
   public static NativeClasses: NativeClasses;
   public static Checker      : TypeChecker;
 

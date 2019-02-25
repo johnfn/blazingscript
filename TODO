@@ -1,6 +1,8 @@
-* i can make getParentClassOfMethod deal with classes now
+* i am giving up on the "compile every fn node whenever you see it" because there's too much that we need 
+  to keep in scope to reasonably do this, and compiling a function without it's associated scope is a huge 
+  pain.
+
 * sweep the code for ArrayImpl, StringImpl
-* remove addCompiledFunctionNode
 * im creating an arrow function node twice.
 
 * I need to handle this as a type parameter. yikes!
@@ -11,17 +13,11 @@
 * can i get a better type return for getParentTypeOfMethod
    * merge it with GetMethodTypeInfo?
 
-the way that properties get methods is kind of a hack and should go through functions when i get functions working again.
-getScopeForClass is no good vvvvvvvvv
-* remove getScopeForClass.
-* I'm going to refactor the functions scope thing before I do generic classes for Array<T>.
-
 * things that would make my debugging life easier:
    * the frustrating thing is it still COMPILES the whole program, and the bug is often in the compilation step.
    * the proper way to do this is probably to separate out into individual jest functions. im worried it would be slow, tho
    * ACTUAL stack traces. So I can tell when i have a mem access exception.
 
-* is className required in Function? Is it for methods, or what?
 * i should be able to generate S.Call from a Function. - see elementaccess
 
 * Before I do any serious object literals, I need Array<T> to handle T = String. Somehow.
@@ -32,7 +28,6 @@ getScopeForClass is no good vvvvvvvvv
 * instead of properties.get() which looks up a method by hunting down the class, i should 
   be able to go directly from a symbol to a method. then i could rewrite methods so they could 
   figure out their type parameters without a ton of hacking.
-  * basically the way i do method resolution right now is a GIANT HACK and i should just replace it entire.
 
 * function and method code is really similar:
    * in scopes/functions

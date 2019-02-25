@@ -11,7 +11,7 @@ import { BSStringLiteral } from "./stringliteral";
 import { buildNode, buildNodeArray } from "./nodeutil";
 import { flattenArray } from "../util";
 import { BSArrayLiteral } from "./arrayliteral";
-import { TsTypeToWasmType, Functions } from "../scope/functions";
+import { Functions } from "../scope/functions";
 
 /**
  * e.g. const x = myFunction(1, 5);

@@ -5,6 +5,8 @@ import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
 import { BSExpression } from "./expression";
 import { flattenArray } from "../util";
 import { buildNodeArray } from "./nodeutil";
+import { Program } from "../program";
+import { Constants } from "../constants";
 
 /**
  * Memory layout:
@@ -95,10 +97,16 @@ export class BSArrayLiteral extends BSNode {
 }
 
 export function isArrayType(type: Type) {
-  return (
-    (type.symbol && type.symbol.name === "Array") ||
-    (type.symbol && type.symbol.name === "ArrayImpl")
-  );
+  const arrayImplClassname = Program.NativeClasses[Constants.NATIVE_ARRAY].name!.text;
+
+  if (type.symbol) {
+    return (
+      type.symbol.name === Constants.NATIVE_ARRAY || 
+      type.symbol.name === arrayImplClassname
+    );
+  } else {
+    return false;
+  }
 }
 
 /**
