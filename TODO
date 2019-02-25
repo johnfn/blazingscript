@@ -2,7 +2,6 @@
   to keep in scope to reasonably do this, and compiling a function without it's associated scope is a huge 
   pain.
 
-* sweep the code for ArrayImpl, StringImpl
 * im creating an arrow function node twice.
 
 * I need to handle this as a type parameter. yikes!

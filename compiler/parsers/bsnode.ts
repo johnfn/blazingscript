@@ -1,5 +1,5 @@
 import { Sexpr } from "../sexpr";
-import { Scope, Property } from "../scope/scope";
+import { Scope } from "../scope/scope";
 import { Node, Type, Modifier, SyntaxKind } from "typescript";
 
 export type NodeInfo = {
@@ -24,7 +24,6 @@ export abstract class BSNode {
   fullText  : string;
   modifiers : Modifier[];
   uid       : number;
-  property  : Property | null;
 
   /**
    * Line this token appears in the source file.
@@ -39,7 +38,6 @@ export abstract class BSNode {
   constructor(scope: Scope, node: Node, info: NodeInfo = defaultNodeInfo) {
     this.uid       = getUid();
     this.modifiers = [...(node.modifiers || [])];
-    this.property  = null;
 
     if (node.parent) {
       if (node.kind !== SyntaxKind.ImportClause) {
