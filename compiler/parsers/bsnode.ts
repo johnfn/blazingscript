@@ -2,6 +2,24 @@ import { Sexpr } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { Node, Type, Modifier, SyntaxKind } from "typescript";
 
+export type CompileResultExpr = {
+  expr     : Sexpr;
+  functions: Sexpr[];
+}
+
+export type CompileResultStatements = {
+  statements: Sexpr[];
+  functions : Sexpr[];
+}
+
+export function isCompileResultExpr(x: any): x is CompileResultExpr {
+  return !!x.expr;
+}
+
+export function isCompileResultStatements(x: any): x is CompileResultStatements {
+  return Array.isArray(x.statements);
+}
+
 export type NodeInfo = {
   isLhs     ?: boolean;
   moduleName?: string;
@@ -73,5 +91,5 @@ export abstract class BSNode {
 
   readableName(): string { return "unimplemented"; }
 
-  abstract compile(scope: Scope): Sexpr | Sexpr[] | null;
+  abstract compile(scope: Scope): CompileResultExpr | CompileResultStatements;
 }

@@ -2,13 +2,13 @@ import { Block, BreakStatement, ArrowFunction, SyntaxKind, Expression } from "ty
 import { Sexpr, S, sexprToString } from "../sexpr";
 import { Scope, ScopeName } from "../scope/scope";
 import { Function } from "../scope/functions";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { buildNode, buildNodeArray } from "./nodeutil";
 import { flattenArray, Util } from "../util";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
 import { BSExpression } from "./expression";
-import { parseStatementListBS } from "./statementlist";
+import { compileStatementList } from "./statementlist";
 
 /**
  * e.g. const x = (arg: number) => arg + 1;
@@ -18,7 +18,6 @@ export class BSArrowFunction extends BSNode {
   children   : BSNode[] = [];
   parameters : BSParameter[];
   body       : BSBlock | BSExpression | null;
-  declaration: Sexpr | null = null;
   scope : Scope;
 
   constructor(parentScope: Scope, node: ArrowFunction, info: NodeInfo = defaultNodeInfo) {
@@ -37,58 +36,50 @@ export class BSArrowFunction extends BSNode {
     return "Arrow function";
   }
 
-  private buildDeclaration(fn: Function): void {
-    // TODO - this is copied from function
+  compile(parentScope: Scope): CompileResultExpr {
+    const fn = parentScope.functions.getByType(this.tsType);
 
     const params = this.scope.getParameters(this.parameters);
     let content  : Sexpr[];
+    let functions: Sexpr[] = [];
 
     if (this.body instanceof BSBlock) {
-      const statements = parseStatementListBS(this.scope, this.body.children);
+      const compiled = compileStatementList(this.scope, this.body.children);
       let lastStatement: Sexpr | null = null;
 
-      if (statements.length > 0) {
-        lastStatement = statements[statements.length - 1];
+      if (compiled.statements.length > 0) {
+        lastStatement = compiled.statements[compiled.statements.length - 1];
       }
       const wasmReturn = lastStatement && lastStatement.type === "i32" ? undefined : S.Const(0);
 
       content = [
-        ...statements,
+        ...compiled.statements,
         ...(wasmReturn ? [wasmReturn] : [])
       ];
+      functions = compiled.functions;
     } else {
       if (this.body) {
-        content = [this.body.compile(this.scope)];
+        const compiledBody = this.body.compile(this.scope);
+
+        content = [compiledBody.expr];
+        functions = [...functions, ...compiledBody.functions];
       } else {
-        content = [S.Const(0)];
+        throw new Error("no function body at all?")
       }
     }
 
-    this.declaration = Object.freeze(S.Func({
+    const fnExpr = S.Func({
       name  : fn.getFullyQualifiedName(),
       params: params,
       body  : [
         ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
         ...content,
       ]
-    }));
-  }
+    });
 
-  compile(parentScope: Scope): Sexpr {
-    const fn = parentScope.functions.getByType(this.tsType);
-
-    if (!this.declaration) {
-      this.buildDeclaration(fn);
-    }
-
-    return S.Const(fn.getTableIndex());
-  }
-
-  getDeclaration(): Sexpr {
-    if (this.declaration === null) {
-      throw new Error("This arrow function needs to be compiled before it has a declaration ready.");
-    }
-
-    return this.declaration;
+    return {
+      expr     : S.Const(fn.getTableIndex()),
+      functions: [...functions, fnExpr]
+    };
   }
 }

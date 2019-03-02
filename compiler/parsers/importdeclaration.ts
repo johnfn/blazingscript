@@ -1,8 +1,8 @@
 import { Block, isSwitchStatement, ImportDeclaration, SyntaxKind, StringLiteral, ImportClause } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { parseStatementListBS } from "./statementlist";
+import { compileStatementList } from "./statementlist";
 import { Scope } from "../scope/scope";
-import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
+import { BSNode, defaultNodeInfo, NodeInfo, CompileResultExpr } from "./bsnode";
 import { flattenArray } from "../util";
 import { buildNode } from "./nodeutil";
 import { BSStringLiteral } from "./stringliteral";
@@ -34,7 +34,12 @@ export class BSImportDeclaration extends BSNode {
     scope.modules.add(this.moduleName.text + ".ts");
   }
 
-  compile(scope: Scope): Sexpr {
-    return S.Block(parseStatementListBS(scope, this.children));
+  compile(scope: Scope): CompileResultExpr {
+    const compiledList = compileStatementList(scope, this.children);
+
+    return {
+      expr     : S.Block(compiledList.statements),
+      functions: compiledList.functions,
+    };
   }
 }

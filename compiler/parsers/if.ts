@@ -2,7 +2,7 @@ import { IfStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSStatement } from "./statement";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
 import { flattenArray } from "../util";
@@ -28,26 +28,37 @@ export class BSIfStatement extends BSNode {
     );
   }
 
-  compile(scope: Scope): Sexpr {
-    let thn = (this.ifTrue && this.ifTrue.compile(scope)) || S.Const(0);
-    let els = (this.ifFalse && this.ifFalse.compile(scope)) || S.Const(0);
+  compile(scope: Scope): CompileResultExpr {
+    const condCompiled = this.condition.compile(scope);
+    let thenCompiled   = this.ifTrue  ? this.ifTrue.compile(scope)  : { statements: [], functions: [] };
+    let elseCompiled   = this.ifFalse ? this.ifFalse.compile(scope) : { statements: [], functions: [] };
 
-    if (thn.type !== "[]") {
-      thn = S.Drop(thn);
+    const lastThenStatement = thenCompiled.statements[thenCompiled.statements.length - 1];
+    const lastElseStatement = elseCompiled.statements[elseCompiled.statements.length - 1];
+
+    if (lastThenStatement && lastThenStatement.type !== "[]") {
+      const last = thenCompiled.statements.pop()!;
+      thenCompiled.statements.push(S.Drop(last));
     }
 
-    if (els && els.type !== "[]") {
-      els = S.Drop(els);
+    if (lastElseStatement && lastElseStatement.type !== "[]") {
+      const last = elseCompiled.statements.pop()!;
+      elseCompiled.statements.push(S.Drop(last));
     }
 
-    const result = S(
-      "[]",
-      "if",
-      this.condition.compile(scope),
-      S("[]", "then", thn),
-      S("[]", "else", els ? els : S("[]", "nop"))
-    );
-
-    return result;
+    return {
+      expr: S(
+        "[]",
+        "if",
+        condCompiled.expr,
+        S("[]", "then", S.Block(thenCompiled.statements)),
+        S("[]", "else", S.Block(elseCompiled.statements))
+      ),
+      functions: [
+        ...thenCompiled.functions,
+        ...elseCompiled.functions,
+        ...condCompiled.functions,
+      ],
+    };
   }
 }

@@ -8,6 +8,7 @@ import { Functions, Operator } from "./scope/functions";
 import { flatten } from "./rewriter";
 import { DecoratorUtil } from "./decoratorutil";
 import { Properties } from "./scope/properties";
+import { CompileResultStatements } from "./parsers/bsnode";
 
 export type NativeClasses = { [key: string]: ClassDeclaration };
 
@@ -143,6 +144,7 @@ export class Program {
 
     const allFunctions  = new Functions(this.typeChecker);
     const allProperties = new Properties(this.typeChecker)
+    let compiledSourceFiles: CompileResultStatements[] = [];
 
     for (const source of allSourceFiles) {
       const scope = new Scope({
@@ -157,7 +159,7 @@ export class Program {
 
       allFunctions.activeScope = scope;
 
-      new BSSourceFile(scope, source).compile(scope);
+      compiledSourceFiles.push(new BSSourceFile(scope, source).compile(scope));
     }
 
     // TODO - is this deduping even necessary?
@@ -201,7 +203,7 @@ export class Program {
         );
       }),
 
-      ...flatten(allFunctions.getAllNodes()),
+      ...flatten(compiledSourceFiles.map(sourceFile => sourceFile.functions)),
       ...namesToExport.map(fqname => S.Export(fqname)),
 
       // build our function table

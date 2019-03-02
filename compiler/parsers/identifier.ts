@@ -1,7 +1,7 @@
 import { Identifier, SignatureKind } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 
 /**
  * e.g. const foo = 5
@@ -19,20 +19,19 @@ export class BSIdentifier extends BSNode {
     this.isLhs = info.isLhs || false;
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
     const asVariable = scope.variables.getOrNull(this.text);
 
     if (asVariable) {
-      return asVariable;
+      return { expr: asVariable, functions: [] };
     }
 
     const fn = scope.functions.getByType(this.tsType);
     const signatures = scope.typeChecker.getSignaturesOfType(this.tsType, SignatureKind.Call);
+
     if (signatures.length > 1) { throw new Error("Dont support functions with > 1 signature yet."); }
-    if (signatures.length === 0) { 
-      console.log(scope.localToString());
-      throw new Error(`Cant find a function named ${ this.text }`); 
-    }
+    if (signatures.length === 0) { throw new Error(`Cant find a function named ${ this.text }`); }
+
     const signature = signatures[0];
     const isGeneric = signature.typeParameters ? signature.typeParameters.length > 0 : false;
 
@@ -41,9 +40,9 @@ export class BSIdentifier extends BSNode {
         const typeParamName = signature.typeParameters![0].symbol.name;
         const typeParamType = scope.typeParams.get(typeParamName);
 
-        return S.Const(fn.getTableIndex(typeParamType.substitutedType));
+        return { expr: S.Const(fn.getTableIndex(typeParamType.substitutedType)), functions: [] };
       } else {
-        return S.Const(fn.getTableIndex());
+        return { expr: S.Const(fn.getTableIndex()), functions: [] };
       }
     }
 

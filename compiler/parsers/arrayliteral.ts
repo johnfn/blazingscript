@@ -1,7 +1,7 @@
 import { Scope } from "../scope/scope";
 import { ArrayLiteralExpression, Type, SignatureKind, TypeFlags, TypeChecker } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { BSExpression } from "./expression";
 import { flattenArray } from "../util";
 import { buildNodeArray } from "./nodeutil";
@@ -36,7 +36,7 @@ export class BSArrayLiteral extends BSNode {
     scope.variables.addOnce("array_content_temp", "i32");
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
     return BSArrayLiteral.EmitArrayLiteral(scope, this.elements);
   }
 
@@ -46,10 +46,12 @@ export class BSArrayLiteral extends BSNode {
    * constructor - e.g. 
    * scope.variables.addOnce("array_temp", this.tsType, "i32")
    */
-  public static EmitArrayLiteral(scope: Scope, elements: BSExpression[]): Sexpr {
+  public static EmitArrayLiteral(scope: Scope, elements: BSExpression[]): CompileResultExpr {
     const allocatedLength = elements.length + 1;
 
-    return S("i32", "block", S("[]", "result", "i32"),
+    let functions: Sexpr[] = [];
+
+    let result = S("i32", "block", S("[]", "result", "i32"),
       S.SetLocal("array_temp"        , S("i32", "call", "$malloc__malloc", S.Const(4               * 4))),
       S.SetLocal("array_content_temp", S("i32", "call", "$malloc__malloc", S.Const(allocatedLength * 4))),
 
@@ -63,16 +65,25 @@ export class BSArrayLiteral extends BSNode {
       S.Store(S.Add(scope.variables.get("array_temp"), 8), scope.variables.get("array_content_temp")),
 
       ...(
-        elements.map((elem, i) =>
-          S.Store(
-            S.Add(scope.variables.get("array_content_temp"), i * 4),
-            elem.compile(scope)
-          )
+          elements.map((elem, i) => {
+            const compiled = elem.compile(scope);
+            functions = functions.concat(compiled.functions);
+
+            return S.Store(
+              S.Add(scope.variables.get("array_content_temp"), i * 4),
+              compiled.expr
+            )
+          }
         )
       ),
 
       scope.variables.get("array_temp")
     );
+
+    return {
+      expr: result,
+      functions,
+    }
   }
 
   public static GetArrayElemSize(scope: Scope, type: Type) {

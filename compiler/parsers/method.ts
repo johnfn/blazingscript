@@ -1,11 +1,10 @@
 import { ClassDeclaration, MethodDeclaration, Type } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope, ScopeName } from "../scope/scope";
-import { Function, Functions } from "../scope/functions";
 import { THIS_NAME } from "../program";
-import { parseStatementListBS } from "./statementlist";
+import { compileStatementList } from "./statementlist";
 import { assertNever, flattenArray } from "../util";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { BSParameter } from "./parameter";
 import { BSBlock } from "./block";
 import { BSDecorator } from "./decorator";
@@ -26,7 +25,6 @@ export class BSMethodDeclaration extends BSNode {
   name       : string | null;
 
   decorators : BSDecorator[];
-  declaration: Sexpr[] | null = null;
   scope      : Scope;
   typeParams : string[];
 
@@ -49,29 +47,27 @@ export class BSMethodDeclaration extends BSNode {
     this.name = node.name ? node.name.getText() : null;
  }
 
-  compile(parentScope: Scope): Sexpr {
+  compile(parentScope: Scope): CompileResultExpr {
     const params = this.scope.getParameters(this.parameters);
-    const sb     = parseStatementListBS(this.scope, this.body!.children);
+    const statementsCompiled = compileStatementList(this.scope, this.body!.children);
 
     let last: Sexpr | null = null;
 
-    if (sb.length > 0) {
-      last = sb[sb.length - 1];
+    if (statementsCompiled.statements.length > 0) {
+      last = statementsCompiled.statements[statementsCompiled.statements.length - 1];
     }
 
     const ret = last && last.type === "i32" ? undefined : S.Const(0);
 
-    this.declaration = [];
+    let functions = [];
 
     const fn = parentScope.functions.getByType(this.tsType);
-
-    if (!fn) { throw new Error("this is a really bad error."); }
 
     if (fn.supportedTypeParams.length > 0) {
       for (const type of fn.supportedTypeParams) {
         this.scope.typeParams.add({ name: this.typeParams[0], substitutedType: type });
 
-        this.declaration.push(S.Func({
+        functions.push(S.Func({
           name: fn.getFullyQualifiedName(type),
           params: [
             {
@@ -82,13 +78,13 @@ export class BSMethodDeclaration extends BSNode {
           ],
           body: [
             ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
-            ...sb,
+            ...statementsCompiled.statements,
             ...(ret ? [ret] : [])
           ]
         }));
       }
     } else {
-      this.declaration = [S.Func({
+      functions = [S.Func({
         name: fn.getFullyQualifiedName(""),
         params: [
           {
@@ -99,21 +95,16 @@ export class BSMethodDeclaration extends BSNode {
         ],
         body: [
           ...this.scope.variables.getAll({ wantParameters: false }).map(decl => S.DeclareLocal(decl)),
-          ...sb,
+          ...statementsCompiled.statements,
           ...(ret ? [ret] : [])
         ]
       })];
     }
 
-    return S.Const(0);
-  }
-
-  getDeclaration(): Sexpr[] {
-    if (this.declaration) {
-      return this.declaration;
+    return {
+      expr     : S.Const(0),
+      functions,
     }
-
-    throw new Error("This BSFunctionNode needs to be compiled before it has a declaration available.");
   }
 
   readableName(): string {

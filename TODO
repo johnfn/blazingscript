@@ -1,6 +1,19 @@
 * i am giving up on the "compile every fn node whenever you see it" because there's too much that we need 
   to keep in scope to reasonably do this, and compiling a function without it's associated scope is a huge 
   pain.
+  * should eventually verify that functions, methods etc are returning empty exprs, but nonempty function arrays
+  * somehow proxy or something the functions expression, so that i can check if they're ever used, and error 
+    if they arent.
+
+* should sweep the code for S.Const(0) and make sure that i cant just return a null expr instead.
+
+* variables is still scope related. is that what i want? not sure...
+
+* ExpressionStatements are the ones that need to return null. i should probably use enums
+  so that weird cases like this are easier to search for.
+  and declare let x = stupid also returns null.
+
+* binary expression "x = 5" - shouldnt i be evaluating x? e.g. if x is actually array[1] = 5;.
 
 * im creating an arrow function node twice.
 

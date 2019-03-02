@@ -1,6 +1,6 @@
 import { BSExpression, BSBindingName } from "./expression";
 import { VariableDeclaration, TypeFlags, SymbolFlags } from "typescript";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { Scope } from "../scope/scope";
 import { S, Sexpr } from "../sexpr";
 import { buildNode } from "./nodeutil";
@@ -36,12 +36,18 @@ export class BSVariableDeclaration extends BSNode {
     this.name = this.nameNode.text;
   }
 
-  compile(scope: Scope): Sexpr {
-    const name = this.name;
+  compile(scope: Scope): CompileResultExpr {
+    const name                = this.name;
+    const compiledInitializer = this.initializer ? this.initializer.compile(scope) : { expr: S.Const(0), functions: [] };
 
-    return S.SetLocal(
+    const expr = S.SetLocal(
       name,
-      this.initializer ? this.initializer.compile(scope) : S.Const(0)
+      compiledInitializer.expr,
     );
+
+    return {
+      expr,
+      functions: compiledInitializer.functions,
+    };
   }
 }

@@ -1,7 +1,7 @@
 import { ThisExpression } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 
 export class BSThisKeyword extends BSNode {
   children: BSNode[];
@@ -12,7 +12,7 @@ export class BSThisKeyword extends BSNode {
     this.children = [];
   }
 
-  compile(scope: Scope): Sexpr {
-    return S.GetLocal("i32", "__this");
+  compile(scope: Scope): CompileResultExpr {
+    return { expr: S.GetLocal("i32", "__this"), functions: [] };
   }
 }

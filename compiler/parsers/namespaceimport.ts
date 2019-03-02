@@ -1,6 +1,6 @@
 import { Scope } from "../scope/scope";
 import { Sexpr, S, Sx } from "../sexpr";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { ImportClause, NamespaceImport } from "typescript";
 
 export class BSNamespaceImport extends BSNode {
@@ -12,7 +12,10 @@ export class BSNamespaceImport extends BSNode {
     this.children = [ ];
   }
 
-  compile(scope: Scope): Sexpr {
-    return S.Const(0);
+  compile(scope: Scope): CompileResultExpr {
+    return {
+      expr     : S.Const(0),
+      functions: [],
+    };
   }
 }

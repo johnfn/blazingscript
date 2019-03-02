@@ -1,7 +1,7 @@
 import { ContinueStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 
 // TODO: Handle label.
 
@@ -16,7 +16,10 @@ export class BSContinueStatement extends BSNode {
     super(scope, node);
   }
 
-  compile(scope: Scope): Sexpr {
-    return scope.loops.getContinue();
+  compile(scope: Scope): CompileResultExpr {
+    return {
+      expr: scope.loops.getContinue(),
+      functions: [],
+    }
   }
 }

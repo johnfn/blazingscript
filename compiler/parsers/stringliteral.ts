@@ -1,7 +1,7 @@
 import { Scope } from "../scope/scope";
 import { StringLiteral } from "typescript";
 import { Sexpr, S, Sx } from "../sexpr";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 
 export class BSStringLiteral extends BSNode {
   children: BSNode[] = [];
@@ -14,8 +14,8 @@ export class BSStringLiteral extends BSNode {
     scope.variables.addOnce("string_temp", "i32");
   }
 
-  compile(scope: Scope): Sexpr {
-    return S("i32",
+  compile(scope: Scope): CompileResultExpr {
+    const expr = S("i32",
       "block",
       S("[]", "result", "i32"),
       S.SetLocal(
@@ -28,5 +28,10 @@ export class BSStringLiteral extends BSNode {
       ...Sx.SetStringLiteralAtSexpr(scope.variables.get("string_temp"), this.text),
       scope.variables.get("string_temp")
     );
+
+    return {
+      expr,
+      functions: [],
+    };
   }
 }

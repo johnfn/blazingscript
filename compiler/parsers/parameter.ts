@@ -1,5 +1,5 @@
 import { ParameterDeclaration, TypeFlags } from "typescript";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { Scope } from "../scope/scope";
 import { buildNode } from "./nodeutil";
 import { isArrayType, isFunctionType } from "./arrayliteral";
@@ -26,10 +26,10 @@ export class BSParameter extends BSNode {
     );
 
     if (
-      this.tsType.flags & TypeFlags.NumberLike ||
-      this.tsType.flags & TypeFlags.StringLike ||
+      this.tsType.flags & TypeFlags.NumberLike    ||
+      this.tsType.flags & TypeFlags.StringLike    ||
       this.tsType.flags & TypeFlags.TypeParameter || 
-      isFunctionType(scope, this.tsType)       ||
+      isFunctionType(scope, this.tsType)          ||
       isArrayType(this.tsType)
     ) {
       scope.variables.add({ name: this.bindingName.text, wasmType: "i32", isParameter: true });
@@ -38,7 +38,7 @@ export class BSParameter extends BSNode {
     }
   }
 
-  compile(scope: Scope): null {
+  compile(scope: Scope): CompileResultExpr {
     throw new Error("Trying to compile a parameter but dunno how");
   }
 }

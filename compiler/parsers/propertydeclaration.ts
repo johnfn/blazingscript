@@ -1,7 +1,7 @@
 import { PropertyDeclaration } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { BSDecorator } from "./decorator";
 import { buildNodeArray, buildNode } from "./nodeutil";
 import { flattenArray, assertNever } from "../util";
@@ -30,8 +30,8 @@ export class BSPropertyDeclaration extends BSNode {
     );
   }
 
-  compile(scope: Scope): Sexpr {
-    return S.Const(0);
+  compile(scope: Scope): CompileResultExpr {
+    return { expr: S.Const(0), functions: [] };
   }
 
 }

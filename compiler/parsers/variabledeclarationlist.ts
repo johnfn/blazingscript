@@ -1,9 +1,10 @@
 import { VariableDeclarationList, SyntaxKind } from "typescript";
 import { BSVariableDeclaration } from "./variabledeclaration";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { Scope } from "../scope/scope";
 import { S, Sexpr } from "../sexpr";
 import { buildNodeArray } from "./nodeutil";
+import { compileStatementList } from "./statementlist";
 
 export class BSVariableDeclarationList extends BSNode {
   children    : BSNode[];
@@ -36,11 +37,16 @@ export class BSVariableDeclarationList extends BSNode {
     this.children = this.declarations;
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
     if (this.isDeclare) {
-      return S.Const(0);
+      return { expr: S.Const(0), functions: [] };
     } else {
-      return S.Block(this.declarations.map(decl => decl.compile(scope)));
+      const compiledStatements = compileStatementList(scope, this.declarations);
+
+      return {
+        expr     : S.Block(compiledStatements.statements),
+        functions: compiledStatements.functions,
+      };
     }
   }
 }

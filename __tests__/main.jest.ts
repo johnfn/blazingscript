@@ -1,3 +1,5 @@
+Error.stackTraceLimit = Infinity;
+
 import fs from "fs";
 import path from "path";
 import { Program } from "../compiler/program";

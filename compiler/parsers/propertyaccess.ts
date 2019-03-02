@@ -1,7 +1,7 @@
 import { PropertyAccessExpression, TypeFlags, SymbolFlags } from "typescript";
 import { Sexpr, S, sexprToString } from "../sexpr";
 import { Scope } from "../scope/scope";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { BSExpression } from "./expression";
 import { BSIdentifier } from "./identifier";
 import { buildNode } from "./nodeutil";
@@ -40,8 +40,9 @@ export class BSPropertyAccessExpression extends BSNode {
     this.node = node;
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
     let expr: Sexpr | null = null;
+    const compiledExpr = this.expression.compile(scope);
 
     if (this.expression.tsType.symbol && this.expression.tsType.symbol.flags & SymbolFlags.ObjectLiteral) {
       // Handle object literal properties.
@@ -52,7 +53,7 @@ export class BSPropertyAccessExpression extends BSNode {
       if (!prop) { throw new Error("Offset not found for property in object literal!") }
 
       expr = S.Add(
-        this.expression.compile(scope),
+        compiledExpr.expr,
         prop.offset
       );
     } else {
@@ -83,7 +84,7 @@ export class BSPropertyAccessExpression extends BSNode {
 
         if (prop) {
           expr = S.Add(
-            this.expression.compile(scope),
+            compiledExpr.expr,
             prop.offset
           );
         }
@@ -94,10 +95,15 @@ export class BSPropertyAccessExpression extends BSNode {
       }
     }
 
-    if (this.isLhs) {
-      return expr;
-    } else {
-      return S.Load("i32", expr);
+    if (!this.isLhs) {
+      expr = S.Load("i32", expr);
     }
+
+    return {
+      expr,
+      functions: [
+        ...compiledExpr.functions,
+      ],
+    };
   }
 }

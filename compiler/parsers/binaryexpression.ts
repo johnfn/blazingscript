@@ -9,7 +9,7 @@ import {
 import { Sexpr, S, sexprToString } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { Function } from "../scope/functions";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { BSIdentifier } from "./identifier";
 import { flattenArray } from "../util";
 import { buildNode } from "./nodeutil";
@@ -45,15 +45,21 @@ export class BSBinaryExpression extends BSNode {
     this.fullText = node.getFullText();
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
     const leftParsed  = this.left.compile(scope);
     const rightParsed = this.right.compile(scope);
 
     if (this.operatorToken.kind === SyntaxKind.EqualsToken) {
       if (this.left instanceof BSIdentifier) {
-        return S.SetLocal(this.left.text, rightParsed);
+        return {
+          expr   : S.SetLocal(this.left.text, rightParsed.expr),
+          functions: rightParsed.functions,
+        };
       } else {
-        return S.Store(leftParsed, rightParsed);
+        return {
+          expr: S.Store(leftParsed.expr, rightParsed.expr),
+          functions: [...leftParsed.functions, ...rightParsed.functions],
+        };
       }
     }
 
@@ -69,46 +75,33 @@ export class BSBinaryExpression extends BSNode {
     //   throw new Error(`in ${ be.getText() } both types must agree. (${ (leftType as any).intrinsicName }, ${ (rightType as any).intrinsicName })`);
     // }
 
+    // Binary operations on integers
+
     if (
       this.left.tsType.flags  & TypeFlags.NumberLike &&
       this.right.tsType.flags & TypeFlags.NumberLike
     ) {
+      let expr: Sexpr;
+
       switch (this.operatorToken.kind) {
-        case SyntaxKind.CommaToken:
-          throw new Error(`unsupported binary expression ${this.fullText}`);
-        case SyntaxKind.LessThanToken:
-          return S("i32", "i32.lt_s", leftParsed, rightParsed);
-        case SyntaxKind.GreaterThanToken:
-          return S("i32", "i32.gt_s", leftParsed, rightParsed);
-        case SyntaxKind.LessThanEqualsToken:
-          return S("i32", "i32.le_s", leftParsed, rightParsed);
-        case SyntaxKind.GreaterThanEqualsToken:
-          return S("i32", "i32.ge_s", leftParsed, rightParsed);
-        case SyntaxKind.EqualsEqualsEqualsToken:
-          return S("i32", "i32.eq", leftParsed, rightParsed);
-        case SyntaxKind.ExclamationEqualsEqualsToken:
-          return S("i32", "i32.ne", leftParsed, rightParsed);
-        case SyntaxKind.PercentToken:
-          return S("i32", "i32.rem_s", leftParsed, rightParsed);
-        case SyntaxKind.LessThanLessThanToken:
-          return S("i32", "i32.shl", leftParsed, rightParsed);
-        case SyntaxKind.GreaterThanGreaterThanToken:
-          return S("i32", "i32.shr_s", leftParsed, rightParsed);
-        case SyntaxKind.AmpersandToken:
-          return S("i32", "i32.and", leftParsed, rightParsed);
-        case SyntaxKind.BarToken:
-          return S("i32", "i32.or", leftParsed, rightParsed);
-        case SyntaxKind.CaretToken:
-          return S("i32", "i32.xor", leftParsed, rightParsed);
-        case SyntaxKind.PlusToken:
-          return S("i32", "i32.add", leftParsed, rightParsed);
-        case SyntaxKind.MinusToken:
-          return S("i32", "i32.sub", leftParsed, rightParsed);
-        case SyntaxKind.AsteriskToken:
-          return S("i32", "i32.mul", leftParsed, rightParsed);
-        case SyntaxKind.SlashToken:
-          return S("i32", "i32.div_s", leftParsed, rightParsed);
+        case SyntaxKind.LessThanToken               : expr = S("i32", "i32.lt_s" , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.GreaterThanToken            : expr = S("i32", "i32.gt_s" , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.LessThanEqualsToken         : expr = S("i32", "i32.le_s" , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.GreaterThanEqualsToken      : expr = S("i32", "i32.ge_s" , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.EqualsEqualsEqualsToken     : expr = S("i32", "i32.eq"   , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.ExclamationEqualsEqualsToken: expr = S("i32", "i32.ne"   , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.PercentToken                : expr = S("i32", "i32.rem_s", leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.LessThanLessThanToken       : expr = S("i32", "i32.shl"  , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.GreaterThanGreaterThanToken : expr = S("i32", "i32.shr_s", leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.AmpersandToken              : expr = S("i32", "i32.and"  , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.BarToken                    : expr = S("i32", "i32.or "  , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.CaretToken                  : expr = S("i32", "i32.xor"  , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.PlusToken                   : expr = S("i32", "i32.add"  , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.MinusToken                  : expr = S("i32", "i32.sub"  , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.AsteriskToken               : expr = S("i32", "i32.mul"  , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.SlashToken                  : expr = S("i32", "i32.div_s", leftParsed.expr, rightParsed.expr); break;
         case SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
+        case SyntaxKind.CommaToken:
         case SyntaxKind.AsteriskAsteriskToken:
         case SyntaxKind.PlusEqualsToken:
         case SyntaxKind.MinusEqualsToken:
@@ -128,26 +121,36 @@ export class BSBinaryExpression extends BSNode {
         default:
           throw new Error(`unknown binary expression ${this.fullText}`);
       }
+
+      return {
+        expr,
+        functions: [...leftParsed.functions, ...rightParsed.functions],
+      };
     }
+
+    // Binary operations on booleans
 
     if (
       this.left.tsType.flags  & TypeFlags.BooleanLike &&
       this.right.tsType.flags & TypeFlags.BooleanLike
     ) {
+      let expr: Sexpr;
+
       switch (this.operatorToken.kind) {
-        case SyntaxKind.EqualsEqualsEqualsToken:
-          // TODO: Wrong in the case of true
-          return S("i32", "i32.eq", leftParsed, rightParsed);
-        case SyntaxKind.ExclamationEqualsEqualsToken:
-          return S("i32", "i32.ne", leftParsed, rightParsed);
-        case SyntaxKind.AmpersandAmpersandToken:
+        // TODO: Wrong in the case of true
+        case SyntaxKind.EqualsEqualsEqualsToken     : expr = S("i32", "i32.eq" , leftParsed.expr, rightParsed.expr); break;
+        case SyntaxKind.ExclamationEqualsEqualsToken: expr = S("i32", "i32.ne" , leftParsed.expr, rightParsed.expr); break;
           // TODO: This is actually wrong (e.g. 1010 and 0101)
-          return S("i32", "i32.and", leftParsed, rightParsed);
+        case SyntaxKind.AmpersandAmpersandToken     : expr = S("i32", "i32.and", leftParsed.expr, rightParsed.expr); break;
         case SyntaxKind.BarBarToken:
-          throw new Error(`unsupported binary expression ${this.fullText}`);
         default:
           throw new Error(`unsupported binary expression ${this.fullText}`);
       }
+
+      return {
+        expr,
+        functions: [...leftParsed.functions, ...rightParsed.functions],
+      };
     }
 
     if (
@@ -170,7 +173,13 @@ export class BSBinaryExpression extends BSNode {
           throw new Error(`unsupported binary expression ${this.fullText}`);
       }
 
-      return S.CallWithThis(fn, this.left.compile(scope), this.right.compile(scope));
+      const leftCompiled  = this.left.compile(scope);
+      const rightCompiled = this.right.compile(scope);
+
+      return {
+        expr     : S.CallWithThis(fn, leftCompiled.expr, rightCompiled.expr),
+        functions: [...leftCompiled.functions, ...rightCompiled.functions],
+      }
     }
 
     throw new Error(`unhandled types for binary expression ${this.fullText} ${ TypeFlags[this.left.tsType.flags] }.`);

@@ -1,17 +1,19 @@
 import { ElementAccessExpression, TypeFlags } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { BSExpression } from "./expression";
 import { flattenArray } from "../util";
 import { buildNode } from "./nodeutil";
 import { isArrayType } from "./arrayliteral";
 import { Operator } from "../scope/functions";
-import { parseStatementListBS } from "./statementlist";
 
 /**
  * e.g. const x = myArray[5];
  *                ^^^^^^^^^^^
+ * 
+ * also e.g. myArray[2] = "hello";
+ *           ^^^^^^^^^^
  */
 export class BSElementAccessExpression extends BSNode {
   children : BSNode[];
@@ -31,42 +33,48 @@ export class BSElementAccessExpression extends BSNode {
     );
   }
 
-  compile(scope: Scope): Sexpr {
-    const arrayType = this.array.tsType;
+  compile(scope: Scope): CompileResultExpr {
+    const arrayType     = this.array.tsType;
+
+    const thisCompiled  = this.array.compile(scope);
+    const indexCompiled = this.index.compile(scope);
+
+    let expr: Sexpr | null = null;
 
     if (arrayType.symbol && arrayType.symbol.name === "BuiltInArray") {
-      const expr = S.Add(this.array.compile(scope), S.Mul(this.index.compile(scope), 4));
+      expr = S.Add(thisCompiled.expr, S.Mul(indexCompiled.expr, 4));
 
-      if (this.isLhs) {
-        return expr;
-      } else {
-        return S.Load("i32", expr);
+      if (!this.isLhs) {
+        expr = S.Load("i32", expr);
+      }
+    } else {
+      const fn = scope.functions.getByOperator(arrayType, Operator["[]"]);
+      
+      if (
+        isArrayType(this.array.tsType)
+      ) {
+        if (this.isLhs) {
+          expr = S.CallWithThis(fn, thisCompiled.expr, indexCompiled.expr);
+        } else {
+          expr = S.Load("i32", S.CallWithThis(fn, thisCompiled.expr, indexCompiled.expr));
+        }
+      }
+
+      // you can't assign to a string by index, so they're never the lhs.
+
+      // Also, a string element access being an LHS wouldn't work in the
+      // conventional way because str[0] isn't a pointer - it actually creates a
+      // new string and returns it.
+      if (this.array.tsType.flags & TypeFlags.StringLike) {
+        expr = S.CallWithThis(fn, thisCompiled.expr, indexCompiled.expr);
       }
     }
 
-    const fn = scope.functions.getByOperator(arrayType, Operator["[]"]);
-    const thisExpr = this.array.compile(scope);
-    const indexExpr = this.index.compile(scope);
-
-    const expr = S.CallWithThis(fn, thisExpr, indexExpr);
-    
-    if (
-      isArrayType(this.array.tsType)
-    ) {
-      if (this.isLhs) {
-        return expr;
-      } else {
-        return S.Load("i32", expr);
-      }
-    }
-
-    // you can't assign to a string by index, so they're never the lhs.
-
-    // Also, a string element access being an LHS wouldn't work in the
-    // conventional way because str[0] isn't a pointer - it actually creates a
-    // new string and returns it.
-    if (this.array.tsType.flags & TypeFlags.StringLike) {
-      return expr;
+    if (expr !== null) {
+      return {
+        expr,
+        functions: [...thisCompiled.functions, ...indexCompiled.functions],
+      };
     }
 
     throw new Error("Do not know how to access the element of that.");

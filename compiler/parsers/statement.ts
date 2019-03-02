@@ -28,7 +28,7 @@ import { BSTypeAliasDeclaration } from "./typealias";
 import { BSInterfaceDeclaration } from "./interface";
 import { BSFunctionDeclaration } from "./function";
 import { BSClassDeclaration } from "./class";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr, isCompileResultExpr, CompileResultStatements } from "./bsnode";
 
 export class BSStatement extends BSNode {
   children: BSNode[];
@@ -72,11 +72,11 @@ export class BSStatement extends BSNode {
     }
   }
 
-  compile(scope: Scope): Sexpr | null {
+  compile(scope: Scope): CompileResultStatements {
     const res = this.statement.compile(scope);
 
-    if (Array.isArray(res)) {
-      return S.Block(res);
+    if (isCompileResultExpr(res)) {
+      throw new Error("I was promised a statement type but i didnt get one...");
     } else {
       return res;
     }

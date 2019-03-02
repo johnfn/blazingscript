@@ -1,6 +1,6 @@
 import { BSExpression } from "./expression";
 import { AsExpression, Expression } from "typescript";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { Scope } from "../scope/scope";
 import { Sexpr } from "../sexpr";
 import { flattenArray } from "../util";
@@ -22,7 +22,7 @@ export class BSAsExpression extends BSNode {
     );
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
     return this.expression.compile(scope);
   }
 }

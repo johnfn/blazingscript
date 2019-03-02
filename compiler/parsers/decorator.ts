@@ -1,4 +1,4 @@
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { Decorator } from "typescript";
@@ -25,7 +25,7 @@ export class BSDecorator extends BSNode {
     );
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
     throw new Error("Cant compile decorators! They are only currently for metadata.");
   }
 }

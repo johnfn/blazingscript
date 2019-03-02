@@ -1,7 +1,7 @@
 import { Block, BreakStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr, CompileResultStatements } from "./bsnode";
 
 // TODO: Handle label.
 
@@ -16,7 +16,10 @@ export class BSBreakStatement extends BSNode {
     super(scope, node);
   }
 
-  compile(scope: Scope): Sexpr {
-    return S("[]", "br", scope.loops.getBreakLabel());
+  compile(scope: Scope): CompileResultStatements {
+    return {
+      statements: [S("[]", "br", scope.loops.getBreakLabel())],
+      functions : [],
+    };
   }
 }

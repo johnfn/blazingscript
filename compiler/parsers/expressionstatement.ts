@@ -1,7 +1,7 @@
 import { Scope } from "../scope/scope";
 import { ExpressionStatement, isExpressionStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr, CompileResultStatements } from "./bsnode";
 import { buildNode } from "./nodeutil";
 import { flattenArray } from "../util";
 import { BSExpression } from "./expression";
@@ -11,7 +11,7 @@ import { BSExpression } from "./expression";
  *      ^^^^^^^^^^^^^^^^^^^^^
  */
 export class BSExpressionStatement extends BSNode {
-  children: BSNode[];
+  children  : BSNode[];
   expression: BSExpression;
 
   constructor(scope: Scope, node: ExpressionStatement, info: NodeInfo = defaultNodeInfo) {
@@ -22,17 +22,19 @@ export class BSExpressionStatement extends BSNode {
     );
   }
 
-  compile(scope: Scope): Sexpr | null {
+  compile(scope: Scope): CompileResultExpr {
     const result = this.expression.compile(scope);
 
-    if (result === null) {
-      return null
+    if (result.expr.type !== "[]") {
+      return {
+        expr     : S.Drop(result.expr),
+        functions: result.functions,
+      };
     } else {
-      if (result.type !== "[]") {
-        return S.Drop(result);
-      } else {
-        return result;
-      }
+      return {
+        expr     : result.expr,
+        functions: result.functions,
+      };
     }
   }
 }

@@ -1,6 +1,7 @@
 import { TypeAliasDeclaration } from "typescript";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { Scope } from "../scope/scope";
+import { S } from "../sexpr";
 
 export class BSTypeAliasDeclaration extends BSNode {
   children: BSNode[] = [];
@@ -9,7 +10,7 @@ export class BSTypeAliasDeclaration extends BSNode {
     super(scope, node);
   }
 
-  compile(scope: Scope): null {
-    return null;
+  compile(scope: Scope): CompileResultExpr {
+    return { expr: S.Const(0), functions: [] };
   }
 }

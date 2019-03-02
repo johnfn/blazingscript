@@ -1,4 +1,4 @@
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { Node } from "typescript";
@@ -12,7 +12,10 @@ export class BSTrueKeyword extends BSNode {
     this.children = [];
   }
 
-  compile(scope: Scope): Sexpr {
-    return S.Const(1);
+  compile(scope: Scope): CompileResultExpr {
+    return {
+      expr: S.Const(1),
+      functions: [],
+    };
   }
 }

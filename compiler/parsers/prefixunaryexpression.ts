@@ -1,7 +1,7 @@
 import { PrefixUnaryExpression, SyntaxKind, PrefixUnaryOperator } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
 import { flattenArray } from "../util";
@@ -25,22 +25,34 @@ export class BSPrefixUnaryExpression extends BSNode {
     this.operator = node.operator;
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
+    const exprCompiled = this.expression.compile(scope);
+    let expr: Sexpr;
+
     switch (this.operator) {
       case SyntaxKind.ExclamationToken:
-        return S("i32", "i32.eqz", this.expression.compile(scope));
+        expr = S("i32", "i32.eqz", exprCompiled.expr);
+        break;
       case SyntaxKind.MinusToken:
-        return S(
+        expr = S(
           "i32",
           "i32.sub",
           S.Const(0),
-          this.expression.compile(scope)
+          exprCompiled.expr
         );
+        break;
       case SyntaxKind.PlusPlusToken:
       case SyntaxKind.MinusMinusToken:
       case SyntaxKind.PlusToken:
       case SyntaxKind.TildeToken:
         throw new Error(`unhandled unary prefix ${this.fullText}`);
+      default:
+        throw new Error(`unhandled unary prefix ${this.fullText}`);
     }
+
+    return {
+      expr,
+      functions: exprCompiled.functions,
+    };
   }
 }

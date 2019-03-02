@@ -1,7 +1,7 @@
 import { ConditionalExpression } from "typescript";
 import { Scope } from "../scope/scope";
 import { Sexpr, S } from "../sexpr";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { BSExpression } from "./expression";
 import { flattenArray } from "../util";
 import { buildNode } from "./nodeutil";
@@ -27,19 +27,24 @@ export class BSConditionalExpression extends BSNode {
     );
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
     // TODO this is wrong because it always evaluates both sides
 
-    const whenTrueExpr = this.whenTrue.compile(scope);
+    const whenTrueExpr  = this.whenTrue.compile(scope);
     const whenFalseExpr = this.whenFalse.compile(scope);
-    const condExpr = this.condition.compile(scope);
+    const condExpr      = this.condition.compile(scope);
 
-    if (!whenTrueExpr)
-      throw new Error("no true expr in conditional expression.");
-    if (!whenFalseExpr)
-      throw new Error("no false expr in conditional expression.");
-    if (!condExpr) throw new Error("no cond expr in conditional expression.");
+    if (!whenTrueExpr)  throw new Error("no true expr in conditional expression.");
+    if (!whenFalseExpr) throw new Error("no false expr in conditional expression.");
+    if (!condExpr)      throw new Error("no cond expr in conditional expression.");
 
-    return S("i32", "select", whenTrueExpr, whenFalseExpr, condExpr);
+    return {
+      expr: S("i32", "select", whenTrueExpr.expr, whenFalseExpr.expr, condExpr.expr),
+      functions: [
+        ...whenTrueExpr.functions,
+        ...whenFalseExpr.functions,
+        ...condExpr.functions,
+      ],
+    }
   }
 }

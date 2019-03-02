@@ -2,9 +2,9 @@ import { Scope } from "../scope/scope";
 import { CallExpression, TypeFlags, SignatureKind, TypeParameterDeclaration, SymbolFlags } from "typescript";
 import { Sexpr, S, Sx, sexprToString } from "../sexpr";
 import { flatten } from "../rewriter";
-import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
+import { BSNode, defaultNodeInfo, NodeInfo, CompileResultExpr } from "./bsnode";
 import { BSExpression } from "./expression";
-import { parseStatementListBS } from "./statementlist";
+import { compileStatementList } from "./statementlist";
 import { BSIdentifier } from "./identifier";
 import { BSPropertyAccessExpression } from "./propertyaccess";
 import { BSStringLiteral } from "./stringliteral";
@@ -34,8 +34,8 @@ export class BSCallExpression extends BSNode {
     );
   }
 
-  compile(scope: Scope): Sexpr {
-    const special = this.handleSpecialFunctions(scope);
+  compile(scope: Scope): CompileResultExpr {
+    const special = this.handleNativeFunctions(scope);
 
     if (special !== null) {
       return special;
@@ -75,57 +75,86 @@ export class BSCallExpression extends BSNode {
     if (this.expression instanceof BSPropertyAccessExpression) {
       // pass in "this" argument
 
+      const thisCompiled = this.expression.expression.compile(scope);
+      const bodyCompiled = this.expression.compile(scope);
+      const argsCompiled = compileStatementList(scope, this.arguments);
+
       const res = S(
         "i32",
         "call_indirect",
         S("[]", "type", sig.name),
-        this.expression.expression.compile(scope),
-        ...parseStatementListBS(scope, this.arguments),
-        this.expression.compile(scope),
+        thisCompiled.expr,
+        ...argsCompiled.statements,
+        bodyCompiled.expr,
         `;; ${ this.fullText.replace(/\n/g, "") } (with this)\n`
       );
 
-      return res;
+      return {
+        expr: res,
+        functions: [...thisCompiled.functions, ...bodyCompiled.functions, ...argsCompiled.functions],
+      };
     } else {
-      return S(
+      const bodyCompiled = this.expression.compile(scope);
+      const argsCompiled = compileStatementList(scope, this.arguments);
+
+      const res = S(
         "i32",
         "call_indirect",
         S("[]", "type", sig.name),
-        ...parseStatementListBS(scope, this.arguments),
-        this.expression.compile(scope),
+        ...argsCompiled.statements,
+        bodyCompiled.expr,
         `;; ${ this.expression.fullText.replace(/\n/g, "") }\n`
       );
+
+      return {
+        expr: res,
+        functions: [...bodyCompiled.functions, ...argsCompiled.functions],
+      };
     }
   }
 
-  handleSpecialFunctions(scope: Scope): Sexpr | null {
+  handleNativeFunctions(scope: Scope): CompileResultExpr | null {
     if (this.expression instanceof BSIdentifier) {
       if (this.expression.text === "memwrite") {
-        const res = S.Store(
-          this.arguments[0].compile(scope)!,
-          this.arguments[1].compile(scope)!
-        );
+        const arg0 = this.arguments[0].compile(scope);
+        const arg1 = this.arguments[1].compile(scope);
 
-        return res;
+        return { 
+          expr: S.Store(arg0.expr, arg1.expr),
+          functions: [...arg0.functions, ...arg1.functions],
+        }
       } else if (this.expression.text === "memread") {
-        return S.Load("i32", this.arguments[0].compile(scope)!);
+        const arg0 = this.arguments[0].compile(scope);
+
+        return { 
+          expr: S.Load("i32", arg0.expr),
+          functions: arg0.functions,
+        }
       } else if (this.expression.text === "elemSize") {
-        return S.Const(BSArrayLiteral.GetArrayElemSize(scope, this.arguments[0].tsType));
+        return {
+          expr: S.Const(BSArrayLiteral.GetArrayElemSize(scope, this.arguments[0].tsType)),
+          functions: [],
+        };
       } else if (this.expression.text === "divfloor") {
-        return S(
-          "i32",
-          "i32.trunc_s/f32",
-          S(
-            "f32",
-            "f32.floor",
+        const arg0 = this.arguments[0].compile(scope);
+
+        return {
+          expr: S(
+            "i32",
+            "i32.trunc_s/f32",
             S(
               "f32",
-              "f32.div",
-              S("f32", "f32.convert_s/i32", this.arguments[0].compile(scope)!),
-              S("f32", "f32.convert_s/i32", this.arguments[0].compile(scope)!)
+              "f32.floor",
+              S(
+                "f32",
+                "f32.div",
+                S("f32", "f32.convert_s/i32", arg0.expr),
+                S("f32", "f32.convert_s/i32", arg0.expr)
+              )
             )
-          )
-        );
+          ),
+          functions: [],
+        };
       } else if (this.expression.text === "log") {
         const logArgs: {
           size: Sexpr;
@@ -133,6 +162,7 @@ export class BSCallExpression extends BSNode {
           type: number;
           putValueInMemory: Sexpr[];
         }[] = [];
+        let functions: Sexpr[] = [];
 
         let offset = 50000;
 
@@ -185,8 +215,10 @@ export class BSCallExpression extends BSNode {
               size: S.Const(4),
               start: S.Const(offset),
               type: 1,
-              putValueInMemory: [S.Store(S.Const(offset), result)]
+              putValueInMemory: [S.Store(S.Const(offset), result.expr)]
             });
+
+            functions = [...functions, ...result.functions];
 
             offset += 4;
           }
@@ -201,27 +233,30 @@ export class BSCallExpression extends BSNode {
           });
         }
 
-        return S.Block([
-          // store all args into memory
+        return {
+          expr: S.Block([
+              // store all args into memory
 
-          ...flatten(logArgs.map(obj => obj.putValueInMemory)),
+              ...flatten(logArgs.map(obj => obj.putValueInMemory)),
 
-          S(
-            "[]",
-            "call",
-            "$log",
-            ...flatten(
-              logArgs.map(obj => [
-                S.Const(obj.type),
-                obj.start,
-                S.Add(obj.start, obj.size),
-              ])
-            ),
-            S.Const(this.expression.line),
-            S.Const(this.expression.char),
-            S.Const(0),
-          )
-        ]);
+              S(
+                "[]",
+                "call",
+                "$log",
+                ...flatten(
+                  logArgs.map(obj => [
+                    S.Const(obj.type),
+                    obj.start,
+                    S.Add(obj.start, obj.size),
+                  ])
+                ),
+                S.Const(this.expression.line),
+                S.Const(this.expression.char),
+                S.Const(0),
+              )
+            ]),
+          functions: functions,
+        }
       }
     }
 

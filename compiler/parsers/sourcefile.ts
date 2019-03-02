@@ -2,10 +2,11 @@ import { SourceFile } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope, ScopeName } from "../scope/scope";
 import { BSStatement } from "./statement";
-import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
+import { BSNode, defaultNodeInfo, NodeInfo, CompileResultExpr, CompileResultStatements } from "./bsnode";
 import { flattenArray, assertNever, normalizeString as normalizeModuleName } from "../util";
 import { buildNodeArray } from "./nodeutil";
 import { flatten } from "../rewriter";
+import { compileStatementList } from "./statementlist";
 
 export class BSSourceFile extends BSNode {
   children  : BSNode[];
@@ -28,12 +29,8 @@ export class BSSourceFile extends BSNode {
     return this.node.getLineAndCharacterOfPosition(pos);
   }
 
-  compile(scope: Scope): Sexpr {
-    for (const statement of this.statements) {
-      statement.compile(scope);
-    }
-
-    return S.Const(0);
+  compile(scope: Scope): CompileResultStatements {
+    return compileStatementList(scope, this.statements);
   }
 
   readableName() {

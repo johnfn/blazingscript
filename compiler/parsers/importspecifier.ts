@@ -1,6 +1,6 @@
 import { Scope, ScopeName } from "../scope/scope";
 import { Sexpr, S, Sx } from "../sexpr";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { ImportSpecifier, TypeFlags, SignatureKind, SyntaxKind, SymbolFlags } from "typescript";
 import { isFunctionType } from "./arrayliteral";
 import { BSIdentifier } from "./identifier";
@@ -33,7 +33,10 @@ export class BSImportSpecifier extends BSNode {
     ];
   }
 
-  compile(scope: Scope): Sexpr {
-    return S.Const(0);
+  compile(scope: Scope): CompileResultExpr {
+    return {
+      expr     : S.Const(0),
+      functions: [],
+    };
   }
 }

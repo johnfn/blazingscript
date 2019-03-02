@@ -1,6 +1,6 @@
 import { Scope } from "../scope/scope";
 import { Sexpr, S, Sx } from "../sexpr";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { PropertyAssignment } from "typescript";
 import { buildNodeArray, buildNode } from "./nodeutil";
 import { BSPropertyName, BSExpression } from "./expression";
@@ -25,7 +25,7 @@ export class BSPropertyAssignment extends BSNode {
     ];
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
     return this.initializer.compile(scope);
   }
 }

@@ -66,7 +66,6 @@ export class Functions {
   public static AllSignatures: { [key: string]: WasmFunctionSignature } = {};
 
   private list: Function[];
-  functionExprs: Sexpr[][];
   checker      : TypeChecker;
 
   /** TODO: Remove this. */
@@ -74,7 +73,6 @@ export class Functions {
 
   constructor(checker: TypeChecker) {
     this.list          = [];
-    this.functionExprs = [];
     this.checker       = checker;
   }
 
@@ -235,7 +233,6 @@ export class Functions {
 
     const node = new BSMethodDeclaration(this.activeScope, methodDeclaration as MethodDeclaration);
     node.compile(this.activeScope);
-    this.functionExprs.push(node.getDeclaration());
 
     return fn;
   }
@@ -304,12 +301,10 @@ export class Functions {
       const node = new BSArrowFunction(this.activeScope, decl as ArrowFunction);
 
       node.compile(this.activeScope);
-      this.functionExprs.push([node.getDeclaration()]);
     } else if (decl.kind === SyntaxKind.FunctionDeclaration) {
       const node = new BSFunctionDeclaration(this.activeScope, decl as FunctionDeclaration);
 
       node.compile(this.activeScope);
-      this.functionExprs.push(node.getDeclaration());
     }
 
     return fn;
@@ -325,10 +320,6 @@ export class Functions {
 
   getAll(): Function[] {
     return this.list;
-  }
-
-  getAllNodes(): Sexpr[][] {
-    return this.functionExprs;
   }
 
   /** 

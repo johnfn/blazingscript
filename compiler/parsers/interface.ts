@@ -1,5 +1,5 @@
 import { InterfaceDeclaration } from "typescript";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultStatements } from "./bsnode";
 import { Scope } from "../scope/scope";
 
 /**
@@ -13,7 +13,10 @@ export class BSInterfaceDeclaration extends BSNode {
     super(scope, node);
   }
 
-  compile(scope: Scope): null {
-    return null;
+  compile(scope: Scope): CompileResultStatements {
+    return {
+      statements: [],
+      functions : [],
+    };
   }
 }

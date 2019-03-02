@@ -1,6 +1,6 @@
 import { Scope } from "../scope/scope";
 import { Sexpr, S, Sx } from "../sexpr";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { NamedImports, ObjectLiteralExpression, ObjectLiteralElementLike, Symbol } from "typescript";
 import { buildNodeArray } from "./nodeutil";
 import { BSPropertyAssignment } from "./propertyassignment";
@@ -104,11 +104,12 @@ export class BSObjectLiteralExpression extends BSNode {
     return mapping;
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
     const mapping         = BSObjectLiteralExpression.ObjectTypes.find(x => x.declarationStart === this.declStart)!;
     const allocatedLength = mapping.propertyOffsets.length * 4;
+    let functions: Sexpr[] = [];
 
-    return S("i32", "block", S("[]", "result", "i32"),
+    const expr = S("i32", "block", S("[]", "result", "i32"),
       S.SetLocal("obj_temp", S("i32", "call", "$malloc__malloc", S.Const(allocatedLength * 4))),
 
       // Store array of string keys
@@ -139,14 +140,22 @@ export class BSObjectLiteralExpression extends BSNode {
             throw new Error(`Couldn't find a node for object literal property name ${ name }.`);
           }
 
+          const compiledNode = associatedPropertyNode.compile(scope);
+          functions = [...functions, ...compiledNode.functions];
+
           return S.Store(
             S.Add(scope.variables.get("obj_temp"), offset),
-            associatedPropertyNode.compile(scope),
+            compiledNode.expr
           );
         })
       ),
 
       scope.variables.get("obj_temp")
     );
+
+    return {
+      expr,
+      functions,
+    };
   }
 }

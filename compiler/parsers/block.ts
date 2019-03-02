@@ -1,15 +1,15 @@
 import { Block, isSwitchStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
-import { parseStatementListBS } from "./statementlist";
+import { compileStatementList } from "./statementlist";
 import { Scope } from "../scope/scope";
 import { BSStatement } from "./statement";
-import { BSNode, defaultNodeInfo, NodeInfo } from "./bsnode";
+import { BSNode, defaultNodeInfo, NodeInfo, CompileResultExpr, CompileResultStatements } from "./bsnode";
 import { flattenArray } from "../util";
 import { buildNode, buildNodeArray } from "./nodeutil";
 
 /**
- * e.g. if (x) { myLongFunction("Hello") }
- *             ^^^^^^^^^^^^^^^^^^^^^^^^^
+ * e.g. if (x) { foo("Hello"); bar("world") }
+ *             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  */
 export class BSBlock extends BSNode {
   children : BSNode[];
@@ -23,7 +23,7 @@ export class BSBlock extends BSNode {
     );
   }
 
-  compile(scope: Scope): Sexpr {
-    return S.Block(parseStatementListBS(scope, this.children));
+  compile(scope: Scope): CompileResultStatements {
+    return compileStatementList(scope, this.children);
   }
 }

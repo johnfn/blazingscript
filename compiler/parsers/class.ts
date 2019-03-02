@@ -3,24 +3,20 @@ import {
   SyntaxKind,
   MethodDeclaration,
   PropertyDeclaration,
-  Symbol,
-  TypeFlags,
   Declaration,
   CallExpression,
   Identifier,
-  StringLiteral,
-  SymbolFlags,
   NumericLiteral
 } from "typescript";
 import { Scope, ScopeName } from "../scope/scope";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr, CompileResultStatements } from "./bsnode";
 import { BSMethodDeclaration } from "./method";
 import { BSPropertyDeclaration, PropertyType } from "./propertydeclaration";
 import { BSDecorator } from "./decorator";
 import { buildNodeArray } from "./nodeutil";
 import { flattenArray, assertNever } from "../util";
-import { OperatorOverload, Operator } from "../scope/functions";
 import { InternalPropertyType } from "../scope/properties";
+import { flatten } from "../rewriter";
 
 /**
  * e.g. class MyClass { ... }
@@ -69,12 +65,14 @@ export class BSClassDeclaration extends BSNode {
     return `Class ${ this.name }`;
   }
 
-  compile(parentScope: Scope): null {
-    for (const member of this.members) {
-      member.compile(this.scope);
-    }
+  compile(parentScope: Scope): CompileResultStatements {
+    const compiledMembers = this.members.map(m => m.compile(this.scope));
 
-    return null;
+    // TODO: This needs to change.
+    return {
+      statements: [],
+      functions: flatten(compiledMembers.map(member => member.functions)),
+    };
   }
 
   // TODO: interfaces - https://stackoverflow.com/questions/50526710/typescript-compiler-api-get-type-of-imported-names

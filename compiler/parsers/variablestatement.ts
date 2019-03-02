@@ -2,7 +2,7 @@ import { VariableStatement, SyntaxKind, Modifier } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { Scope } from "../scope/scope";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 
 export class BSVariableStatement extends BSNode {
   children       : BSNode[];
@@ -39,9 +39,9 @@ export class BSVariableStatement extends BSNode {
     }
   }
 
-  compile(scope: Scope): Sexpr | null {
+  compile(scope: Scope): CompileResultExpr {
     if (this.isDeclare) {
-      return null
+      return { expr: S.Const(0), functions: [] };
     } else {
       return this.declarationList!.compile(scope);
     }

@@ -1,13 +1,9 @@
 import { Scope } from "../scope/scope";
-import {
-  ForStatement,
-  SyntaxKind,
-  VariableDeclarationList,
-} from "typescript";
+import { ForStatement } from "typescript";
 import { Sexpr, S } from "../sexpr";
 import { BSStatement } from "./statement";
 import { BSVariableDeclarationList } from "./variabledeclarationlist";
-import { BSNode, NodeInfo, defaultNodeInfo } from "./bsnode";
+import { BSNode, NodeInfo, defaultNodeInfo, CompileResultExpr } from "./bsnode";
 import { BSExpression } from "./expression";
 import { buildNode } from "./nodeutil";
 
@@ -39,20 +35,27 @@ export class BSForStatement extends BSNode {
     ];
   }
 
-  compile(scope: Scope): Sexpr {
+  compile(scope: Scope): CompileResultExpr {
     const initializerSexprs: Sexpr[] = [];
+    let   initializerFns   : Sexpr[] = [];
 
     if (this.initializer) {
       if (this.initializer instanceof BSVariableDeclarationList) {
         for (const v of this.initializer.declarations) {
           if (v.initializer) {
+            const compiledInitializer = v.initializer.compile(scope);
+
             initializerSexprs.push(
-              S.SetLocal(v.nameNode.text, v.initializer.compile(scope))
+              S.SetLocal(v.nameNode.text, compiledInitializer.expr)
             );
+            initializerFns = [...initializerFns, ...compiledInitializer.functions];
           }
         }
       } else {
-        initializerSexprs.push(this.initializer.compile(scope));
+        const compiledInitializer = this.initializer.compile(scope);
+
+        initializerSexprs.push(compiledInitializer.expr);
+        initializerFns = [...initializerFns, ...compiledInitializer.functions];
       }
     }
 
@@ -61,10 +64,14 @@ export class BSForStatement extends BSNode {
     // TODO - we generate an increment with every continue statement. im sure
     // there's a better way!
 
-    scope.loops.add(inc);
+    scope.loops.add(inc ? inc.expr : null);
 
-    const bodyComp = this.body ? this.body.compile(scope) : null;
-    const cond = this.condition ? this.condition.compile(scope) : null;
+    if (inc !== null) {
+      initializerFns = [...initializerFns, ...inc.functions];
+    }
+
+    const bodyComp = this.body      ? this.body.compile(scope)      : null;
+    const cond     = this.condition ? this.condition.compile(scope) : null;
 
     const result = S(
       "i32",
@@ -76,16 +83,23 @@ export class BSForStatement extends BSNode {
         "loop",
         scope.loops.getContinueLabel(),
         ...(cond
-          ? [S("[]", "br_if", scope.loops.getBreakLabel(), S("i32", "i32.eqz", cond))]
+          ? [S("[]", "br_if", scope.loops.getBreakLabel(), S("i32", "i32.eqz", cond.expr))]
           : []),
-        ...(bodyComp ? [bodyComp] : []),
-        ...(inc ? [inc] : []),
+        ...(bodyComp ? bodyComp.statements : []),
+        ...(inc      ? [inc.expr]          : []),
         S("[]", "br", scope.loops.getContinueLabel())
       )
     );
 
     scope.loops.pop();
 
-    return result;
+    return {
+      expr: result,
+      functions: [
+        ...initializerFns,
+        ...(inc      ? inc.functions      : []),
+        ...(bodyComp ? bodyComp.functions : []),
+      ],
+    };
   }
 }
